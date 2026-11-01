@@ -1,0 +1,13 @@
+{
+  "source": {
+    "projectName": "YamAuth",
+    "webPackage": "yam-auth-web",
+    "dockerPrefix": "yam-auth",
+    "dbBase": "YamBase",
+    "dbSecondary": "YamBzss",
+    "jwtIssuer": "YamAuth",
+    "jwtAudience": "YamAuth.Web",
+    "smtpFromName": "YamAuth"
+  },
+  "notes": "Used by scripts/new-project.ps1 for token replacement. Do not put secrets in source."
+}

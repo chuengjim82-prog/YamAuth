@@ -1,0 +1,9 @@
+{
+  "baseScripts": [
+    "init_db.sql",
+    "init_db.seed.sql"
+  ],
+  "secondaryScripts": [
+    "init_db.secondary.sql"
+  ]
+}

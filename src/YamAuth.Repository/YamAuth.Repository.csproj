@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\YamAuth.Entity\YamAuth.Entity.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FreeSql" Version="3.5.*" />
+    <PackageReference Include="FreeSql.Provider.SqlServer" Version="3.5.*" />
+    <PackageReference Include="FreeSql.Repository" Version="3.5.*" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

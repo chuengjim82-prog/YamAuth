@@ -1,0 +1,10 @@
+{
+  "server": "127.0.0.1",
+  "port": 1433,
+  "user": "sa",
+  "password": "ChangeMe",
+  "dbBase": "YamBase",
+  "dbSecondary": "YamBzss",
+  "adminUser": "admin",
+  "adminPassword": "Admin@123"
+}

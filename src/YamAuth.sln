@@ -1,0 +1,58 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YamAuth.DbInit", "YamAuth.DbInit\YamAuth.DbInit.csproj", "{85761C26-35FD-CA25-ADEC-88B3C3B00A4A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YamAuth.CodeGen", "YamAuth.CodeGen\YamAuth.CodeGen.csproj", "{2DF10871-9422-4AB6-4FF8-B01572A2A1EB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YamAuth.Entity", "YamAuth.Entity\YamAuth.Entity.csproj", "{4D559FE9-8047-9299-47ED-8C542D8DAFE8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YamAuth.Dtos", "YamAuth.Dtos\YamAuth.Dtos.csproj", "{33DBE088-956F-C45C-E046-6056D9ADE405}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YamAuth.Repository", "YamAuth.Repository\YamAuth.Repository.csproj", "{0A178353-6972-51E8-0BF1-798580F19EF4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YamAuth.Service", "YamAuth.Service\YamAuth.Service.csproj", "{D8608A7C-5299-BA88-4B6C-02CDEFF157EC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YamAuth.Api", "YamAuth.Api\YamAuth.Api.csproj", "{B6A58DFD-251F-02B3-7D4C-DA713020F433}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{85761C26-35FD-CA25-ADEC-88B3C3B00A4A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{85761C26-35FD-CA25-ADEC-88B3C3B00A4A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{85761C26-35FD-CA25-ADEC-88B3C3B00A4A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{85761C26-35FD-CA25-ADEC-88B3C3B00A4A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2DF10871-9422-4AB6-4FF8-B01572A2A1EB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2DF10871-9422-4AB6-4FF8-B01572A2A1EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2DF10871-9422-4AB6-4FF8-B01572A2A1EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2DF10871-9422-4AB6-4FF8-B01572A2A1EB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4D559FE9-8047-9299-47ED-8C542D8DAFE8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4D559FE9-8047-9299-47ED-8C542D8DAFE8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4D559FE9-8047-9299-47ED-8C542D8DAFE8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4D559FE9-8047-9299-47ED-8C542D8DAFE8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{33DBE088-956F-C45C-E046-6056D9ADE405}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{33DBE088-956F-C45C-E046-6056D9ADE405}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{33DBE088-956F-C45C-E046-6056D9ADE405}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{33DBE088-956F-C45C-E046-6056D9ADE405}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0A178353-6972-51E8-0BF1-798580F19EF4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0A178353-6972-51E8-0BF1-798580F19EF4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0A178353-6972-51E8-0BF1-798580F19EF4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0A178353-6972-51E8-0BF1-798580F19EF4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D8608A7C-5299-BA88-4B6C-02CDEFF157EC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D8608A7C-5299-BA88-4B6C-02CDEFF157EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D8608A7C-5299-BA88-4B6C-02CDEFF157EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D8608A7C-5299-BA88-4B6C-02CDEFF157EC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B6A58DFD-251F-02B3-7D4C-DA713020F433}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B6A58DFD-251F-02B3-7D4C-DA713020F433}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B6A58DFD-251F-02B3-7D4C-DA713020F433}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B6A58DFD-251F-02B3-7D4C-DA713020F433}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,501 @@
+/* ForgeAbc admin theme — adapted from Osoo.EC / admin.ui.plus */
+
+:root {
+  --next-bg-main-color: #f8f8f8;
+  --next-bg-color: #f5f5ff;
+  --next-border-color-light: #f1f2f3;
+  --next-bg-menuBar: #ffffff;
+  --next-bg-menuBarColor: #606266;
+  --next-bg-menuBarActiveColor: rgba(105, 84, 240, 0.1);
+  --next-bg-topBar: #ffffff;
+  --layout-aside-width: 220px;
+  --layout-aside-collapse-width: 64px;
+  --layout-header-height: 50px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  background-color: var(--next-bg-main-color);
+  overflow: hidden;
+}
+
+/* ---------- layout shell ---------- */
+.layout-container {
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.layout-aside {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--next-bg-menuBar);
+  border-right: 1px solid var(--next-border-color-light);
+  box-shadow: 2px 0 8px rgb(0 21 41 / 4%);
+  transition: width 0.2s ease;
+  overflow: hidden;
+}
+
+.layout-header {
+  height: var(--layout-header-height) !important;
+  padding: 0 !important;
+  background: var(--next-bg-topBar);
+  border-bottom: 1px solid var(--next-border-color-light);
+  flex-shrink: 0;
+}
+
+.layout-main {
+  position: relative;
+  padding: 0 !important;
+  overflow: hidden;
+  background: var(--next-bg-main-color);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.layout-container>.el-container {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.layout-padding {
+  position: absolute;
+  inset: 15px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.layout-padding-view {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #f4f2f2;
+  border-radius: 4px;
+  // border: 1px solid var(--el-border-color-lighter, #ebeef5);
+  overflow: hidden;
+  // padding: 16px;
+}
+
+.page-shell {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  margin: 2px;
+}
+
+.page-shell:has(.data-table-panel) {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* fallback: class toggled by DataTable to ensure outer scrolling is disabled */
+.page-shell.no-scroll-outer {
+  overflow: hidden !important;
+}
+
+.page-shell>*:has(> .data-table-panel) {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.page-list {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- sidebar logo ---------- */
+.sidebar-logo {
+  flex-shrink: 0;
+  height: var(--layout-header-height);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--el-color-primary);
+  border-bottom: 1px solid var(--next-border-color-light);
+  white-space: nowrap;
+  overflow: hidden;
+
+  &.is-collapsed {
+    padding: 0;
+    font-size: 20px;
+  }
+}
+
+.layout-aside .sidebar-menu-wrap {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* ---------- header bar ---------- */
+.layout-navbars-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--layout-header-height);
+  padding: 0 16px;
+}
+
+.layout-navbars-top-left,
+.layout-navbars-top-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.layout-navbars-top .header-icon-btn {
+  color: var(--next-bg-menuBarColor);
+  font-size: 18px;
+}
+
+.user-trigger,
+.locale-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  color: var(--next-bg-menuBarColor);
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.2s;
+
+  &:hover {
+    background: var(--next-bg-menuBarActiveColor);
+    color: var(--el-color-primary);
+  }
+}
+
+.sidebar-menu-wrap .el-menu {
+  flex: 1;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border-right: none !important;
+}
+
+.layout-aside .el-menu-item,
+.layout-aside .el-sub-menu__title {
+  height: 48px !important;
+  line-height: 48px !important;
+  color: var(--next-bg-menuBarColor) !important;
+}
+
+.layout-aside .el-menu-item:hover,
+.layout-aside .el-sub-menu__title:hover,
+.layout-aside .el-menu-item.is-active,
+.layout-aside .el-sub-menu.is-active>.el-sub-menu__title {
+  background-color: var(--next-bg-menuBarActiveColor) !important;
+  color: var(--el-color-primary) !important;
+}
+
+.layout-aside .el-menu--collapse {
+  width: var(--layout-aside-collapse-width) !important;
+}
+
+.el-menu--popup-container .el-menu--popup,
+.el-menu--popup {
+  --el-menu-bg-color: var(--next-bg-menuBar);
+  --el-menu-text-color: var(--next-bg-menuBarColor);
+  --el-menu-hover-bg-color: var(--next-bg-menuBarActiveColor);
+  --el-menu-active-color: var(--el-color-primary);
+}
+
+/* ---------- Element Plus: misc ---------- */
+.el-message {
+  min-width: unset !important;
+  padding: 12px 16px !important;
+  box-shadow: 0 2px 12px rgb(0 0 0 / 8%);
+}
+
+.el-dialog {
+  border-radius: 8px;
+}
+
+.el-card {
+  border-radius: 4px;
+  border-color: var(--el-border-color-lighter);
+}
+
+.data-table-panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #fff;
+  border-radius: 5px;
+  padding: 0px 5px 0px 12px;
+}
+
+.data-table-body {
+  flex: 1;
+  min-height: 0;
+  height: 0;
+  overflow: auto;
+}
+
+.page-table-footer-placeholder {
+  height: 45px;
+  flex-shrink: 0;
+}
+
+/* external pagination container (rendered by parent) */
+.external-table-footer {
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 6px 12px;
+  background: #fff;
+  border-top: 1px solid var(--el-border-color-light);
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+}
+
+.data-table-panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #fff;
+  border-radius: 5px;
+  padding: 0px 5px 0px 12px;
+  position: relative;
+}
+
+.data-table-body {
+  flex: 1;
+  min-height: 0;
+  height: 0;
+  overflow: auto;
+  /* reserve space for the footer so footer won't shift during toolbar transition */
+  // padding-bottom: 56px;
+  /* footer height (45) + margin */
+}
+
+.page-table-footer {
+  height: 45px;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  position: absolute;
+  right: 5px;
+  left: 12px;
+  bottom: 0px;
+}
+
+.page-welcome {
+  padding: 8px 0;
+
+  h2 {
+    margin: 0 0 8px;
+    font-size: 20px;
+    font-weight: 600;
+    color: #303133;
+  }
+
+  p {
+    margin: 0;
+    color: var(--el-text-color-secondary);
+  }
+}
+
+/* ---------- auth pages ---------- */
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: linear-gradient(135deg, var(--next-bg-color) 0%, var(--next-bg-main-color) 45%, #fff 100%);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  border-radius: 8px;
+  border: none;
+  box-shadow: 0 8px 32px rgb(105 84 240 / 12%);
+
+  .el-card__body {
+    padding: 32px 28px 24px;
+  }
+
+  h2 {
+    margin: 0 0 24px;
+    text-align: center;
+    font-size: 22px;
+    font-weight: 600;
+    color: #303133;
+  }
+}
+
+.auth-form .el-form-item__label {
+  white-space: nowrap;
+}
+
+.auth-hint {
+  color: var(--el-text-color-secondary);
+  font-size: 13px;
+  margin: 0 0 16px;
+  text-align: center;
+}
+
+.search-form {
+  margin-bottom: 5px;
+  background: #fff;
+  border-radius: 5px;
+}
+
+.search-form-actions .el-button+.el-button {
+  margin-left: 8px;
+}
+
+.search-form-actions-extra {
+  margin-left: 12px;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+}
+
+.route-pending {
+  min-height: 280px;
+}
+
+.status-bar {
+  margin-bottom: 8px;
+  border-top: 1px dashed var(--el-border-color-light);
+  padding-top: 8px;
+  //padding-bottom: 8px;
+  margin-left: 13px;
+  margin-right: 13px;
+}
+
+.button-status-divider {
+  width: 100%;
+  // margin: 10px 0;
+  margin-left: 13px;
+  margin-right: 13px;
+  margin-top: 8px;
+}
+
+/* DataTable global overrides: ensure header background and custom scrollbar are applied */
+.data-table-panel {
+  --el-table-header-bg-color: #f0f6ff !important;
+}
+
+.data-table-panel .el-table__header-wrapper,
+.data-table-panel .el-table__header-wrapper .el-table__cell,
+
+/* Global override: tighten Element Plus tooltip/popover content (for body-mounted poppers) */
+body .el-tooltip__popper .el-tooltip__content,
+body .el-popper .el-tooltip__content,
+body .el-tooltip__popper .el-popover__content,
+body .el-popper .el-popover__content {
+  padding: 0px 2px !important;
+  font-size: 11px !important;
+  white-space: nowrap;
+  max-width: none;
+}
+
+/* Additional broad selectors to catch different popper/tooltip implementations */
+body .el-popper__content,
+body .el-tooltip__content,
+body .el-popover__content,
+body [role="tooltip"] {
+  padding: 3px 6px !important;
+  font-size: 11px !important;
+  white-space: nowrap !important;
+  max-width: none !important;
+  border-radius: 3px !important;
+}
+
+.data-table-panel .el-table__header th {
+  background-color: #f0f6ff !important;
+}
+
+.data-table-panel .el-table__body-wrapper {
+  background-color: #fff !important;
+}
+
+/* Hide visual scrollbar while keeping scrolling functionality */
+.data-table-panel .data-table-body {
+  -ms-overflow-style: none;
+  /* IE 10+ */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+.data-table-panel .data-table-body::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  background: transparent;
+}
+
+/* also ensure inner el-table wrapper has no visible scrollbar */
+.data-table-panel .el-table__body-wrapper {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.data-table-panel .el-table__body-wrapper::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+/* Element Plus native scrollbar component (horizontal bar) style override */
+.el-scrollbar__bar.is-horizontal {
+  background: transparent !important;
+  margin-bottom: -0.7px;
+  /* keep track transparent */
+}
+
+.el-scrollbar__bar.is-horizontal .el-scrollbar__thumb {
+  background-color: #110000 !important;
+  border-radius: 6px;
+}
+
+.el-scrollbar__bar.is-horizontal .el-scrollbar__thumb:hover {
+  background-color: #0c0c0c !important;
+}
+
+/* Also style vertical thumb if desired (keeps consistent) */
+.el-scrollbar__bar.is-vertical .el-scrollbar__thumb {
+  background-color: #000 !important;
+}
+
+.el-scrollbar__bar.is-vertical .el-scrollbar__thumb:hover {
+  background-color: #000 !important;
+}

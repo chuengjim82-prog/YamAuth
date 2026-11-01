@@ -1,0 +1,62 @@
+# 用法：在仓库根目录执行
+#   cp deploy/.env.example deploy/.env   # 编辑后
+#   docker compose -f deploy/docker-compose.yml up -d --build
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    profiles: [with-db]
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-YourStrong!Passw0rd}
+    ports:
+      - "${MSSQL_PORT:-1433}:1433"
+    volumes:
+      - yam-auth_mssql:/var/opt/mssql
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$${MSSQL_SA_PASSWORD}" -C -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/docker/Dockerfile.api
+    ports:
+      - "${API_PORT:-6500}:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      Db__Base: ${Db__Base}
+      Db__Bzss: ${Db__Bzss}
+      Db__LogSql: ${Db__LogSql:-false}
+      Jwt__SecretKey: ${Jwt__SecretKey}
+      Jwt__Issuer: ${Jwt__Issuer:-YamAuth}
+      Jwt__Audience: ${Jwt__Audience:-YamAuth.Web}
+      Cors__AllowedOrigins__0: ${WEB_ORIGIN:-http://localhost:8080}
+      App__WebBaseUrl: ${WEB_ORIGIN:-http://localhost:8080}
+      Rbac__SyncPermissionsOnStartup: ${Rbac__SyncPermissionsOnStartup:-false}
+      Swagger__Enabled: "false"
+      Smtp__Enabled: ${Smtp__Enabled:-false}
+      Smtp__Host: ${Smtp__Host:-}
+      Smtp__Port: ${Smtp__Port:-465}
+      Smtp__UseSsl: ${Smtp__UseSsl:-true}
+      Smtp__UserName: ${Smtp__UserName:-}
+      Smtp__Password: ${Smtp__Password:-}
+      Smtp__From: ${Smtp__From:-}
+      Smtp__FromName: ${Smtp__FromName:-YamAuth}
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/docker/Dockerfile.web
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  yam-auth_mssql:

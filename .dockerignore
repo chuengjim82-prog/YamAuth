@@ -1,0 +1,12 @@
+**/.git
+**/.svn
+**/bin
+**/obj
+**/node_modules
+**/dist
+**/logs
+**/.vs
+**/*.user
+deploy/.env
+**/appsettings.Development.json
+TestResults
