@@ -1,12 +1,12 @@
-import { request } from '@/utils/request';
+import { apiDelete, apiGet, apiPost, apiPut } from './request'
+import type { PagedResult, Row } from '@/types'
 
-export function createCrudApi<TDto, TCreate, TUpdate, TQuery>(basePath: string) {
+export function createCrudApi(basePath: string) {
   return {
-    page: (q: TQuery) => request<{ total: number; items: TDto[] }>({ url: basePath, method: 'GET', params: q }),
-    get: (id: number) => request<TDto>({ url: `${basePath}/${id}`, method: 'GET' }),
-    listChildren: (parentId: number) => request<TDto[]>({ url: `${basePath}/children`, method: 'GET', params: { parentId } }),
-    create: (data: TCreate) => request<number>({ url: basePath, method: 'POST', data }),
-    update: (id: number, data: TUpdate) => request<void>({ url: `${basePath}/${id}`, method: 'PUT', data }),
-    remove: (id: number) => request<void>({ url: `${basePath}/${id}`, method: 'DELETE' })
-  };
+    page: (page: number, size: number, keyword: string) =>
+      apiGet<PagedResult<Row>>(basePath, { page, size, keyword: keyword || undefined }),
+    create: (data: Row) => apiPost<number>(basePath, data),
+    update: (id: number, data: Row) => apiPut<void>(`${basePath}/${id}`, data),
+    remove: (id: number) => apiDelete<void>(`${basePath}/${id}`),
+  }
 }
