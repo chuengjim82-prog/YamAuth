@@ -1,26 +1,39 @@
 .container {
   display: flex;
+  flex: 1 1 0;
   flex-direction: column;
+  width: 100%;
   gap: 12px;
   min-height: 0;
+  padding-top: 8px;
+  overflow: hidden;
+}
+
+.container :global(.ant-btn) {
+  border-radius: 3px;
 }
 
 .controlsPanel {
+  flex: 0 0 auto;
   padding: 16px 16px 0;
   background: #fff;
   border: 1px solid #edf0f5;
 }
 
 .tablePanel {
+  position: relative;
   display: flex;
+  flex: 1 1 0;
   flex-direction: column;
   min-height: 0;
+  overflow: hidden;
   background: #fff;
   border: 1px solid #edf0f5;
 }
 
 .toolbar {
   display: flex;
+  flex: 0 0 auto;
   align-items: center;
   min-height: 48px;
   padding: 8px 12px;
@@ -32,13 +45,120 @@
 }
 
 .tableViewport {
-  min-height: 240px;
-  overflow: auto;
+  flex: 1;
+  min-height: 0;
+  overflow-x: clip;
+  overflow-y: auto;
+  scrollbar-color: #b8b8b8 #f3f3f3;
+  scrollbar-width: thin;
+}
+
+.tableViewport::-webkit-scrollbar {
+  width: 8px;
+  height: 0;
+}
+
+.tableViewport::-webkit-scrollbar-track {
+  background: #f3f3f3;
+}
+
+.tableViewport::-webkit-scrollbar-thumb {
+  background: #b8b8b8;
+  border: 1px solid #f3f3f3;
+  border-radius: 6px;
+}
+
+.tableViewport::-webkit-scrollbar-thumb:hover {
+  background: #969696;
+}
+
+.tablePanel[data-loading='true'] :global(.ant-table-placeholder .ant-empty) {
+  visibility: hidden;
 }
 
 .paginationBar {
   display: flex;
+  flex: 0 0 48px;
+  align-items: center;
   justify-content: flex-end;
-  padding: 12px 16px;
-  border-top: 1px solid #edf0f5;
+  min-height: 48px;
+  padding: 0 12px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.paginationBar :global(.ant-pagination) {
+  width: 100%;
+  font-size: 14px;
+}
+
+.paginationBar :global(.ant-pagination-item),
+.paginationBar :global(.ant-pagination-prev),
+.paginationBar :global(.ant-pagination-next),
+.paginationBar :global(.ant-pagination-jump-prev),
+.paginationBar :global(.ant-pagination-jump-next) {
+  min-width: 28px;
+  height: 28px;
+  margin-inline-end: 4px;
+  line-height: 28px;
+  border-radius: 3px;
+}
+
+.paginationBar :global(.ant-pagination-prev button),
+.paginationBar :global(.ant-pagination-next button),
+.paginationBar :global(.ant-pagination-options-quick-jumper input) {
+  height: 28px;
+  border-radius: 3px;
+}
+
+.paginationBar :global(.ant-select-single.ant-select-sm),
+.paginationBar :global(.ant-select-single.ant-select-sm .ant-select-selector) {
+  height: 28px;
+  border-radius: 3px;
+}
+
+.paginationBar :global(.ant-pagination-total-text) {
+  order: 1;
+  margin-inline-end: 12px;
+}
+
+.paginationBar :global(.ant-pagination-options) {
+  display: contents;
+}
+
+.paginationBar :global(.ant-pagination-options-size-changer) {
+  order: 2;
+  margin-inline-start: 0;
+}
+
+.paginationBar :global(.ant-pagination-prev) {
+  order: 3;
+  margin-inline-start: auto;
+}
+
+.paginationBar :global(.ant-pagination-item),
+.paginationBar :global(.ant-pagination-next),
+.paginationBar :global(.ant-pagination-jump-prev),
+.paginationBar :global(.ant-pagination-jump-next) {
+  order: 3;
+}
+
+.paginationBar :global(.ant-pagination-options-quick-jumper) {
+  order: 4;
+}
+
+.paginationBar :global(.ant-pagination-options-quick-jumper input),
+.paginationBar :global(.ant-select-selection-item) {
+  font-size: 14px;
+}
+
+@media (max-width: 1200px) {
+  .paginationBar {
+    flex-basis: auto;
+    padding-block: 8px;
+  }
+
+  .paginationBar :global(.ant-pagination) {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
 }

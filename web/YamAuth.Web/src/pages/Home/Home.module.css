@@ -1,0 +1,21 @@
+.page {
+  min-height: 0;
+  padding-bottom: 24px;
+  overflow: auto;
+}
+
+.panel {
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #edf0f5;
+}
+
+.welcome {
+  margin-bottom: 8px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.description {
+  color: #667085;
+}

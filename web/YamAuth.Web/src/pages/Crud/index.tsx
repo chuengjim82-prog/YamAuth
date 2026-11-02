@@ -1,12 +1,17 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import { Button, DatePicker, Form, Input, InputNumber, Modal, Pagination, Popconfirm, Result, Switch, Table, message } from 'antd'
+import { Button, DatePicker, Empty, Form, Input, InputNumber, Modal, Pagination, Popconfirm, Result, Space, Spin, Switch, Table, Tooltip, message } from 'antd'
+import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
 import type { TableColumnsType } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import DataListLayout from '@/components/DataListLayout'
+import PageHeader from '@/components/PageHeader'
 import { createCrudApi } from '@/api/crud'
-import { findResource, type FieldDef } from '@/resources'
+import { findResource, type FieldDef, type ResourceDef } from '@/resources'
 import type { Row } from '@/types'
+import { useTableViewport } from './useTableViewport'
+import emptyImage from './assets/list-empty.png'
+import styles from './Crud.module.css'
 
 function emptyValue(field: FieldDef) {
   if (field.kind === 'bool') return false
@@ -52,63 +57,72 @@ function toPayload(fields: FieldDef[], values: Record<string, unknown>, editing:
 export default function CrudPage() {
   const location = useLocation()
   const resource = findResource(location.pathname)
-  const [form] = Form.useForm()
-  const [keyword, setKeyword] = useState('')
-  const [page, setPage] = useState(1)
   const [size, setSize] = useState(20)
+
+  if (!resource) {
+    return <Result status="404" title="未找到页面" subTitle={location.pathname} />
+  }
+
+  // 资源切换时重建列表和表单，避免关键字、弹窗或旧请求结果串到下一页。
+  return <ResourceCrudPage key={resource.path} resource={resource} size={size} onSizeChange={setSize} />
+}
+
+function ResourceCrudPage({ resource, size, onSizeChange }: {
+  resource: ResourceDef
+  size: number
+  onSizeChange: (size: number) => void
+}) {
+  const [form] = Form.useForm()
+  const [searchKeyword, setSearchKeyword] = useState('')
+  const [query, setQuery] = useState({ page: 1, keyword: '' })
   const [total, setTotal] = useState(0)
   const [items, setItems] = useState<Row[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [loadFailed, setLoadFailed] = useState(false)
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
-
-  const api = useMemo(() => (resource ? createCrudApi(resource.api) : null), [resource])
-
-  async function load(nextPage = page, nextSize = size, nextKeyword = keyword) {
-    if (!api) return
-    setLoading(true)
-    try {
-      const result = await api.page(nextPage, nextSize, nextKeyword)
-      setTotal(result.total)
-      setItems(result.items ?? [])
-    } finally {
-      setLoading(false)
-    }
-  }
+  const mountedRef = useRef(false)
+  const submittingRef = useRef(false)
+  const api = useMemo(() => createCrudApi(resource.api), [resource.api])
+  const tableFields = resource.fields.filter((field) => field.table !== false)
+  const tableWidth = tableFields.reduce((width, field) => width + (field.name === 'id' ? 90 : 160), 112)
+  const { viewportRef, scrollbarRef, scrollWidth, isOverflowing } = useTableViewport(tableWidth, items)
+  const keywordId = `${resource.path}-keyword`
 
   useEffect(() => {
-    setKeyword('')
-    setPage(1)
-    setOpen(false)
-    setEditingId(null)
-    if (!api) return
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+    }
+  }, [])
+
+  useEffect(() => {
     let cancelled = false
     setLoading(true)
-    api.page(1, size, '')
+    setLoadFailed(false)
+    if (viewportRef.current) viewportRef.current.scrollTop = 0
+    api.page(query.page, size, query.keyword)
       .then((result) => {
         if (cancelled) return
         setTotal(result.total)
         setItems(result.items ?? [])
       })
+      .catch(() => {
+        // 请求拦截器负责错误提示，列表明确显示失败状态，不能误报为暂无数据。
+        if (!cancelled) setLoadFailed(true)
+      })
       .finally(() => {
         if (!cancelled) setLoading(false)
       })
     return () => {
+      // 后发查询、重置或翻页会清理前次请求，旧结果不能覆盖当前筛选。
       cancelled = true
     }
-  }, [api])
-
-  if (!resource || !api) {
-    return <Result status="404" title="未找到页面" subTitle={location.pathname} />
-  }
-
-  const current = resource
-  const crud = api
+  }, [api, query, size, viewportRef])
 
   const columns: TableColumnsType<Row> = [
-    ...current.fields
-      .filter((field) => field.table !== false)
+    ...tableFields
       .map((field) => ({
         title: field.label,
         dataIndex: field.name,
@@ -125,112 +139,190 @@ export default function CrudPage() {
     {
       title: '操作',
       key: 'actions',
-      width: 140,
+      width: 112,
       fixed: 'right',
+      align: 'center',
+      className: styles.actionColumn,
       render: (_value, row) => (
-        <>
-          <Button type="link" onClick={() => openEdit(row)}>编辑</Button>
+        <Space size={4}>
+          <Tooltip title="编辑">
+            <Button
+              type="text"
+              size="small"
+              className={styles.editButton}
+              icon={<EditOutlined />}
+              aria-label="编辑"
+              onClick={() => openEdit(row)}
+            />
+          </Tooltip>
           <Popconfirm title="确认删除？" onConfirm={() => remove(Number(row.id))}>
-            <Button type="link" danger>删除</Button>
+            <Tooltip title="删除">
+              <Button
+                type="text"
+                size="small"
+                className={styles.deleteButton}
+                icon={<DeleteOutlined />}
+                aria-label="删除"
+                danger
+              />
+            </Tooltip>
           </Popconfirm>
-        </>
+        </Space>
       ),
     },
   ]
 
   function openCreate() {
     setEditingId(null)
-    form.setFieldsValue(toFormValues(current.fields))
+    form.resetFields()
+    form.setFieldsValue(toFormValues(resource.fields))
     setOpen(true)
   }
 
   function openEdit(row: Row) {
     setEditingId(Number(row.id))
-    form.setFieldsValue(toFormValues(current.fields, row))
+    form.resetFields()
+    form.setFieldsValue(toFormValues(resource.fields, row))
     setOpen(true)
   }
 
   async function onSubmit(values: Record<string, unknown>) {
+    if (submittingRef.current) return
+    submittingRef.current = true
     setSaving(true)
     try {
-      const payload = toPayload(current.fields, values, editingId !== null)
-      if (editingId) await crud.update(editingId, payload)
-      else await crud.create(payload)
+      const payload = toPayload(resource.fields, values, editingId !== null)
+      if (editingId) await api.update(editingId, payload)
+      else await api.create(payload)
+      if (!mountedRef.current) return
       message.success('保存成功')
       setOpen(false)
-      await load()
+      setQuery((current) => ({ ...current }))
+    } catch {
+      // 保留弹窗和输入内容，错误提示由请求拦截器处理。
     } finally {
-      setSaving(false)
+      submittingRef.current = false
+      if (mountedRef.current) setSaving(false)
     }
   }
 
   async function remove(id: number) {
-    await crud.remove(id)
+    await api.remove(id)
+    if (!mountedRef.current) return
     message.success('删除成功')
-    await load()
+    setQuery((current) => ({ ...current }))
   }
 
   return (
-    <>
+    <section className={styles.page} aria-label={`${resource.title}管理`}>
+      <PageHeader title={resource.title} />
       <DataListLayout
         loading={loading}
         filters={
-          <Form
-            layout="inline"
-            style={{ marginBottom: 16 }}
-            onFinish={(values: { keyword?: string }) => {
-              const next = values.keyword ?? ''
-              setKeyword(next)
-              setPage(1)
-              void load(1, size, next)
+          <form
+            className={styles.searchBar}
+            onSubmit={(event) => {
+              event.preventDefault()
+              setQuery({ page: 1, keyword: searchKeyword })
             }}
           >
-            <Form.Item name="keyword" label="关键字">
-              <Input allowClear placeholder="请输入关键字" />
-            </Form.Item>
-            <Form.Item>
+            <div className={styles.combinedSearch}>
+              <label className={styles.keywordLabel} htmlFor={keywordId}>关键字</label>
+              <Input
+                id={keywordId}
+                className={styles.keywordInput}
+                allowClear
+                placeholder="请输入关键字"
+                value={searchKeyword}
+                onChange={(event) => setSearchKeyword(event.target.value)}
+              />
+            </div>
+            <div className={styles.searchActions}>
+              <Button onClick={() => {
+                setSearchKeyword('')
+                setQuery({ page: 1, keyword: '' })
+              }}>重置</Button>
               <Button type="primary" htmlType="submit">查询</Button>
-            </Form.Item>
-          </Form>
+            </div>
+          </form>
         }
-        toolbar={<Button type="primary" onClick={openCreate}>新增</Button>}
+        toolbar={<Button className={styles.createButton} icon={<PlusOutlined />} onClick={openCreate}>新增</Button>}
+        tableViewportRef={viewportRef}
         table={
           <Table<Row>
+            className={styles.resultTable}
+            tableLayout="fixed"
             rowKey="id"
-            size="small"
-            loading={loading}
+            size="medium"
             columns={columns}
             dataSource={items}
             pagination={false}
-            scroll={{ x: 'max-content' }}
+            scroll={{ x: tableWidth }}
+            sticky={{ offsetHeader: 0, getContainer: () => viewportRef.current ?? window }}
+            locale={{ emptyText: loadFailed ? null : (
+              <Empty
+                image={<img className={styles.emptyImage} src={emptyImage} alt="" />}
+                description="暂无数据"
+              />
+            ) }}
           />
         }
-        pagination={
+        horizontalScrollbar={
+          <div
+            ref={scrollbarRef}
+            className={styles.horizontalScroll}
+            data-overflow={isOverflowing}
+            role="region"
+            aria-label="表格横向滚动"
+            tabIndex={isOverflowing ? 0 : -1}
+          >
+            <div className={styles.horizontalScrollContent} style={{ width: scrollWidth }} />
+          </div>
+        }
+        pagination={total > 0 ? (
           <Pagination
-            current={page}
+            size="small"
+            current={query.page}
             pageSize={size}
             total={total}
             showSizeChanger
-            showTotal={(count) => `共 ${count} 条`}
+            showQuickJumper
+            showTotal={(count, range) => `第 ${range[0]}–${range[1]} 条 / 总共 ${count} 条`}
             onChange={(nextPage, nextSize) => {
-              setPage(nextPage)
-              setSize(nextSize)
-              void load(nextPage, nextSize, keyword)
+              onSizeChange(nextSize)
+              setQuery((current) => ({ ...current, page: nextSize !== size ? 1 : nextPage }))
             }}
           />
-        }
+        ) : null}
+        loadingOverlay={loading ? (
+          <div className={styles.loadingMask} role="status" aria-live="polite">
+            <Spin size="large" />
+            <span>正在加载中</span>
+          </div>
+        ) : loadFailed ? (
+          <div className={styles.failureMask} role="alert">
+            <span>数据加载失败，请重试</span>
+            <Button onClick={() => setQuery((current) => ({ ...current }))}>重新加载</Button>
+          </div>
+        ) : null}
       />
 
       <Modal
         open={open}
-        title={editingId ? `编辑${current.title}` : `新增${current.title}`}
+        className={styles.editDialog}
+        classNames={{ container: styles.dialogContainer, body: styles.dialogBody }}
+        title={editingId ? `编辑${resource.title}` : `新增${resource.title}`}
         confirmLoading={saving}
-        onCancel={() => setOpen(false)}
+        onCancel={() => { if (!submittingRef.current) setOpen(false) }}
         onOk={() => form.submit()}
+        cancelButtonProps={{ disabled: saving }}
+        closable={!saving}
+        mask={{ closable: !saving }}
+        keyboard={!saving}
         destroyOnHidden
       >
-        <Form form={form} layout="vertical" onFinish={onSubmit}>
-          {current.fields.filter((field) => field.form !== false).map((field) => {
+        <Form form={form} layout="vertical" onFinish={onSubmit} scrollToFirstError={{ focus: true }}>
+          {resource.fields.filter((field) => field.form !== false).map((field) => {
             const required = field.required && !(field.kind === 'password' && field.name === 'password' && editingId)
             return (
               <Form.Item
@@ -246,7 +338,7 @@ export default function CrudPage() {
           })}
         </Form>
       </Modal>
-    </>
+    </section>
   )
 }
 

@@ -1,0 +1,245 @@
+.page {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.searchBar {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  align-items: center;
+  padding: 8px 0 4px;
+  margin-bottom: 16px;
+}
+
+.combinedSearch {
+  display: flex;
+  min-width: 0;
+}
+
+.keywordLabel {
+  display: flex;
+  flex: 0 0 130px;
+  align-items: center;
+  padding: 0 11px;
+  border: 1px solid #d9d9d9;
+  border-right: 0;
+  font-size: 14px;
+}
+
+.keywordInput {
+  flex: 1;
+  min-width: 0;
+  border-radius: 0;
+}
+
+.searchActions {
+  display: flex;
+  grid-column: 3;
+  gap: 8px;
+  justify-self: end;
+}
+
+.createButton {
+  color: #1f2937;
+  background: #eef3ff;
+  border: 0;
+  box-shadow: none;
+}
+
+.createButton:hover,
+.createButton:focus-visible {
+  color: #111827 !important;
+  background: #dfe8ff !important;
+}
+
+.editButton,
+.deleteButton {
+  display: flex;
+  background: #f3f4f6;
+}
+
+.editButton:hover,
+.editButton:focus-visible {
+  color: #062cff !important;
+  background: #eef3ff !important;
+}
+
+.resultTable {
+  width: 100%;
+}
+
+.resultTable :global(.ant-table-content),
+.resultTable :global(.ant-table-body) {
+  scrollbar-width: none;
+}
+
+.resultTable :global(.ant-table-content)::-webkit-scrollbar,
+.resultTable :global(.ant-table-body)::-webkit-scrollbar {
+  display: none;
+}
+
+/* 使用独立滚动条，隐藏 Ant Design sticky 自带的第二条横向滚动条。 */
+.resultTable :global(.ant-table-sticky-scroll) {
+  display: none;
+}
+
+.resultTable :global(.ant-table-tbody > tr > td.ant-table-cell) {
+  padding: 7px 8px;
+}
+
+.resultTable :global(.ant-table-thead > tr > th.ant-table-cell) {
+  padding-inline: 8px;
+  color: #4b5563;
+  font-weight: 600;
+  background: #f7f8fc;
+}
+
+.resultTable :global(.ant-table-thead) .actionColumn {
+  right: 0 !important;
+  z-index: 12;
+  text-align: center;
+  background: #f7f8fc;
+}
+
+.resultTable :global(.ant-table-tbody) .actionColumn {
+  right: 0 !important;
+  z-index: 11;
+  text-align: center;
+  background: #fff;
+}
+
+.resultTable :global(.ant-table-tbody > tr:hover > td.ant-table-cell) {
+  background: #fafafa;
+}
+
+.resultTable :global(.ant-table-placeholder) {
+  height: var(--table-empty-height, 210px);
+}
+
+.resultTable :global(.ant-table-placeholder > td) {
+  vertical-align: middle;
+}
+
+.resultTable :global(.ant-empty-image) {
+  height: auto;
+  margin-bottom: 4px;
+}
+
+.emptyImage {
+  width: min(clamp(120px, 13vw, 180px), calc(100vw - 64px));
+  height: auto;
+  object-fit: contain;
+}
+
+.horizontalScroll {
+  position: relative;
+  z-index: 5;
+  flex: 0 0 14px;
+  height: 14px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: #f3f3f3;
+  scrollbar-color: #aeb4bf #f3f3f3;
+  scrollbar-width: thin;
+}
+
+.horizontalScroll[data-overflow='false'] {
+  overflow-x: hidden;
+}
+
+.horizontalScroll:focus-visible {
+  outline: 2px solid #062cff;
+  outline-offset: -2px;
+}
+
+.horizontalScrollContent {
+  height: 1px;
+}
+
+.horizontalScroll::-webkit-scrollbar {
+  height: 8px;
+}
+
+.horizontalScroll::-webkit-scrollbar-track {
+  background: #f3f3f3;
+}
+
+.horizontalScroll::-webkit-scrollbar-thumb {
+  background: #aeb4bf;
+  border-radius: 6px;
+}
+
+.loadingMask,
+.failureMask {
+  position: absolute;
+  z-index: 100;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  color: #3155ff;
+  font-size: 14px;
+  font-weight: 500;
+  background: rgb(255 255 255 / 72%);
+  backdrop-filter: blur(1px);
+}
+
+.failureMask {
+  color: #667085;
+}
+
+.editDialog {
+  top: min(100px, 12dvh);
+  padding-bottom: 0;
+}
+
+.dialogContainer {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - min(100px, 12dvh) - 24px);
+}
+
+.dialogBody {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 2px 8px 0 0;
+  margin-right: -8px;
+  scrollbar-width: thin;
+}
+
+@media (max-width: 1200px) {
+  .searchBar {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .searchActions {
+    grid-column: 2;
+  }
+}
+
+@media (max-width: 768px) {
+  .searchBar {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .searchActions {
+    grid-column: 1;
+    justify-self: stretch;
+  }
+
+  .searchActions :global(.ant-btn) {
+    flex: 1;
+  }
+
+  .keywordLabel {
+    flex-basis: 80px;
+  }
+}

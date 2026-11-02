@@ -88,7 +88,7 @@ export default function BasicLayout() {
   return (
     <Layout className={styles.layout}>
       <HeaderBar />
-      <Layout>
+      <Layout className={styles.body}>
         <Sider
           className={styles.sider}
           width={256}
