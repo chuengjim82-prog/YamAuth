@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using YamAuth.CodeGen.Schema;
 
 namespace YamAuth.CodeGen.Generators;
@@ -85,7 +85,21 @@ public class DtoGenerator
         sb.AppendLine();
         sb.AppendLine($"namespace YamAuth.Dtos.{t.Module};");
         sb.AppendLine();
-        sb.AppendLine($"public class {t.EntityName}QueryDto : PagedQuery {{ }}");
+        if (TreeResourceRules.IsTree(t))
+        {
+            sb.AppendLine($"public class {t.EntityName}QueryDto : PagedQuery");
+            sb.AppendLine("{");
+            sb.AppendLine("    /// <summary>是否返回全部匹配记录；缺省或 false 时保留原分页、Keyword 过滤和排序，Size 上限为 200。</summary>");
+            sb.AppendLine("    /// <remarks>");
+            sb.AppendLine("    /// true 时忽略 Page/Size，仍应用 Keyword 并排除已删除记录，按 SortIndex、Id 升序返回。");
+            sb.AppendLine("    /// 保留现有响应包装及 data.total/items；items 为平面数组，取全时 total 等于返回记录数。");
+            if (t.TableName == "tb_Auth_CrudMenu")
+                sb.AppendLine("    /// 菜单管理查询包含隐藏菜单，沿用原接口的授权与可见范围。");
+            sb.AppendLine("    /// </remarks>");
+            sb.AppendLine("    public bool All { get; set; }");
+            sb.AppendLine("}");
+        }
+        else sb.AppendLine($"public class {t.EntityName}QueryDto : PagedQuery {{ }}");
         return sb.ToString();
     }
 

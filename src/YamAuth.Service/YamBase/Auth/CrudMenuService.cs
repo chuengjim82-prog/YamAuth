@@ -24,7 +24,7 @@ public partial class CrudMenuService : ICrudMenuService
 
     public async Task<PagedResult<CrudMenuDto>> PageAsync(CrudMenuQueryDto q)
     {
-        var (total, items) = await _repo.PageAsync(q.Page, q.Size, q.Keyword);
+        var (total, items) = await _repo.PageAsync(q.Page, q.Size, q.Keyword, q.All);
         return new PagedResult<CrudMenuDto>
         {
             Total = total,
@@ -32,16 +32,5 @@ public partial class CrudMenuService : ICrudMenuService
         };
     }
 
-    public Task<long> CreateAsync(CrudMenuCreateDto dto)
-        => _repo.InsertAsync(dto.Adapt<CrudMenu>());
-
-    public async Task UpdateAsync(long id, CrudMenuUpdateDto dto)
-    {
-        var e = await _repo.GetAsync(id) ?? throw new BusinessException("记录不存在", 404);
-        dto.Adapt(e);
-        e.Id = id;
-        await _repo.UpdateAsync(e);
-    }
-
-    public Task DeleteAsync(long id) => _repo.SoftDeleteAsync(id);
+    // 层级校验和事务写入见 CrudMenuService.Extensions.cs。
 }

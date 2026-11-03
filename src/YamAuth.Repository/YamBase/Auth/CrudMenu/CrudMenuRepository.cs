@@ -17,13 +17,18 @@ public partial class CrudMenuRepository : RepositoryBase<CrudMenu>, ICrudMenuRep
     public Task<int> UpdateAsync(CrudMenu entity) => UpdateEntityAsync(entity);
     public Task<int> SoftDeleteAsync(long id) => SoftDeleteByIdAsync(id);
 
-    public async Task<(long total, List<CrudMenu> items)> PageAsync(int page, int size, string? keyword)
+    public async Task<(long total, List<CrudMenu> items)> PageAsync(int page, int size, string? keyword, bool all = false)
     {
         var select = Repo.Select.Where(x => !x.IsDeleted);
         var kw = KeywordQueryExtensions.Normalize(keyword);
         if (kw != null)
         {
             select = select.Where(x => (x.MenuCode != null && x.MenuCode.Contains(kw)) || (x.MenuName != null && x.MenuName.Contains(kw)) || (x.MenuType != null && x.MenuType.Contains(kw)) || (x.IconName != null && x.IconName.Contains(kw)) || (x.RoutePath != null && x.RoutePath.Contains(kw)) || (x.Redirect != null && x.Redirect.Contains(kw)) || (x.Remark != null && x.Remark.Contains(kw)) || (x.CreatorNic != null && x.CreatorNic.Contains(kw)) || (x.UpdaterNic != null && x.UpdaterNic.Contains(kw)) || (x.DeleterNic != null && x.DeleterNic.Contains(kw)));
+        }
+        if (all)
+        {
+            var allItems = await select.OrderBy(x => x.SortIndex).OrderBy(x => x.Id).ToListAsync();
+            return (allItems.Count, allItems);
         }
         var total = await select.CountAsync();
         var items = await select.Page(page, size).OrderByDescending(x => x.CreateTime).ToListAsync();

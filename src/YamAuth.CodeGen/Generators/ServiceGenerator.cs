@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using YamAuth.CodeGen.Schema;
 
 namespace YamAuth.CodeGen.Generators;
@@ -65,7 +65,7 @@ public class ServiceGenerator
         sb.AppendLine();
         sb.AppendLine($"    public async Task<PagedResult<{t.EntityName}Dto>> PageAsync({t.EntityName}QueryDto q)");
         sb.AppendLine("    {");
-        sb.AppendLine("        var (total, items) = await _repo.PageAsync(q.Page, q.Size, q.Keyword);");
+        sb.AppendLine($"        var (total, items) = await _repo.PageAsync(q.Page, q.Size, q.Keyword{(TreeResourceRules.IsTree(t) ? ", q.All" : "")});");
         sb.AppendLine($"        return new PagedResult<{t.EntityName}Dto>");
         sb.AppendLine("        {");
         sb.AppendLine("            Total = total,");
@@ -73,7 +73,11 @@ public class ServiceGenerator
         sb.AppendLine("        };");
         sb.AppendLine("    }");
         sb.AppendLine();
-        if (HasPasswordColumn(t))
+        if (TreeResourceRules.IsTree(t))
+        {
+            sb.AppendLine($"    // 层级校验和事务写入见 {t.EntityName}Service.Extensions.cs。");
+        }
+        else if (HasPasswordColumn(t))
         {
             sb.AppendLine($"    // CreateAsync / UpdateAsync 含密码哈希，见 {t.EntityName}Service.Extensions.cs");
             sb.AppendLine($"    public Task DeleteAsync(long id) => _repo.SoftDeleteAsync(id);");

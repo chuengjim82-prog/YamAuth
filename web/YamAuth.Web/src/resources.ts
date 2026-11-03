@@ -16,6 +16,14 @@ export interface ResourceDef {
   api: string
   title: string
   fields: FieldDef[]
+  /** 显式启用层级管理，不能仅凭存在 parentId 自动推断业务。 */
+  tree?: TreeDef
+}
+
+export interface TreeDef {
+  nameField: string
+  searchFields: string[]
+  appScoped?: boolean
 }
 
 function f(
@@ -101,6 +109,11 @@ export const resources: ResourceDef[] = [
     path: '/auth/crud-infos',
     api: '/v1/auth/crud-infos',
     title: '功能',
+    tree: {
+      nameField: 'crudName',
+      appScoped: true,
+      searchFields: ['crudName', 'crudCode', 'remark', 'creatorNic', 'updaterNic', 'deleterNic'],
+    },
     fields: [
       id,
       f('appsId', '应用', 'number', { nullable: true }),
@@ -129,6 +142,10 @@ export const resources: ResourceDef[] = [
     path: '/auth/crud-menus',
     api: '/v1/auth/crud-menus',
     title: '菜单',
+    tree: {
+      nameField: 'menuName',
+      searchFields: ['menuCode', 'menuName', 'menuType', 'iconName', 'routePath', 'redirect', 'remark', 'creatorNic', 'updaterNic', 'deleterNic'],
+    },
     fields: [
       id,
       f('crudId', '功能', 'number', { nullable: true }),

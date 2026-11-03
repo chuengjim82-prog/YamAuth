@@ -244,3 +244,26 @@
     flex-basis: 80px;
   }
 }
+
+.treeName {
+  display: inline-flex;
+  flex-direction: column;
+  max-width: calc(100% - 28px);
+  vertical-align: middle;
+}
+
+.treeNameText,
+.treeIssue {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.treeIssue {
+  color: #b54708;
+  font-size: 12px;
+}
+
+.resultTable .locatedRow > td {
+  background: #eef3ff !important;
+}
