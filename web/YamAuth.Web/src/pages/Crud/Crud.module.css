@@ -2,8 +2,9 @@
   display: flex;
   flex: 1;
   flex-direction: column;
-  min-height: 0;
-  min-width: 0;
+  min-height: min-content;
+  /* 极窄窗口中仍可横向访问内容，收起侧栏后恢复完整列表宽度。 */
+  min-width: 280px;
 }
 
 .searchBar {

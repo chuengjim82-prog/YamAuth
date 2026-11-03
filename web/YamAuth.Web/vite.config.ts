@@ -6,7 +6,24 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src'),
+      '@': path.resolve(import.meta.dirname, 'src'),
+    },
+  },
+  build: {
+    rolldownOptions: {
+      output: {
+        // 按大小拆分 Ant Design 依赖时，仍须保持模块初始化的先后顺序。
+        strictExecutionOrder: true,
+        codeSplitting: {
+          groups: [{
+            name: 'vendor',
+            test: /node_modules/,
+            entriesAware: true,
+            entriesAwareMergeThreshold: 20_000,
+            maxSize: 450_000,
+          }],
+        },
+      },
     },
   },
   server: {

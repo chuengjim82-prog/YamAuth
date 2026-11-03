@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { Button, DatePicker, Empty, Form, Input, InputNumber, Modal, Pagination, Popconfirm, Result, Space, Spin, Switch, Table, Tooltip, message } from 'antd'
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
@@ -72,7 +72,6 @@ function ResourceCrudPage({ resource, size, onSizeChange }: {
   size: number
   onSizeChange: (size: number) => void
 }) {
-  const [form] = Form.useForm()
   const [searchKeyword, setSearchKeyword] = useState('')
   const [query, setQuery] = useState({ page: 1, keyword: '' })
   const [total, setTotal] = useState(0)
@@ -82,13 +81,20 @@ function ResourceCrudPage({ resource, size, onSizeChange }: {
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
+  const [formSession, setFormSession] = useState(0)
+  const [formValues, setFormValues] = useState<Record<string, unknown>>({})
+  const [deleteId, setDeleteId] = useState<number | null>(null)
+  const queryButtonRef = useRef<HTMLButtonElement>(null)
   const mountedRef = useRef(false)
   const submittingRef = useRef(false)
+  const actionStateRef = useRef({ blocked: true, open: false, formSession: 0 })
+  const interactionBlocked = loading || loadFailed
   const api = useMemo(() => createCrudApi(resource.api), [resource.api])
   const tableFields = resource.fields.filter((field) => field.table !== false)
   const tableWidth = tableFields.reduce((width, field) => width + (field.name === 'id' ? 90 : 160), 112)
   const { viewportRef, scrollbarRef, scrollWidth, isOverflowing } = useTableViewport(tableWidth, items)
   const keywordId = `${resource.path}-keyword`
+  const editFormId = `${resource.path}-edit-form`
 
   useEffect(() => {
     mountedRef.current = true
@@ -96,6 +102,12 @@ function ResourceCrudPage({ resource, size, onSizeChange }: {
       mountedRef.current = false
     }
   }, [])
+
+  useLayoutEffect(() => {
+    // 弹出层退出动画和异步校验可能保留旧回调，操作前必须读取最新状态。
+    actionStateRef.current = { blocked: interactionBlocked, open, formSession }
+    if (interactionBlocked) setDeleteId(null)
+  }, [interactionBlocked, open, formSession])
 
   useEffect(() => {
     let cancelled = false
@@ -152,10 +164,16 @@ function ResourceCrudPage({ resource, size, onSizeChange }: {
               className={styles.editButton}
               icon={<EditOutlined />}
               aria-label="编辑"
+              disabled={interactionBlocked}
               onClick={() => openEdit(row)}
             />
           </Tooltip>
-          <Popconfirm title="确认删除？" onConfirm={() => remove(Number(row.id))}>
+          <Popconfirm
+            title="确认删除？"
+            open={!interactionBlocked && deleteId === Number(row.id)}
+            onOpenChange={(nextOpen) => setDeleteId(nextOpen && !actionStateRef.current.blocked ? Number(row.id) : null)}
+            onConfirm={() => remove(Number(row.id))}
+          >
             <Tooltip title="删除">
               <Button
                 type="text"
@@ -163,6 +181,7 @@ function ResourceCrudPage({ resource, size, onSizeChange }: {
                 className={styles.deleteButton}
                 icon={<DeleteOutlined />}
                 aria-label="删除"
+                disabled={interactionBlocked}
                 danger
               />
             </Tooltip>
@@ -173,21 +192,24 @@ function ResourceCrudPage({ resource, size, onSizeChange }: {
   ]
 
   function openCreate() {
+    if (actionStateRef.current.blocked) return
     setEditingId(null)
-    form.resetFields()
-    form.setFieldsValue(toFormValues(resource.fields))
+    setFormValues(toFormValues(resource.fields))
+    setFormSession((current) => current + 1)
     setOpen(true)
   }
 
   function openEdit(row: Row) {
+    if (actionStateRef.current.blocked) return
     setEditingId(Number(row.id))
-    form.resetFields()
-    form.setFieldsValue(toFormValues(resource.fields, row))
+    setFormValues(toFormValues(resource.fields, row))
+    setFormSession((current) => current + 1)
     setOpen(true)
   }
 
   async function onSubmit(values: Record<string, unknown>) {
-    if (submittingRef.current) return
+    const actionState = actionStateRef.current
+    if (submittingRef.current || actionState.blocked || !actionState.open || actionState.formSession !== formSession) return
     submittingRef.current = true
     setSaving(true)
     try {
@@ -207,10 +229,15 @@ function ResourceCrudPage({ resource, size, onSizeChange }: {
   }
 
   async function remove(id: number) {
-    await api.remove(id)
-    if (!mountedRef.current) return
-    message.success('删除成功')
-    setQuery((current) => ({ ...current }))
+    if (actionStateRef.current.blocked) return
+    try {
+      await api.remove(id)
+      if (!mountedRef.current) return
+      message.success('删除成功')
+      setQuery((current) => ({ ...current }))
+    } catch {
+      // 请求拦截器已提示失败，确认框可关闭后重新发起删除。
+    }
   }
 
   return (
@@ -218,6 +245,8 @@ function ResourceCrudPage({ resource, size, onSizeChange }: {
       <PageHeader title={resource.title} />
       <DataListLayout
         loading={loading}
+        interactionBlocked={interactionBlocked}
+        focusReturnRef={queryButtonRef}
         filters={
           <form
             className={styles.searchBar}
@@ -242,11 +271,11 @@ function ResourceCrudPage({ resource, size, onSizeChange }: {
                 setSearchKeyword('')
                 setQuery({ page: 1, keyword: '' })
               }}>重置</Button>
-              <Button type="primary" htmlType="submit">查询</Button>
+              <Button ref={queryButtonRef} type="primary" htmlType="submit">查询</Button>
             </div>
           </form>
         }
-        toolbar={<Button className={styles.createButton} icon={<PlusOutlined />} onClick={openCreate}>新增</Button>}
+        toolbar={<Button className={styles.createButton} icon={<PlusOutlined />} disabled={interactionBlocked} onClick={openCreate}>新增</Button>}
         tableViewportRef={viewportRef}
         table={
           <Table<Row>
@@ -287,15 +316,17 @@ function ResourceCrudPage({ resource, size, onSizeChange }: {
             total={total}
             showSizeChanger
             showQuickJumper
+            disabled={interactionBlocked}
             showTotal={(count, range) => `第 ${range[0]}–${range[1]} 条 / 总共 ${count} 条`}
             onChange={(nextPage, nextSize) => {
+              if (actionStateRef.current.blocked) return
               onSizeChange(nextSize)
               setQuery((current) => ({ ...current, page: nextSize !== size ? 1 : nextPage }))
             }}
           />
         ) : null}
         loadingOverlay={loading ? (
-          <div className={styles.loadingMask} role="status" aria-live="polite">
+          <div className={styles.loadingMask} role="status" aria-live="polite" tabIndex={-1}>
             <Spin size="large" />
             <span>正在加载中</span>
           </div>
@@ -314,31 +345,65 @@ function ResourceCrudPage({ resource, size, onSizeChange }: {
         title={editingId ? `编辑${resource.title}` : `新增${resource.title}`}
         confirmLoading={saving}
         onCancel={() => { if (!submittingRef.current) setOpen(false) }}
-        onOk={() => form.submit()}
+        okButtonProps={{ disabled: interactionBlocked, htmlType: 'submit', form: editFormId }}
         cancelButtonProps={{ disabled: saving }}
         closable={!saving}
         mask={{ closable: !saving }}
         keyboard={!saving}
         destroyOnHidden
       >
-        <Form form={form} layout="vertical" onFinish={onSubmit} scrollToFirstError={{ focus: true }}>
-          {resource.fields.filter((field) => field.form !== false).map((field) => {
-            const required = field.required && !(field.kind === 'password' && field.name === 'password' && editingId)
-            return (
-              <Form.Item
-                key={field.name}
-                name={field.name}
-                label={field.label}
-                valuePropName={field.kind === 'bool' ? 'checked' : 'value'}
-                rules={required ? [{ required: true, message: `请输入${field.label}` }] : undefined}
-              >
-                {renderControl(field, Boolean(editingId))}
-              </Form.Item>
-            )
-          })}
-        </Form>
+        <ResourceEditForm
+          key={formSession}
+          formId={editFormId}
+          resource={resource}
+          editingId={editingId}
+          initialValues={formValues}
+          onSubmit={onSubmit}
+        />
       </Modal>
     </section>
+  )
+}
+
+function ResourceEditForm({ formId, resource, editingId, initialValues, onSubmit }: {
+  formId: string
+  resource: ResourceDef
+  editingId: number | null
+  initialValues: Record<string, unknown>
+  onSubmit: (values: Record<string, unknown>) => Promise<void>
+}) {
+  const [form] = Form.useForm()
+
+  useEffect(() => {
+    // clearOnDestroy 也会在 StrictMode 试卸载时清空存储；连接后恢复本次初始值。
+    form.resetFields()
+  }, [form])
+
+  return (
+    <Form
+      id={formId}
+      form={form}
+      initialValues={initialValues}
+      clearOnDestroy
+      layout="vertical"
+      onFinish={onSubmit}
+      scrollToFirstError={{ focus: true }}
+    >
+      {resource.fields.filter((field) => field.form !== false).map((field) => {
+        const required = field.required && !(field.kind === 'password' && field.name === 'password' && editingId)
+        return (
+          <Form.Item
+            key={field.name}
+            name={field.name}
+            label={field.label}
+            valuePropName={field.kind === 'bool' ? 'checked' : 'value'}
+            rules={required ? [{ required: true, message: `请输入${field.label}` }] : undefined}
+          >
+            {renderControl(field, Boolean(editingId))}
+          </Form.Item>
+        )
+      })}
+    </Form>
   )
 }
 

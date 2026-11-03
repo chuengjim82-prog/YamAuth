@@ -1,8 +1,10 @@
+import { lazy } from 'react'
 import { Navigate, type RouteObject } from 'react-router-dom'
-import BasicLayout from '@/layouts/BasicLayout'
-import Login from '@/pages/Login'
-import Home from '@/pages/Home'
-import CrudPage from '@/pages/Crud'
+
+const BasicLayout = lazy(() => import('@/layouts/BasicLayout'))
+const Login = lazy(() => import('@/pages/Login'))
+const Home = lazy(() => import('@/pages/Home'))
+const CrudPage = lazy(() => import('@/pages/Crud'))
 
 export const routes: RouteObject[] = [
   { path: '/login', element: <Login /> },

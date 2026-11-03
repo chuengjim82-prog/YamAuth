@@ -116,7 +116,7 @@
   background: #f5f5f5;
   min-width: 0;
   min-height: 0;
-  overflow: hidden;
+  overflow: auto;
 }
 
 .breadcrumb {
