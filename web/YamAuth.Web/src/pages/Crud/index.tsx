@@ -7,6 +7,7 @@ import dayjs, { type Dayjs } from 'dayjs'
 import DataListLayout from '@/components/DataListLayout'
 import PageHeader from '@/components/PageHeader'
 import IconPicker from '@/components/IconPicker'
+import TenantSelect from '@/components/TenantSelect'
 import IconGlyph from '@/components/icons/IconGlyph'
 import { createCrudApi } from '@/api/crud'
 import { findResource, type FieldDef, type ResourceDef } from '@/resources'
@@ -546,6 +547,7 @@ function ResourceEditForm({ formId, resource, editingId, initialValues, treeMode
 }
 
 function renderControl(field: FieldDef, editing: boolean, active: boolean, saving: boolean) {
+  if (field.formControl === 'tenant') return <TenantSelect active={active} disabled={saving} />
   if (field.kind === 'icon') return <IconPicker active={active} disabled={saving} />
   if (field.kind === 'bool') return <Switch />
   if (field.kind === 'number') return <InputNumber style={{ width: '100%' }} controls={false} />

@@ -1,0 +1,15 @@
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 4px 8px;
+  color: var(--ant-color-text-secondary, #666);
+  font-size: 12px;
+}
+
+.feedback {
+  margin-top: 4px;
+  color: var(--ant-color-warning-text, #ad6800);
+  font-size: 12px;
+}

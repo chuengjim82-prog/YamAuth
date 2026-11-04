@@ -9,6 +9,8 @@ export interface FieldDef {
   table?: boolean
   form?: boolean
   nullable?: boolean
+  /** 仅对显式配置的字段使用关联选择器，保留原有数据类型。 */
+  formControl?: 'tenant'
 }
 
 export interface ResourceDef {
@@ -231,7 +233,7 @@ export const resources: ResourceDef[] = [
     title: '公司',
     fields: [
       id,
-      tenantId,
+      { ...tenantId, formControl: 'tenant' },
       f('nameCn', '中文名'),
       f('nameEn', '英文名'),
       f('registratioNo', '注册号'),
