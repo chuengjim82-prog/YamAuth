@@ -1,4 +1,4 @@
-export type FieldKind = 'string' | 'number' | 'bool' | 'date' | 'password' | 'textarea'
+export type FieldKind = 'string' | 'number' | 'bool' | 'date' | 'password' | 'textarea' | 'icon'
 
 export interface FieldDef {
   name: string
@@ -153,7 +153,7 @@ export const resources: ResourceDef[] = [
       f('menuCode', '菜单编码', 'string', { required: true }),
       f('menuName', '菜单名称'),
       f('menuType', '菜单类型', 'string', { required: true }),
-      f('iconName', '图标', 'string', { required: true }),
+      f('iconName', '图标', 'icon', { required: true }),
       f('routePath', '路由'),
       f('redirect', '重定向'),
       f('openType', '打开方式', 'bool', { nullable: true }),

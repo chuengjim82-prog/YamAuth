@@ -17,7 +17,8 @@ export default defineConfig({
         codeSplitting: {
           groups: [{
             name: 'vendor',
-            test: /node_modules/,
+            // 图标叶子模块保持独立的动态依赖边界，不能被合并阈值带入首页。
+            test: (id) => /node_modules/.test(id) && !/@ant-design\/(icons\/es\/icons|icons-svg\/es\/asn)\//.test(id),
             entriesAware: true,
             entriesAwareMergeThreshold: 20_000,
             maxSize: 450_000,

@@ -4,6 +4,7 @@ import { Breadcrumb, Button, Layout, Menu, Spin, Tooltip } from 'antd'
 import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 import { fetchMenuTree } from '@/api/auth'
+import { TOKEN_KEY } from '@/api/request'
 import { useApp } from '@/store/AppContext'
 import { menuIcon } from './menuIcons'
 import HeaderBar from './HeaderBar'
@@ -49,7 +50,7 @@ function findChain(nodes: MenuNode[], pathname: string, trail: MenuNode[] = []):
 }
 
 export default function BasicLayout() {
-  const { isLoggedIn, menus, setMenus } = useApp()
+  const { isLoggedIn, menus, setMenus, menuRefreshVersion, refreshMenus } = useApp()
   const navigate = useNavigate()
   const location = useLocation()
   const [collapsed, setCollapsed] = useState(false)
@@ -58,17 +59,19 @@ export default function BasicLayout() {
   useEffect(() => {
     if (!isLoggedIn) return
     let cancelled = false
+    const sessionToken = localStorage.getItem(TOKEN_KEY)
     fetchMenuTree()
       .then((tree) => {
-        if (!cancelled) setMenus(tree ?? [])
+        if (!cancelled && sessionToken === localStorage.getItem(TOKEN_KEY)) setMenus(tree ?? [])
       })
       .catch(() => {
-        if (!cancelled) setMenus([])
+        // 刷新失败保留当前导航；错误提示沿用请求拦截器，不能误报菜单保存失败。
       })
     return () => {
       cancelled = true
     }
-  }, [isLoggedIn, setMenus])
+    // refreshMenus 随会话变化，更换会话时也必须使旧请求失效。
+  }, [isLoggedIn, setMenus, menuRefreshVersion, refreshMenus])
 
   const chain = useMemo(() => findChain(menus, location.pathname), [menus, location.pathname])
 

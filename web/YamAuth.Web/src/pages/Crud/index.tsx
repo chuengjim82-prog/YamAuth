@@ -6,9 +6,12 @@ import type { TableColumnsType } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import DataListLayout from '@/components/DataListLayout'
 import PageHeader from '@/components/PageHeader'
+import IconPicker from '@/components/IconPicker'
+import IconGlyph from '@/components/icons/IconGlyph'
 import { createCrudApi } from '@/api/crud'
 import { findResource, type FieldDef, type ResourceDef } from '@/resources'
 import type { Row } from '@/types'
+import { useApp } from '@/store/AppContext'
 import { ancestors, buildTree, ISSUE_GROUP, parentOptions, treeView, type TreeModel } from './tree'
 import { useTableViewport } from './useTableViewport'
 import emptyImage from './assets/list-empty.png'
@@ -73,6 +76,7 @@ function ResourceCrudPage({ resource, size, onSizeChange }: {
   size: number
   onSizeChange: (size: number) => void
 }) {
+  const { refreshMenus } = useApp()
   const [searchKeyword, setSearchKeyword] = useState('')
   const [query, setQuery] = useState({ page: 1, keyword: '' })
   const [reloadVersion, setReloadVersion] = useState(0)
@@ -212,6 +216,7 @@ function ResourceCrudPage({ resource, size, onSizeChange }: {
             </span>
           )
           if (field.kind === 'bool') return value ? '是' : '否'
+          if (field.kind === 'icon') return <IconGlyph name={value == null ? undefined : String(value)} />
           if (field.kind === 'date' && value) return dayjs(String(value)).format('YYYY-MM-DD HH:mm')
           if (value === null || value === undefined || value === '') return ''
           return highlight(String(value))
@@ -295,6 +300,8 @@ function ResourceCrudPage({ resource, size, onSizeChange }: {
       let savedId = editingId
       if (editingId !== null) await api.update(editingId, payload)
       else savedId = await api.create(payload)
+      // 全局刷新与本页生命周期分开；刷新请求失败不改变已成功的保存结果。
+      if (resource.path === '/auth/crud-menus') refreshMenus()
       if (!mountedRef.current) return
       if (resource.tree) pendingLocate.current = savedId
       message.success('保存成功')
@@ -462,19 +469,23 @@ function ResourceCrudPage({ resource, size, onSizeChange }: {
           initialValues={formValues}
           treeModel={treeModel}
           onSubmit={onSubmit}
+          active={open}
+          saving={saving}
         />
       </Modal>
     </section>
   )
 }
 
-function ResourceEditForm({ formId, resource, editingId, initialValues, treeModel, onSubmit }: {
+function ResourceEditForm({ formId, resource, editingId, initialValues, treeModel, onSubmit, active, saving }: {
   formId: string
   resource: ResourceDef
   editingId: number | null
   initialValues: Record<string, unknown>
   treeModel?: TreeModel
   onSubmit: (values: Record<string, unknown>) => Promise<void>
+  active: boolean
+  saving: boolean
 }) {
   const [form] = Form.useForm()
   const watchedApp = Form.useWatch('appsId', { form, preserve: true })
@@ -520,13 +531,13 @@ function ResourceEditForm({ formId, resource, editingId, initialValues, treeMode
             rules={isParent ? [{ required: true, message: '请选择上级或顶级' }, {
               validator: (_rule, value) => value === 0 || candidates.some((option) => option.value === value)
                 ? Promise.resolve() : Promise.reject(new Error('上级不合法，请重新选择')),
-            }] : required ? [{ required: true, message: `请输入${field.label}` }] : undefined}
+            }] : required ? [{ required: true, message: `请${field.kind === 'icon' ? '选择' : '输入'}${field.label}` }] : undefined}
           >
             {isParent ? <TreeSelect
               style={{ width: '100%' }} showSearch allowClear treeDefaultExpandAll
               treeDataSimpleMode={{ id: 'id', pId: 'pId', rootPId: -1 }}
               treeData={options} placeholder="请选择上级或顶级" treeNodeFilterProp="title"
-            /> : lockedApp ? <InputNumber style={{ width: '100%' }} disabled /> : renderControl(field, Boolean(editingId))}
+            /> : lockedApp ? <InputNumber style={{ width: '100%' }} disabled /> : renderControl(field, Boolean(editingId), active, saving)}
           </Form.Item>
         )
       })}
@@ -534,7 +545,8 @@ function ResourceEditForm({ formId, resource, editingId, initialValues, treeMode
   )
 }
 
-function renderControl(field: FieldDef, editing: boolean) {
+function renderControl(field: FieldDef, editing: boolean, active: boolean, saving: boolean) {
+  if (field.kind === 'icon') return <IconPicker active={active} disabled={saving} />
   if (field.kind === 'bool') return <Switch />
   if (field.kind === 'number') return <InputNumber style={{ width: '100%' }} controls={false} />
   if (field.kind === 'date') return <DatePicker showTime style={{ width: '100%' }} />
