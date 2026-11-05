@@ -8,6 +8,7 @@ import DataListLayout from '@/components/DataListLayout'
 import PageHeader from '@/components/PageHeader'
 import IconPicker from '@/components/IconPicker'
 import TenantSelect from '@/components/TenantSelect'
+import DepartmentSelect from '@/components/DepartmentSelect'
 import IconGlyph from '@/components/icons/IconGlyph'
 import { createCrudApi } from '@/api/crud'
 import { findResource, type FieldDef, type ResourceDef } from '@/resources'
@@ -15,6 +16,7 @@ import type { Row } from '@/types'
 import { useApp } from '@/store/AppContext'
 import { ancestors, buildTree, ISSUE_GROUP, parentOptions, treeView, type TreeModel } from './tree'
 import { useTableViewport } from './useTableViewport'
+import { useDepartmentLabels } from './useDepartmentLabels'
 import emptyImage from './assets/list-empty.png'
 import styles from './Crud.module.css'
 
@@ -88,6 +90,7 @@ function ResourceCrudPage({ resource, size, onSizeChange }: {
   const pendingLocate = useRef<number | null>(null)
   const [total, setTotal] = useState(0)
   const [items, setItems] = useState<Row[]>([])
+  const departmentLabel = useDepartmentLabels(items, resource.path === '/unit/employees')
   const [loading, setLoading] = useState(true)
   const [loadFailed, setLoadFailed] = useState(false)
   const [open, setOpen] = useState(false)
@@ -219,6 +222,7 @@ function ResourceCrudPage({ resource, size, onSizeChange }: {
           if (field.kind === 'bool') return value ? '是' : '否'
           if (field.kind === 'icon') return <IconGlyph name={value == null ? undefined : String(value)} />
           if (field.kind === 'date' && value) return dayjs(String(value)).format('YYYY-MM-DD HH:mm')
+          if (field.formControl === 'department') return departmentLabel(value)
           if (value === null || value === undefined || value === '') return ''
           return highlight(String(value))
         },
@@ -548,6 +552,7 @@ function ResourceEditForm({ formId, resource, editingId, initialValues, treeMode
 
 function renderControl(field: FieldDef, editing: boolean, active: boolean, saving: boolean) {
   if (field.formControl === 'tenant') return <TenantSelect active={active} disabled={saving} />
+  if (field.formControl === 'department') return <DepartmentSelect active={active} disabled={saving} />
   if (field.kind === 'icon') return <IconPicker active={active} disabled={saving} />
   if (field.kind === 'bool') return <Switch />
   if (field.kind === 'number') return <InputNumber style={{ width: '100%' }} controls={false} />

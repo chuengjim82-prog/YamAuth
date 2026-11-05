@@ -10,7 +10,7 @@ export interface FieldDef {
   form?: boolean
   nullable?: boolean
   /** 仅对显式配置的字段使用关联选择器，保留原有数据类型。 */
-  formControl?: 'tenant'
+  formControl?: 'tenant' | 'department'
 }
 
 export interface ResourceDef {
@@ -276,7 +276,7 @@ export const resources: ResourceDef[] = [
     title: '员工',
     fields: [
       id,
-      f('departmentId', '部门', 'number', { nullable: true }),
+      f('departmentId', '部门', 'number', { nullable: true, formControl: 'department' }),
       f('userId', '用户', 'number', { nullable: true }),
       remark,
     ],
