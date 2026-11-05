@@ -1,6 +1,6 @@
 # YamAuth
 
-基于 [ForgeAbc 脚手架模板](https://github.com/your-org/forgeabc-scaffold) 创建：.NET 8 + Vue 3 管理端，含登录、菜单导航、CodeGen、Docker 与 CI（无权限体系）。
+基于 [ForgeAbc 脚手架模板](https://github.com/your-org/forgeabc-scaffold) 创建：.NET 8 + React 19 + TypeScript 管理端，含登录、菜单导航、CodeGen、Docker 与 CI（无权限体系）。
 
 > 由 `scripts/new-project.ps1` 于 2026-10-19 生成。设计文档见 `docs/`。
 
@@ -11,7 +11,7 @@
 | 层 | 技术 |
 |----|------|
 | API | ASP.NET Core 8、FreeSql、JWT、FluentValidation |
-| Web | Vue 3、Vite、Element Plus、Pinia |
+| Web | React 19、TypeScript 6、Vite 8、Ant Design 6、React Router 7、Axios；状态管理使用 React Context |
 | 工具 | `YamAuth.CodeGen` |
 
 ---
