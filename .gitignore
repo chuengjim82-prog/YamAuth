@@ -18,6 +18,7 @@ node_modules/
 dist/
 .npm/
 .pnpm-store/
+*.tsbuildinfo
 
 # Logs
 logs/
