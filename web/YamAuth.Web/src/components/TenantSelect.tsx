@@ -1,18 +1,5 @@
 import RemoteEntitySelect, { type EntitySelectProps } from './RemoteEntitySelect'
-
-interface Tenant {
-  id: number
-  tenantName?: string | null
-  tenantCode?: string | null
-  isActived: boolean
-}
-
-function tenantLabel(tenant: Tenant) {
-  const name = tenant.tenantName?.trim()
-  const code = tenant.tenantCode?.trim()
-  const label = name && code ? `${name}（${code}）` : name || code || `租户 #${tenant.id}`
-  return tenant.isActived ? label : `${label} · 已停用`
-}
+import { tenantLabel, type Tenant } from './tenant'
 
 export default function TenantSelect(props: EntitySelectProps) {
   return <RemoteEntitySelect<Tenant>

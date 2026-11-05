@@ -17,6 +17,7 @@ import { useApp } from '@/store/AppContext'
 import { ancestors, buildTree, ISSUE_GROUP, parentOptions, treeView, type TreeModel } from './tree'
 import { useTableViewport } from './useTableViewport'
 import { useDepartmentLabels } from './useDepartmentLabels'
+import { useTenantLabels } from './useTenantLabels'
 import emptyImage from './assets/list-empty.png'
 import styles from './Crud.module.css'
 
@@ -91,6 +92,7 @@ function ResourceCrudPage({ resource, size, onSizeChange }: {
   const [total, setTotal] = useState(0)
   const [items, setItems] = useState<Row[]>([])
   const departmentLabel = useDepartmentLabels(items, resource.path === '/unit/employees')
+  const tenantLabel = useTenantLabels(items, resource.fields.some((field) => field.formControl === 'tenant' && field.table !== false))
   const [loading, setLoading] = useState(true)
   const [loadFailed, setLoadFailed] = useState(false)
   const [open, setOpen] = useState(false)
@@ -223,6 +225,7 @@ function ResourceCrudPage({ resource, size, onSizeChange }: {
           if (field.kind === 'icon') return <IconGlyph name={value == null ? undefined : String(value)} />
           if (field.kind === 'date' && value) return dayjs(String(value)).format('YYYY-MM-DD HH:mm')
           if (field.formControl === 'department') return departmentLabel(value)
+          if (field.formControl === 'tenant') return tenantLabel(value)
           if (value === null || value === undefined || value === '') return ''
           return highlight(String(value))
         },
