@@ -171,7 +171,7 @@ export default function TenantSelect({ value, onChange, active = true, disabled 
           if (enabled.current) onChange?.(nextValue ?? null)
         }}
         onInputKeyDown={(event) => {
-          // 搜索框回车用于选择候选，不能冒泡提交整个公司表单。
+          // 搜索框回车用于选择候选，不能冒泡提交整个表单。
           if (event.key === 'Enter') event.preventDefault()
         }}
         onPopupScroll={(event) => {

@@ -251,7 +251,7 @@ export const resources: ResourceDef[] = [
     title: '项目',
     fields: [
       id,
-      tenantId,
+      { ...tenantId, formControl: 'tenant' },
       f('projCode', '项目编码'),
       f('projName', '项目名称'),
       remark,
@@ -263,7 +263,7 @@ export const resources: ResourceDef[] = [
     title: '部门',
     fields: [
       id,
-      tenantId,
+      { ...tenantId, formControl: 'tenant' },
       f('deptName', '部门名称'),
       f('empCount', '人数', 'number', { nullable: true }),
       f('directorId', '负责人', 'number', { nullable: true }),
