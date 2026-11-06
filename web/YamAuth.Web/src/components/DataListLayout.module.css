@@ -15,8 +15,8 @@
 .controlsPanel {
   flex: 0 0 auto;
   padding: 16px 16px 0;
-  background: #fff;
-  border: 1px solid #edf0f5;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border-soft);
 }
 
 .tablePanel {
@@ -25,8 +25,8 @@
   flex: 1 1 0;
   flex-direction: column;
   min-height: min-content;
-  background: #fff;
-  border: 1px solid #edf0f5;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border-soft);
 }
 
 .tableContents {
@@ -43,7 +43,7 @@
   align-items: center;
   min-height: 48px;
   padding: 8px 12px;
-  border-bottom: 1px solid #edf0f5;
+  border-bottom: 1px solid var(--app-border-soft);
 }
 
 .toolbarActions {
@@ -57,7 +57,7 @@
   min-height: 240px;
   overflow-x: clip;
   overflow-y: auto;
-  scrollbar-color: #b8b8b8 #f3f3f3;
+  scrollbar-color: var(--app-scroll-thumb) var(--app-scroll-track);
   scrollbar-width: thin;
 }
 
@@ -67,17 +67,17 @@
 }
 
 .tableViewport::-webkit-scrollbar-track {
-  background: #f3f3f3;
+  background: var(--app-scroll-track);
 }
 
 .tableViewport::-webkit-scrollbar-thumb {
-  background: #b8b8b8;
-  border: 1px solid #f3f3f3;
+  background: var(--app-scroll-thumb);
+  border: 1px solid var(--app-scroll-track);
   border-radius: 6px;
 }
 
 .tableViewport::-webkit-scrollbar-thumb:hover {
-  background: #969696;
+  background: var(--app-scroll-thumb-hover);
 }
 
 .tablePanel[data-loading='true'] :global(.ant-table-placeholder .ant-empty) {
@@ -91,7 +91,7 @@
   justify-content: flex-end;
   min-height: 48px;
   padding: 0 12px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--app-divider);
 }
 
 .paginationBar :global(.ant-pagination) {

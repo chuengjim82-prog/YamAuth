@@ -17,12 +17,13 @@ const AppContext = createContext<AppContextType | null>(null)
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserInfo | null>(() => {
-    const token = localStorage.getItem(TOKEN_KEY)
-    const account = localStorage.getItem(ACCOUNT_KEY)
-    if (!token || !account) return null
     try {
+      const token = localStorage.getItem(TOKEN_KEY)
+      const account = localStorage.getItem(ACCOUNT_KEY)
+      if (!token || !account) return null
       return JSON.parse(account) as UserInfo
     } catch {
+      // 浏览器禁用存储时仍展示登录页，使主题可以在当前页面正常切换。
       return null
     }
   })

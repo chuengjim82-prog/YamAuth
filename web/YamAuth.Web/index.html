@@ -3,6 +3,27 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      // 在应用与样式加载前确定底色；存储键和解析规则须与 src/store/theme.ts 保持一致。
+      ;(() => {
+        let mode = 'system'
+        try {
+          const saved = localStorage.getItem('yamauth-theme')
+          if (saved === 'light' || saved === 'dark') mode = saved
+        } catch {
+          // 读取失败由应用初始化统一记录，首屏仍按系统外观显示。
+        }
+        const resolved = mode === 'system'
+          ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+          : mode
+        document.documentElement.dataset.theme = resolved
+        document.documentElement.style.colorScheme = resolved
+      })()
+    </script>
+    <style>
+      html { background: #f5f5f5; }
+      html[data-theme='dark'] { background: #101114; }
+    </style>
     <link rel="icon" type="image/svg+xml" href="/src/assets/favicon.svg" />
     <title>YamAuth</title>
   </head>

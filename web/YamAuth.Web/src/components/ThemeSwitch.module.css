@@ -1,0 +1,23 @@
+.option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-width: 96px;
+}
+
+.onBrand {
+  color: var(--app-on-brand);
+}
+
+/* 覆盖组件库 text 按钮的交互颜色，品牌栏上的文字和图标始终保持白色。 */
+.onBrand:global(.ant-btn):not(:disabled):not(:global(.ant-btn-disabled)):hover,
+.onBrand:global(.ant-btn):not(:disabled):not(:global(.ant-btn-disabled)):active {
+  color: var(--app-on-brand);
+  background: var(--app-brand-control-hover);
+}
+
+.onBrand:focus-visible {
+  outline: 2px solid var(--app-on-brand);
+  outline-offset: 2px;
+}

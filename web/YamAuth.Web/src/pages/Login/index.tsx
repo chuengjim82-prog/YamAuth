@@ -5,6 +5,7 @@ import { LockOutlined, UserOutlined } from '@ant-design/icons'
 import type { InputRef } from 'antd'
 import { login } from '@/api/auth'
 import { useApp } from '@/store/AppContext'
+import ThemeSwitch from '@/components/ThemeSwitch'
 import styles from './Login.module.css'
 
 export default function Login() {
@@ -42,6 +43,9 @@ export default function Login() {
         <div className={styles.brandSlogan}>权限与组织管理</div>
       </div>
       <div className={styles.panel}>
+        <div className={styles.themeControl}>
+          <ThemeSwitch />
+        </div>
         <div className={styles.formWrap}>
           <h1 className={styles.formTitle}>用户登录</h1>
           <Form layout="vertical" onFinish={onFinish} size="large" initialValues={{ userName: 'admin', password: 'Admin@123' }}>

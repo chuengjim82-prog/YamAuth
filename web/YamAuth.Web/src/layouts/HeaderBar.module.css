@@ -1,7 +1,7 @@
 .header {
   height: 64px;
   flex: 0 0 64px;
-  background: #062cff;
+  background: var(--app-brand);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -12,13 +12,46 @@
 }
 
 .brand {
-  color: #fff;
+  color: var(--app-on-brand);
   font-size: 18px;
   font-weight: 700;
   cursor: pointer;
 }
 
 .userMenu {
-  color: #fff;
+  color: var(--app-on-brand);
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.userName {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  min-width: 0;
+  margin-left: 16px;
+}
+
+.actions > button {
+  flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding-inline: 12px;
+  }
+
+  .actions {
+    gap: 8px;
+    margin-left: 8px;
+  }
 }

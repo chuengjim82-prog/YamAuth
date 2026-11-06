@@ -5,12 +5,12 @@
 
 .brand {
   width: 35%;
-  background: linear-gradient(135deg, #062cff 0%, #4060ff 100%);
+  background: linear-gradient(135deg, var(--app-brand) 0%, var(--app-brand-gradient-end) 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--app-on-brand);
   padding: 24px;
   text-align: center;
 }
@@ -27,12 +27,19 @@
 }
 
 .panel {
+  position: relative;
   width: 65%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #fff;
-  padding: 32px 24px;
+  background: var(--app-surface);
+  padding: 80px 24px 32px;
+}
+
+.themeControl {
+  position: absolute;
+  top: 24px;
+  right: 24px;
 }
 
 .formWrap {
@@ -44,7 +51,7 @@
   font-size: 24px;
   font-weight: 600;
   margin-bottom: 32px;
-  color: #333;
+  color: var(--app-heading);
 }
 
 @media (max-width: 768px) {

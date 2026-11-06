@@ -1,3 +1,71 @@
+:root {
+  --app-bg: #f5f5f5;
+  --app-surface: #fff;
+  --app-text: #1f2937;
+  --app-text-strong: #111827;
+  --app-heading: #333;
+  --app-text-secondary: #667085;
+  --app-text-placeholder: #bfbfbf;
+  --app-border: #d9d9d9;
+  --app-border-soft: #edf0f5;
+  --app-divider: #f0f0f0;
+  --app-sidebar-border: #e5e7eb;
+  --app-primary: #062cff;
+  --app-accent: #3155ff;
+  --app-accent-bg: #eef3ff;
+  --app-accent-hover: #dfe8ff;
+  --app-nav-hover: #f5f7ff;
+  --app-nav-selected: #eaf0ff;
+  --app-button-bg: #f3f4f6;
+  --app-table-heading: #4b5563;
+  --app-table-header: #f7f8fc;
+  --app-row-hover: #fafafa;
+  --app-loading-mask: rgb(255 255 255 / 72%);
+  --app-warning: #b54708;
+  --app-brand: #062cff;
+  --app-brand-gradient-end: #4060ff;
+  --app-on-brand: #fff;
+  --app-brand-control-hover: rgb(255 255 255 / 16%);
+  --app-scroll-track: #f3f3f3;
+  --app-scroll-thumb: #b8b8b8;
+  --app-scroll-thumb-hover: #969696;
+  --app-scroll-horizontal-thumb: #aeb4bf;
+  --app-scroll-menu-thumb: #c8cbd1;
+}
+
+:root[data-theme='dark'] {
+  --app-bg: #101114;
+  --app-surface: #181a1f;
+  --app-text: #e5e7eb;
+  --app-text-strong: #f3f4f6;
+  --app-heading: #f3f4f6;
+  --app-text-secondary: #a6adbb;
+  --app-text-placeholder: #8a92a2;
+  --app-border: #424650;
+  --app-border-soft: #30343d;
+  --app-divider: #30343d;
+  --app-sidebar-border: #30343d;
+  --app-primary: #8aa5ff;
+  --app-accent: #8aa5ff;
+  --app-accent-bg: #202d50;
+  --app-accent-hover: #2a3c66;
+  --app-nav-hover: #20283b;
+  --app-nav-selected: #243456;
+  --app-button-bg: #282c35;
+  --app-table-heading: #c3c9d4;
+  --app-table-header: #20232b;
+  --app-row-hover: #242832;
+  --app-loading-mask: rgb(24 26 31 / 82%);
+  --app-warning: #f0b35e;
+  --app-brand: #111e43;
+  --app-brand-gradient-end: #233c78;
+  --app-scroll-track: #20232b;
+  --app-scroll-thumb: #505867;
+  --app-scroll-thumb-hover: #6b7587;
+  --app-scroll-horizontal-thumb: #505867;
+  --app-scroll-menu-thumb: #505867;
+}
+
 *,
 *::before,
 *::after {
@@ -8,6 +76,8 @@
 
 html, body {
   height: 100%;
+  color: var(--app-text);
+  background: var(--app-bg);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
 }

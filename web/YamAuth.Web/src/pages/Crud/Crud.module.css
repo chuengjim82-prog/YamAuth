@@ -26,7 +26,7 @@
   flex: 0 0 130px;
   align-items: center;
   padding: 0 11px;
-  border: 1px solid #d9d9d9;
+  border: 1px solid var(--app-border);
   border-right: 0;
   font-size: 14px;
 }
@@ -45,28 +45,28 @@
 }
 
 .createButton {
-  color: #1f2937;
-  background: #eef3ff;
+  color: var(--app-text);
+  background: var(--app-accent-bg);
   border: 0;
   box-shadow: none;
 }
 
 .createButton:hover,
 .createButton:focus-visible {
-  color: #111827 !important;
-  background: #dfe8ff !important;
+  color: var(--app-text-strong) !important;
+  background: var(--app-accent-hover) !important;
 }
 
 .editButton,
 .deleteButton {
   display: flex;
-  background: #f3f4f6;
+  background: var(--app-button-bg);
 }
 
 .editButton:hover,
 .editButton:focus-visible {
-  color: #062cff !important;
-  background: #eef3ff !important;
+  color: var(--app-primary) !important;
+  background: var(--app-accent-bg) !important;
 }
 
 .resultTable {
@@ -94,27 +94,27 @@
 
 .resultTable :global(.ant-table-thead > tr > th.ant-table-cell) {
   padding-inline: 8px;
-  color: #4b5563;
+  color: var(--app-table-heading);
   font-weight: 600;
-  background: #f7f8fc;
+  background: var(--app-table-header);
 }
 
 .resultTable :global(.ant-table-thead) .actionColumn {
   right: 0 !important;
   z-index: 12;
   text-align: center;
-  background: #f7f8fc;
+  background: var(--app-table-header);
 }
 
 .resultTable :global(.ant-table-tbody) .actionColumn {
   right: 0 !important;
   z-index: 11;
   text-align: center;
-  background: #fff;
+  background: var(--app-surface);
 }
 
 .resultTable :global(.ant-table-tbody > tr:hover > td.ant-table-cell) {
-  background: #fafafa;
+  background: var(--app-row-hover);
 }
 
 .resultTable :global(.ant-table-placeholder) {
@@ -143,8 +143,8 @@
   height: 14px;
   overflow-x: auto;
   overflow-y: hidden;
-  background: #f3f3f3;
-  scrollbar-color: #aeb4bf #f3f3f3;
+  background: var(--app-scroll-track);
+  scrollbar-color: var(--app-scroll-horizontal-thumb) var(--app-scroll-track);
   scrollbar-width: thin;
 }
 
@@ -153,7 +153,7 @@
 }
 
 .horizontalScroll:focus-visible {
-  outline: 2px solid #062cff;
+  outline: 2px solid var(--app-primary);
   outline-offset: -2px;
 }
 
@@ -166,11 +166,11 @@
 }
 
 .horizontalScroll::-webkit-scrollbar-track {
-  background: #f3f3f3;
+  background: var(--app-scroll-track);
 }
 
 .horizontalScroll::-webkit-scrollbar-thumb {
-  background: #aeb4bf;
+  background: var(--app-scroll-horizontal-thumb);
   border-radius: 6px;
 }
 
@@ -184,15 +184,15 @@
   gap: 12px;
   align-items: center;
   justify-content: center;
-  color: #3155ff;
+  color: var(--app-accent);
   font-size: 14px;
   font-weight: 500;
-  background: rgb(255 255 255 / 72%);
+  background: var(--app-loading-mask);
   backdrop-filter: blur(1px);
 }
 
 .failureMask {
-  color: #667085;
+  color: var(--app-text-secondary);
 }
 
 .editDialog {
@@ -260,10 +260,10 @@
 }
 
 .treeIssue {
-  color: #b54708;
+  color: var(--app-warning);
   font-size: 12px;
 }
 
 .resultTable .locatedRow > td {
-  background: #eef3ff !important;
+  background: var(--app-accent-bg) !important;
 }
