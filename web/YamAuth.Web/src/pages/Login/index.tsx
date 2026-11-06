@@ -48,7 +48,15 @@ export default function Login() {
         </div>
         <div className={styles.formWrap}>
           <h1 className={styles.formTitle}>用户登录</h1>
-          <Form layout="vertical" onFinish={onFinish} size="large" initialValues={{ userName: 'admin', password: 'Admin@123' }}>
+          <Form<{ userName: string; password: string }>
+            layout="vertical"
+            onFinish={(values) => {
+              // onFinish 内部处理请求失败并释放提交锁，Form 的回调不接收 Promise。
+              void onFinish(values)
+            }}
+            size="large"
+            initialValues={{ userName: 'admin', password: 'Admin@123' }}
+          >
             <Form.Item name="userName" rules={[{ required: true, message: '请输入用户名' }]}>
               <Input
                 prefix={<UserOutlined />}

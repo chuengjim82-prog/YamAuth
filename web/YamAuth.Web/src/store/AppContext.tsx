@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode
+} from 'react'
 import { ACCOUNT_KEY, SESSION_CLEARED, TOKEN_KEY } from '@/api/request'
 import type { MenuNode, UserInfo } from '@/types'
 
@@ -38,15 +46,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const refreshMenus = useCallback(() => {
     // 保存回调可能迟于退出或重新登录；旧会话只能刷新自己的导航。
-    if (user && sessionRef.current === sessionVersion) setMenuRefreshVersion((current) => current + 1)
+    if (user && sessionRef.current === sessionVersion)
+      setMenuRefreshVersion((current) => current + 1)
   }, [user, sessionVersion])
 
-  const login = useCallback((userInfo: UserInfo, token: string) => {
-    advanceSession()
-    localStorage.setItem(TOKEN_KEY, token)
-    localStorage.setItem(ACCOUNT_KEY, JSON.stringify(userInfo))
-    setUser(userInfo)
-  }, [advanceSession])
+  const login = useCallback(
+    (userInfo: UserInfo, token: string) => {
+      advanceSession()
+      localStorage.setItem(TOKEN_KEY, token)
+      localStorage.setItem(ACCOUNT_KEY, JSON.stringify(userInfo))
+      setUser(userInfo)
+    },
+    [advanceSession]
+  )
 
   const logout = useCallback(() => {
     advanceSession()
@@ -67,7 +79,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [advanceSession])
 
   return (
-    <AppContext.Provider value={{ user, isLoggedIn: !!user, menus, setMenus, menuRefreshVersion, refreshMenus, login, logout }}>
+    <AppContext.Provider
+      value={{
+        user,
+        isLoggedIn: !!user,
+        menus,
+        setMenus,
+        menuRefreshVersion,
+        refreshMenus,
+        login,
+        logout
+      }}
+    >
       {children}
     </AppContext.Provider>
   )

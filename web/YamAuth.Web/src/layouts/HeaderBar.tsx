@@ -17,7 +17,7 @@ export default function HeaderBar() {
       onOk: () => {
         logout()
         navigate('/login', { replace: true })
-      },
+      }
     })
   }
 
@@ -26,8 +26,8 @@ export default function HeaderBar() {
       key: 'logout',
       icon: <LogoutOutlined />,
       label: '退出登录',
-      onClick: handleLogout,
-    },
+      onClick: handleLogout
+    }
   ]
 
   return (

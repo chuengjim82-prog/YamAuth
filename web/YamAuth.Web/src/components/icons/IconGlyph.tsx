@@ -5,38 +5,102 @@ import QuestionCircleOutlined from '@ant-design/icons/es/icons/QuestionCircleOut
 import WarningOutlined from '@ant-design/icons/es/icons/WarningOutlined'
 import { cachedIcon, loadIcon, resolveIconName, type IconComponent } from './catalog'
 
-export default function IconGlyph({ name, className }: { name?: string, className?: string }) {
+export default function IconGlyph({ name, className }: { name?: string; className?: string }) {
   const canonical = resolveIconName(name)
+  if (!name) return null
+  return (
+    <ResolvedIconGlyph
+      key={canonical ?? name}
+      name={name}
+      canonical={canonical}
+      className={className}
+    />
+  )
+}
+
+function ResolvedIconGlyph({
+  name,
+  canonical,
+  className
+}: {
+  name: string
+  canonical?: string
+  className?: string
+}) {
   const [attempt, setAttempt] = useState(0)
-  const [result, setResult] = useState<{ name: string, component?: IconComponent, failed?: boolean }>()
+  // 图标身份变化由 key 重建状态，已加载的组件仅在初始化或异步完成时读取。
+  const [result, setResult] = useState<{ component?: IconComponent; failed?: boolean }>(() => ({
+    component: canonical ? cachedIcon(canonical) : undefined
+  }))
+  const Component = result.component
 
   useEffect(() => {
-    if (!canonical || cachedIcon(canonical)) return
+    if (!canonical || Component) return
     let cancelled = false
-    setResult({ name: canonical })
     loadIcon(canonical).then(
-      (component) => { if (!cancelled) setResult({ name: canonical, component }) },
-      () => { if (!cancelled) setResult({ name: canonical, failed: true }) },
+      (component) => {
+        if (!cancelled) setResult({ component })
+      },
+      () => {
+        if (!cancelled) setResult({ failed: true })
+      }
     )
-    return () => { cancelled = true }
-  }, [canonical, attempt])
+    return () => {
+      cancelled = true
+    }
+  }, [canonical, attempt, Component])
 
-  if (!name) return null
-  const Component = canonical ? cachedIcon(canonical) ?? (result?.name === canonical ? result.component : undefined) : undefined
-  const failed = Boolean(canonical && !Component && result?.name === canonical && result.failed)
-  const label = !canonical ? `未识别图标：${name}` : failed ? `图标加载失败：${name}` : Component ? name : `正在加载图标：${name}`
+  const failed = Boolean(canonical && !Component && result.failed)
+  const label = !canonical
+    ? `未识别图标：${name}`
+    : failed
+      ? `图标加载失败：${name}`
+      : Component
+        ? name
+        : `正在加载图标：${name}`
   return (
-    <Tooltip title={failed ? <span>
-      图标加载失败
-      <Button size="small" type="link" onClick={(event) => {
-        event.stopPropagation()
-        setResult(undefined)
-        setAttempt((current) => current + 1)
-      }}>重试</Button>
-    </span> : label} trigger={['hover', 'focus']}>
-      <span className={className} role="img" aria-label={label} tabIndex={failed ? 0 : undefined}
-        data-icon-name={canonical ?? name} data-icon-state={!canonical ? 'unknown' : failed ? 'failed' : Component ? 'ready' : 'loading'}>
-        {!canonical ? <QuestionCircleOutlined aria-hidden /> : failed ? <WarningOutlined aria-hidden /> : Component ? <Component aria-hidden /> : <LoadingOutlined spin aria-hidden />}
+    <Tooltip
+      title={
+        failed ? (
+          <span>
+            图标加载失败
+            <Button
+              size="small"
+              type="link"
+              onClick={(event) => {
+                event.stopPropagation()
+                setResult({})
+                setAttempt((current) => current + 1)
+              }}
+            >
+              重试
+            </Button>
+          </span>
+        ) : (
+          label
+        )
+      }
+      trigger={['hover', 'focus']}
+    >
+      <span
+        className={className}
+        role="img"
+        aria-label={label}
+        tabIndex={failed ? 0 : undefined}
+        data-icon-name={canonical ?? name}
+        data-icon-state={
+          !canonical ? 'unknown' : failed ? 'failed' : Component ? 'ready' : 'loading'
+        }
+      >
+        {!canonical ? (
+          <QuestionCircleOutlined aria-hidden />
+        ) : failed ? (
+          <WarningOutlined aria-hidden />
+        ) : Component ? (
+          <Component aria-hidden />
+        ) : (
+          <LoadingOutlined spin aria-hidden />
+        )}
       </span>
     </Tooltip>
   )

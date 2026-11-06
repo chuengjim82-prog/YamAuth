@@ -34,7 +34,10 @@ export function useTableViewport(tableWidth: number, items: Row[]) {
       // 纵向滚动条会占用表格宽度，两处最大 scrollLeft 必须保持相同。
       setScrollWidth(scrollbar!.clientWidth + overflow)
       setIsOverflowing(overflow > 1)
-      viewport!.style.setProperty('--table-empty-height', `${Math.max(0, viewport!.clientHeight - (header?.offsetHeight ?? 0) - 1)}px`)
+      viewport!.style.setProperty(
+        '--table-empty-height',
+        `${Math.max(0, viewport!.clientHeight - (header?.offsetHeight ?? 0) - 1)}px`
+      )
       syncFromTable()
     }
 

@@ -14,7 +14,7 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <Navigate to="/home" replace /> },
       { path: 'home', element: <Home /> },
-      { path: '*', element: <CrudPage /> },
-    ],
-  },
+      { path: '*', element: <CrudPage /> }
+    ]
+  }
 ]

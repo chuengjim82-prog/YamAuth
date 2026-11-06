@@ -32,7 +32,7 @@ function f(
   name: string,
   label: string,
   kind: FieldKind = 'string',
-  extra: Partial<FieldDef> = {},
+  extra: Partial<FieldDef> = {}
 ): FieldDef {
   return {
     name,
@@ -40,7 +40,7 @@ function f(
     kind,
     table: kind !== 'password',
     form: name !== 'id',
-    ...extra,
+    ...extra
   }
 }
 
@@ -64,8 +64,8 @@ export const resources: ResourceDef[] = [
       f('email', '邮箱', 'string', { required: true }),
       f('isAdmin', '管理员', 'bool'),
       f('isActived', '启用', 'bool'),
-      remark,
-    ],
+      remark
+    ]
   },
   {
     path: '/auth/tenants',
@@ -76,8 +76,8 @@ export const resources: ResourceDef[] = [
       f('tenantCode', '租户编码'),
       f('tenantName', '租户名称'),
       f('isActived', '启用', 'bool'),
-      remark,
-    ],
+      remark
+    ]
   },
   {
     path: '/auth/apps-infos',
@@ -91,8 +91,8 @@ export const resources: ResourceDef[] = [
       f('appsName', '应用名称'),
       f('appKey', 'AppKey', 'string', { required: true }),
       f('appSecret', '密钥', 'password', { required: true, table: false }),
-      remark,
-    ],
+      remark
+    ]
   },
   {
     path: '/auth/apps-users',
@@ -104,8 +104,8 @@ export const resources: ResourceDef[] = [
       f('appsId', '应用', 'number', { nullable: true }),
       f('userId', '用户', 'number', { nullable: true }),
       f('isAdmin', '管理员', 'bool'),
-      remark,
-    ],
+      remark
+    ]
   },
   {
     path: '/auth/crud-infos',
@@ -114,7 +114,7 @@ export const resources: ResourceDef[] = [
     tree: {
       nameField: 'crudName',
       appScoped: true,
-      searchFields: ['crudName', 'crudCode', 'remark', 'creatorNic', 'updaterNic', 'deleterNic'],
+      searchFields: ['crudName', 'crudCode', 'remark', 'creatorNic', 'updaterNic', 'deleterNic']
     },
     fields: [
       id,
@@ -124,8 +124,8 @@ export const resources: ResourceDef[] = [
       f('crudCode', '功能编码', 'string', { required: true }),
       f('crudType', '功能类型', 'number'),
       f('sortIndex', '排序', 'number'),
-      remark,
-    ],
+      remark
+    ]
   },
   {
     path: '/auth/crud-items',
@@ -137,8 +137,8 @@ export const resources: ResourceDef[] = [
       f('parentId', '上级', 'number'),
       f('method', '方法', 'string', { required: true }),
       f('apiPath', '接口路径'),
-      remark,
-    ],
+      remark
+    ]
   },
   {
     path: '/auth/crud-menus',
@@ -146,7 +146,18 @@ export const resources: ResourceDef[] = [
     title: '菜单',
     tree: {
       nameField: 'menuName',
-      searchFields: ['menuCode', 'menuName', 'menuType', 'iconName', 'routePath', 'redirect', 'remark', 'creatorNic', 'updaterNic', 'deleterNic'],
+      searchFields: [
+        'menuCode',
+        'menuName',
+        'menuType',
+        'iconName',
+        'routePath',
+        'redirect',
+        'remark',
+        'creatorNic',
+        'updaterNic',
+        'deleterNic'
+      ]
     },
     fields: [
       id,
@@ -162,8 +173,8 @@ export const resources: ResourceDef[] = [
       f('sortIndex', '排序', 'number'),
       f('isHided', '隐藏', 'bool'),
       f('allowAny', '匿名访问', 'bool'),
-      remark,
-    ],
+      remark
+    ]
   },
   {
     path: '/auth/crud-roles',
@@ -178,8 +189,8 @@ export const resources: ResourceDef[] = [
       f('roleName', '角色名称', 'string', { required: true }),
       f('sortIndex', '排序', 'number', { nullable: true }),
       f('isSystem', '系统角色', 'bool'),
-      remark,
-    ],
+      remark
+    ]
   },
   {
     path: '/auth/crud-role-cruds',
@@ -188,8 +199,8 @@ export const resources: ResourceDef[] = [
     fields: [
       id,
       f('crudRoleId', '功能角色', 'number', { required: true }),
-      f('crudInfoId', '功能', 'number', { required: true }),
-    ],
+      f('crudInfoId', '功能', 'number', { required: true })
+    ]
   },
   {
     path: '/auth/crud-role-users',
@@ -198,8 +209,8 @@ export const resources: ResourceDef[] = [
     fields: [
       id,
       f('roleId', '角色', 'number', { required: true }),
-      f('userId', '用户', 'number', { required: true }),
-    ],
+      f('userId', '用户', 'number', { required: true })
+    ]
   },
   {
     path: '/auth/data-roles',
@@ -214,8 +225,8 @@ export const resources: ResourceDef[] = [
       f('roleName', '角色名称', 'string', { required: true }),
       f('sortIndex', '排序', 'number', { nullable: true }),
       f('isSystem', '系统角色', 'bool'),
-      remark,
-    ],
+      remark
+    ]
   },
   {
     path: '/auth/data-role-users',
@@ -224,8 +235,8 @@ export const resources: ResourceDef[] = [
     fields: [
       id,
       f('roleId', '角色', 'number', { required: true }),
-      f('userId', '用户', 'number', { required: true }),
-    ],
+      f('userId', '用户', 'number', { required: true })
+    ]
   },
   {
     path: '/bzss/companies',
@@ -242,8 +253,8 @@ export const resources: ResourceDef[] = [
       f('regDate', '注册日期', 'date'),
       f('classify', '分类', 'number', { nullable: true }),
       f('currency', '币种'),
-      remark,
-    ],
+      remark
+    ]
   },
   {
     path: '/bzss/projects',
@@ -254,8 +265,8 @@ export const resources: ResourceDef[] = [
       { ...tenantId, formControl: 'tenant' },
       f('projCode', '项目编码'),
       f('projName', '项目名称'),
-      remark,
-    ],
+      remark
+    ]
   },
   {
     path: '/unit/departments',
@@ -267,8 +278,8 @@ export const resources: ResourceDef[] = [
       f('deptName', '部门名称'),
       f('empCount', '人数', 'number', { nullable: true }),
       f('directorId', '负责人', 'number', { nullable: true }),
-      remark,
-    ],
+      remark
+    ]
   },
   {
     path: '/unit/employees',
@@ -278,9 +289,9 @@ export const resources: ResourceDef[] = [
       id,
       f('departmentId', '部门', 'number', { nullable: true, formControl: 'department' }),
       f('userId', '用户', 'number', { nullable: true }),
-      remark,
-    ],
-  },
+      remark
+    ]
+  }
 ]
 
 export function findResource(pathname: string) {

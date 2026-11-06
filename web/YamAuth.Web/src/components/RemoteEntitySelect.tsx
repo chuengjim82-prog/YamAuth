@@ -1,10 +1,13 @@
-import { useEffect, useLayoutEffect, useRef, useState, type Ref } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type Ref } from 'react'
 import { Button, Select, Spin, type GetRef, type SelectProps } from 'antd'
 import { apiGet } from '@/api/request'
 import type { PagedResult } from '@/types'
 import styles from './RemoteEntitySelect.module.css'
 
-export type EntitySelectProps = Pick<SelectProps<number | null>, 'id' | 'onBlur' | 'onFocus' | 'aria-describedby' | 'aria-invalid' | 'aria-required'> & {
+export type EntitySelectProps = Pick<
+  SelectProps<number | null>,
+  'id' | 'onBlur' | 'onFocus' | 'aria-describedby' | 'aria-invalid' | 'aria-required'
+> & {
   value?: number | null
   onChange?: (value: number | null) => void
   active?: boolean
@@ -19,28 +22,82 @@ type RemoteEntitySelectProps<T> = EntitySelectProps & {
   getLabel: (item: T) => string
 }
 
-type Selection<T> = { id: number; item?: T; status: 'loading' | 'ready' | 'missing' | 'error' }
+type Query = { keyword: string; page: number; retry: number }
+type PageRequest = { active: boolean; apiPath: string; query: Query }
+type PageResult<T> = {
+  request: PageRequest
+  items: T[]
+  total: number
+  loadedPage: number
+  failed: boolean
+}
+type Selection<T> = { request: object; item?: T; status: 'ready' | 'missing' | 'error' }
+type EntityCache<T> = { apiPath: string; items: Map<number, T> }
+
+function rememberItems<T extends { id: number }>(
+  cache: EntityCache<T>,
+  apiPath: string,
+  rows: T[]
+): EntityCache<T> {
+  const items = new Map(cache.apiPath === apiPath ? cache.items : undefined)
+  for (const item of rows) items.set(item.id, item)
+  return { apiPath, items }
+}
+
+function previousPage<T>(result: PageResult<T> | undefined, request: PageRequest) {
+  return request.query.page > 1 &&
+    result?.request.apiPath === request.apiPath &&
+    result.request.query.keyword === request.query.keyword
+    ? result
+    : undefined
+}
 
 const PAGE_SIZE = 20
 
 // 租户与部门共用分页、搜索和失效绑定处理，各自提供接口及展示文案。
 export default function RemoteEntitySelect<T extends { id: number }>({
-  apiPath, entityName, placeholder, getLabel, value, onChange, active = true, disabled = false, ref, ...props
+  apiPath,
+  entityName,
+  placeholder,
+  getLabel,
+  value,
+  onChange,
+  active = true,
+  disabled = false,
+  ref,
+  ...props
 }: RemoteEntitySelectProps<T>) {
   const [open, setOpen] = useState(false)
   const [searchValue, setSearchValue] = useState('')
-  const [query, setQuery] = useState({ keyword: '', page: 1, retry: 0 })
-  const [items, setItems] = useState<T[]>([])
-  const [total, setTotal] = useState(0)
-  const [loadedPage, setLoadedPage] = useState(0)
-  const [loading, setLoading] = useState(true)
-  const [failed, setFailed] = useState(false)
+  const [query, setQuery] = useState<Query>({ keyword: '', page: 1, retry: 0 })
+  const request = useMemo(() => ({ active, apiPath, query }), [active, apiPath, query])
+  const [pageResult, setPageResult] = useState<PageResult<T>>()
   const [selection, setSelection] = useState<Selection<T> | null>(null)
   const [detailRetry, setDetailRetry] = useState(0)
   const [popupWidth, setPopupWidth] = useState<number>()
   const containerRef = useRef<HTMLDivElement>(null)
-  const cache = useRef(new Map<number, T>())
+  const [cache, setCache] = useState<EntityCache<T>>(() => ({ apiPath, items: new Map() }))
   const enabled = useRef(false)
+  const available = active && !disabled
+  const [previousAvailable, setPreviousAvailable] = useState(available)
+  const currentResult = pageResult?.request === request
+  const visibleResult = currentResult ? pageResult : previousPage(pageResult, request)
+  const items = visibleResult?.items ?? []
+  const total = visibleResult?.total ?? 0
+  const loadedPage = visibleResult?.loadedPage ?? 0
+  const loading = !currentResult
+  const failed = currentResult && pageResult.failed
+  const cachedItem = cache.apiPath === apiPath && value != null ? cache.items.get(value) : undefined
+  const detailRequest = useMemo(
+    () => ({ active, apiPath, value, retry: detailRetry }),
+    [active, apiPath, value, detailRetry]
+  )
+
+  // 禁用或外层关闭时清除浮层状态，重新启用不会恢复旧弹出层。
+  if (previousAvailable !== available) {
+    setPreviousAvailable(available)
+    if (!available) setOpen(false)
+  }
 
   useLayoutEffect(() => {
     const container = containerRef.current
@@ -55,87 +112,105 @@ export default function RemoteEntitySelect<T extends { id: number }>({
 
   useLayoutEffect(() => {
     enabled.current = active && !disabled
-    if (!enabled.current) setOpen(false)
-    return () => { enabled.current = false }
+    return () => {
+      enabled.current = false
+    }
   }, [active, disabled])
 
   useEffect(() => {
-    if (!active) return
+    if (!request.active) return
     let cancelled = false
-    setLoading(true)
-    setFailed(false)
-    if (query.page === 1) {
-      setItems([])
-      setTotal(0)
-      setLoadedPage(0)
-    }
+    const { apiPath, query } = request
     // 搜索先清空旧候选并防抖；翻页沿用当前关键字，不能只在首批数据内筛选。
-    const timer = window.setTimeout(() => {
-      apiGet<PagedResult<T>>(apiPath, {
-        page: query.page, size: PAGE_SIZE, keyword: query.keyword || undefined,
-      }).then((result) => {
-        if (cancelled) return
-        const rows = result.items ?? []
-        rows.forEach((item) => cache.current.set(item.id, item))
-        setItems((current) => [...new Map([
-          ...(query.page === 1 ? [] : current), ...rows,
-        ].map((item) => [item.id, item])).values()])
-        setTotal(result.total)
-        setLoadedPage(query.page)
-      }).catch(() => {
-        // 请求封装统一提示错误，此处保留已加载项并提供当前页重试。
-        if (!cancelled) setFailed(true)
-      }).finally(() => {
-        if (!cancelled) setLoading(false)
-      })
-    }, query.page === 1 && query.keyword ? 250 : 0)
+    const timer = window.setTimeout(
+      () => {
+        apiGet<PagedResult<T>>(apiPath, {
+          page: query.page,
+          size: PAGE_SIZE,
+          keyword: query.keyword || undefined
+        })
+          .then((result) => {
+            if (cancelled) return
+            const rows = result.items ?? []
+            setCache((current) => rememberItems(current, apiPath, rows))
+            setPageResult((current) => ({
+              request,
+              items: [
+                ...new Map(
+                  [...(previousPage(current, request)?.items ?? []), ...rows].map((item) => [
+                    item.id,
+                    item
+                  ])
+                ).values()
+              ],
+              total: result.total,
+              loadedPage: query.page,
+              failed: false
+            }))
+          })
+          .catch(() => {
+            // 请求封装统一提示错误，此处保留已加载项并提供当前页重试。
+            if (!cancelled)
+              setPageResult((current) => {
+                const previous = previousPage(current, request)
+                return {
+                  request,
+                  items: previous?.items ?? [],
+                  total: previous?.total ?? 0,
+                  loadedPage: previous?.loadedPage ?? 0,
+                  failed: true
+                }
+              })
+          })
+      },
+      query.page === 1 && query.keyword ? 250 : 0
+    )
     return () => {
       cancelled = true
       window.clearTimeout(timer)
     }
-  }, [active, apiPath, query.keyword, query.page, query.retry])
+  }, [request])
 
   useEffect(() => {
-    if (!active || value == null) return
-    const item = cache.current.get(value)
-    if (item) {
-      setSelection({ id: value, item, status: 'ready' })
-      return
-    }
+    const { active, apiPath, value } = detailRequest
+    if (!active || value == null || cachedItem) return
     let cancelled = false
-    setSelection({ id: value, status: 'loading' })
     // 编辑项可能不在当前分页中；查询不到或请求失败都不能隐式改写表单里的 ID。
-    apiGet<T | null>(`${apiPath}/${value}`).then((result) => {
-      if (cancelled) return
-      if (result) cache.current.set(result.id, result)
-      setSelection({ id: value, item: result ?? undefined, status: result ? 'ready' : 'missing' })
-    }).catch(() => {
-      if (!cancelled) setSelection({ id: value, status: 'error' })
-    })
-    return () => { cancelled = true }
-  }, [active, apiPath, value, detailRetry])
+    apiGet<T | null>(`${apiPath}/${value}`)
+      .then((result) => {
+        if (cancelled) return
+        if (result) setCache((current) => rememberItems(current, apiPath, [result]))
+        setSelection({
+          request: detailRequest,
+          item: result ?? undefined,
+          status: result ? 'ready' : 'missing'
+        })
+      })
+      .catch(() => {
+        if (!cancelled) setSelection({ request: detailRequest, status: 'error' })
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [detailRequest, cachedItem])
 
   function search(keyword: string) {
     if (!enabled.current) return
     setSearchValue(keyword)
     const nextKeyword = keyword.trim()
     if (nextKeyword !== query.keyword) {
-      setLoading(true)
-      setFailed(false)
-      setItems([])
       setQuery({ keyword: nextKeyword, page: 1, retry: 0 })
     }
   }
 
   function loadMore() {
     if (!enabled.current || loading || failed || loadedPage * PAGE_SIZE >= total) return
-    setLoading(true)
     setQuery((current) => ({ ...current, page: loadedPage + 1 }))
   }
 
-  const detail = selection?.id === value ? selection : undefined
-  const selectedItem = items.find((item) => item.id === value) ?? detail?.item
-  const selectionStatus = selectedItem ? 'ready' : detail?.status ?? 'loading'
+  const detail = selection?.request === detailRequest ? selection : undefined
+  const selectedItem = items.find((item) => item.id === value) ?? cachedItem ?? detail?.item
+  const selectionStatus = selectedItem ? 'ready' : (detail?.status ?? 'loading')
   const fallbackLabel = `${entityName} #${value}（${selectionStatus === 'missing' ? `${entityName}不存在或已删除` : selectionStatus === 'error' ? '名称加载失败' : '正在加载'}）`
   const options = items.map((item) => ({ value: item.id, label: getLabel(item) }))
 
@@ -154,9 +229,17 @@ export default function RemoteEntitySelect<T extends { id: number }>({
         showSearch={{ searchValue, onSearch: search, filterOption: false }}
         options={options}
         // 当前绑定单独回显，不能混入搜索结果或让失效绑定重新成为候选。
-        labelRender={() => selectedItem ? getLabel(selectedItem) : fallbackLabel}
+        labelRender={() => (selectedItem ? getLabel(selectedItem) : fallbackLabel)}
         loading={loading}
-        notFoundContent={loading ? <Spin size="small" /> : failed ? `${entityName}加载失败` : `未找到匹配的${entityName}`}
+        notFoundContent={
+          loading ? (
+            <Spin size="small" />
+          ) : failed ? (
+            `${entityName}加载失败`
+          ) : (
+            `未找到匹配的${entityName}`
+          )
+        }
         onOpenChange={(nextOpen) => {
           if (!enabled.current) return
           setOpen(nextOpen)
@@ -173,29 +256,62 @@ export default function RemoteEntitySelect<T extends { id: number }>({
           const target = event.currentTarget
           if (target.scrollHeight - target.scrollTop - target.clientHeight < 32) loadMore()
         }}
-        popupRender={(menu) => <>
-          {menu}
-          <div className={styles.footer} aria-live="polite" onMouseDown={(event) => event.preventDefault()}>
-            {loading ? `正在加载${entityName}…` : failed ? <>
-              <span role="alert">{entityName}加载失败</span>
-              <Button type="link" size="small" disabled={!active || disabled} onClick={() => {
-                if (enabled.current) setQuery((current) => ({ ...current, retry: current.retry + 1 }))
-              }}>重试</Button>
-            </> : loadedPage * PAGE_SIZE < total ? (
-              <Button type="link" size="small" disabled={!active || disabled} onClick={loadMore}>加载更多{entityName}</Button>
-            ) : items.length ? `已加载全部 ${total} 个${entityName}` : '无匹配结果'}
-          </div>
-        </>}
+        popupRender={(menu) => (
+          <>
+            {menu}
+            <div
+              className={styles.footer}
+              aria-live="polite"
+              onMouseDown={(event) => event.preventDefault()}
+            >
+              {loading ? (
+                `正在加载${entityName}…`
+              ) : failed ? (
+                <>
+                  <span role="alert">{entityName}加载失败</span>
+                  <Button
+                    type="link"
+                    size="small"
+                    disabled={!active || disabled}
+                    onClick={() => {
+                      if (enabled.current)
+                        setQuery((current) => ({ ...current, retry: current.retry + 1 }))
+                    }}
+                  >
+                    重试
+                  </Button>
+                </>
+              ) : loadedPage * PAGE_SIZE < total ? (
+                <Button type="link" size="small" disabled={!active || disabled} onClick={loadMore}>
+                  加载更多{entityName}
+                </Button>
+              ) : items.length ? (
+                `已加载全部 ${total} 个${entityName}`
+              ) : (
+                '无匹配结果'
+              )}
+            </div>
+          </>
+        )}
       />
       {value != null && selectionStatus === 'error' ? (
         <div className={styles.feedback} role="alert">
           当前{entityName}名称加载失败，已保留原值。
-          <Button type="link" size="small" disabled={!active || disabled} onClick={() => {
-            if (enabled.current) setDetailRetry((current) => current + 1)
-          }}>重试名称加载</Button>
+          <Button
+            type="link"
+            size="small"
+            disabled={!active || disabled}
+            onClick={() => {
+              if (enabled.current) setDetailRetry((current) => current + 1)
+            }}
+          >
+            重试名称加载
+          </Button>
         </div>
       ) : value != null && selectionStatus === 'missing' ? (
-        <div className={styles.feedback} role="status">{entityName}不存在或已删除，已保留原值；可清空或重新选择。</div>
+        <div className={styles.feedback} role="status">
+          {entityName}不存在或已删除，已保留原值；可清空或重新选择。
+        </div>
       ) : null}
     </div>
   )

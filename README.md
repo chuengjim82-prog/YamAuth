@@ -13,6 +13,7 @@
 | API | ASP.NET Core 8、FreeSql、JWT、FluentValidation |
 | Web | React 19、TypeScript 6、Vite 8、Ant Design 6、React Router 7、Axios；状态管理使用 React Context |
 | 工具 | `YamAuth.CodeGen` |
+| 前端质量 | ESLint 10、typescript-eslint 类型感知检查、React Hooks 推荐规则、Prettier 3 |
 
 ---
 
@@ -32,6 +33,8 @@
 ```
 
 （也可双击 `scripts\run-api.cmd`、`scripts\dev-web.cmd`。）
+
+前端开发使用 Node.js 22.13+（22.x）或 24+，在 `web/YamAuth.Web` 执行 `npm ci` 安装锁定依赖。`npm run lint` 检查代码，`npm run lint:fix` 自动修复支持的问题，`npm run format` 统一格式，`npm run format:check` 只检查格式。交付前执行 `npm run check`，依次检查代码、格式并构建；日常 `dev`、`build` 的职责保持不变。具体规则见 [前端开发约定](web/YamAuth.Web/AGENTS.md)。
 
 ### 3. CodeGen（新业务表）
 
@@ -56,5 +59,8 @@ dotnet run --project src/YamAuth.CodeGen
 
 ```bash
 dotnet test YamAuth.sln -c Release
-cd web/YamAuth.Web && npm run test:e2e
+cd web/YamAuth.Web
+npm run check
 ```
+
+前端检查要求零 lint 错误和警告、格式一致及构建成功。当前未配置 `test:e2e` 或自动化测试框架，交互仍需按影响范围验收；模拟接口浏览器回归不等同于真实后端联调。

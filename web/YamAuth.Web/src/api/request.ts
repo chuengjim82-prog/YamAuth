@@ -14,7 +14,7 @@ function resolveApiBaseURL() {
 
 const request = axios.create({
   baseURL: resolveApiBaseURL(),
-  timeout: 30000,
+  timeout: 30000
 })
 
 const ERROR_MESSAGE_KEY = 'api-request-error'
@@ -47,7 +47,13 @@ request.interceptors.request.use((config) => {
 request.interceptors.response.use(
   (response) => {
     const data = response.data as ApiResponse
-    if (data && typeof data === 'object' && 'code' in data && data.code !== 0 && data.code !== 200) {
+    if (
+      data &&
+      typeof data === 'object' &&
+      'code' in data &&
+      data.code !== 0 &&
+      data.code !== 200
+    ) {
       if (data.code === 401 && localStorage.getItem(TOKEN_KEY)) {
         clearSessionAndRedirectToLogin()
       } else {
@@ -57,17 +63,23 @@ request.interceptors.response.use(
     }
     return response
   },
-  (error) => {
-    if (error.response?.status === 401 && localStorage.getItem(TOKEN_KEY)) {
+  (error: unknown) => {
+    const response = axios.isAxiosError<unknown>(error) ? error.response : undefined
+    const body = response?.data
+    const errorMessage =
+      body && typeof body === 'object' && 'message' in body && typeof body.message === 'string'
+        ? body.message
+        : ''
+    if (response?.status === 401 && localStorage.getItem(TOKEN_KEY)) {
       clearSessionAndRedirectToLogin()
     } else {
       message.error({
-        content: error.response?.data?.message || '网络错误',
-        key: ERROR_MESSAGE_KEY,
+        content: errorMessage || '网络错误',
+        key: ERROR_MESSAGE_KEY
       })
     }
-    return Promise.reject(error)
-  },
+    return Promise.reject(error instanceof Error ? error : new Error('网络错误', { cause: error }))
+  }
 )
 
 export async function apiGet<T>(url: string, params?: Record<string, unknown>): Promise<T> {

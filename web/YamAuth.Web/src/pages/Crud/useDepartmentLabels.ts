@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { apiGet } from '@/api/request'
 import { departmentLabel, type Department } from '@/components/department'
 import type { Row } from '@/types'
+import { fieldText } from './fieldText'
 
 export function useDepartmentLabels(rows: Row[], enabled: boolean) {
   const [result, setResult] = useState<{ rows: Row[]; labels: Map<number, string> }>()
@@ -10,8 +11,11 @@ export function useDepartmentLabels(rows: Row[], enabled: boolean) {
     if (!enabled) return
     let cancelled = false
     const labels = new Map<number, string>()
-    const ids = [...new Set(rows.map((row) => row.departmentId).filter((id): id is number => typeof id === 'number'))]
-    setResult({ rows, labels })
+    const ids = [
+      ...new Set(
+        rows.map((row) => row.departmentId).filter((id): id is number => typeof id === 'number')
+      )
+    ]
 
     // 只解析当前页的不同部门，限制并发；刷新时重新获取，避免缓存过期名称。
     async function load() {
@@ -32,12 +36,14 @@ export function useDepartmentLabels(rows: Row[], enabled: boolean) {
     }
     const workers = Math.min(4, ids.length)
     for (let index = 0; index < workers; index++) void load()
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+    }
   }, [rows, enabled])
 
   return (value: unknown) => {
     if (value == null || value === '') return ''
     const label = result?.rows === rows ? result.labels.get(Number(value)) : undefined
-    return label ?? `部门 #${value}（正在加载）`
+    return label ?? `部门 #${fieldText(value)}（正在加载）`
   }
 }

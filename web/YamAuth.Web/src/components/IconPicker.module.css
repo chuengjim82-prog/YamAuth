@@ -10,8 +10,12 @@
   min-width: 0;
 }
 
-.preview { font-size: 18px; }
-.placeholder { color: var(--app-text-placeholder); }
+.preview {
+  font-size: 18px;
+}
+.placeholder {
+  color: var(--app-text-placeholder);
+}
 
 .dialog :global(.ant-modal-container) {
   display: flex;
@@ -48,14 +52,40 @@
   padding: 12px 6px 8px;
 }
 
-.optionIcon { font-size: 24px; line-height: 1; }
-.name { width: 100%; overflow: hidden; text-overflow: ellipsis; font-size: 11px; }
-.selected { color: var(--app-primary); border-color: currentColor; background: var(--app-accent-bg); }
-.check { position: absolute; top: 5px; right: 5px; font-size: 12px; }
-.empty { grid-column: 1 / -1; }
+.optionIcon {
+  font-size: 24px;
+  line-height: 1;
+}
+.name {
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 11px;
+}
+.selected {
+  color: var(--app-primary);
+  border-color: currentColor;
+  background: var(--app-accent-bg);
+}
+.check {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  font-size: 12px;
+}
+.empty {
+  grid-column: 1 / -1;
+}
 
 @media (max-width: 480px) {
-  .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
-  .dialog :global(.ant-modal-footer) { text-align: center; }
-  .dialog :global(.ant-pagination-total-text) { display: block; }
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .dialog :global(.ant-modal-footer) {
+    text-align: center;
+  }
+  .dialog :global(.ant-pagination-total-text) {
+    display: block;
+  }
 }

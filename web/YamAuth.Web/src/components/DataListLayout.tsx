@@ -28,7 +28,7 @@ export default function DataListLayout({
   loading = false,
   interactionBlocked = false,
   focusReturnRef,
-  loadingOverlay,
+  loadingOverlay
 }: DataListLayoutProps) {
   const contentRef = useRef<HTMLDivElement>(null)
   const overlayRef = useRef<HTMLDivElement>(null)
@@ -46,14 +46,18 @@ export default function DataListLayout({
     const content = contentRef.current
     if (!content) return
     const active = document.activeElement
-    const shouldMoveFocus = content.contains(active) || overlayRef.current?.contains(active)
-      || (ownsFocusRef.current && active === document.body)
+    const shouldMoveFocus =
+      content.contains(active) ||
+      overlayRef.current?.contains(active) ||
+      (ownsFocusRef.current && active === document.body)
 
     // 先记录焦点归属，再启用 inert；浏览器可能在禁用时直接清除原焦点。
     content.inert = interactionBlocked
     if (interactionBlocked && shouldMoveFocus) {
       ownsFocusRef.current = true
-      overlayRef.current?.querySelector<HTMLElement>('button:not(:disabled), [tabindex="-1"]')?.focus({ preventScroll: true })
+      overlayRef.current
+        ?.querySelector<HTMLElement>('button:not(:disabled), [tabindex="-1"]')
+        ?.focus({ preventScroll: true })
     } else if (!interactionBlocked && ownsFocusRef.current) {
       ownsFocusRef.current = false
       if (active === document.body) focusReturnRef?.current?.focus({ preventScroll: true })

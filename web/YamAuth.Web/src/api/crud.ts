@@ -8,6 +8,6 @@ export function createCrudApi(basePath: string) {
       apiGet<PagedResult<Row>>(basePath, { page, size, keyword: keyword || undefined }),
     create: (data: Row) => apiPost<number>(basePath, data),
     update: (id: number, data: Row) => apiPut<void>(`${basePath}/${id}`, data),
-    remove: (id: number) => apiDelete<void>(`${basePath}/${id}`),
+    remove: (id: number) => apiDelete<void>(`${basePath}/${id}`)
   }
 }

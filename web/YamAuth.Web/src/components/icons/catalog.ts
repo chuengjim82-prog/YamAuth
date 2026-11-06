@@ -5,12 +5,20 @@ export type IconComponent = ComponentType<IconBaseProps>
 export type IconTheme = 'Outlined' | 'Filled' | 'TwoTone'
 
 // Vite 默认忽略 node_modules；仅枚举图标叶子模块，不能把接口字符串拼成导入路径。
-const modules = import.meta.glob<IconComponent>([
-  '/node_modules/@ant-design/icons/es/icons/*.js',
-  '!/node_modules/@ant-design/icons/es/icons/index.js',
-], { import: 'default', exhaustive: true })
+const modules = import.meta.glob<IconComponent>(
+  [
+    '/node_modules/@ant-design/icons/es/icons/*.js',
+    '!/node_modules/@ant-design/icons/es/icons/index.js'
+  ],
+  { import: 'default', exhaustive: true }
+)
 
-const loaders = new Map(Object.entries(modules).map(([path, loader]) => [path.slice(path.lastIndexOf('/') + 1, -3), loader]))
+const loaders = new Map(
+  Object.entries(modules).map(([path, loader]) => [
+    path.slice(path.lastIndexOf('/') + 1, -3),
+    loader
+  ])
+)
 
 export const legacyIconNames: Readonly<Record<string, string>> = {
   Lock: 'LockOutlined',
@@ -30,7 +38,7 @@ export const legacyIconNames: Readonly<Record<string, string>> = {
   Suitcase: 'ShoppingOutlined',
   Folder: 'FolderOutlined',
   School: 'ReadOutlined',
-  Postcard: 'IdcardOutlined',
+  Postcard: 'IdcardOutlined'
 }
 
 // 常用语义关键词覆盖同一图标的不同风格，不将品牌或冷门图标冒充为已完整翻译。
@@ -42,7 +50,10 @@ const keywordRules: [RegExp, string][] = [
   [/Bank|Home|Shop|Apartment|Cluster/, '组织 公司 建筑 银行 首页 商店 部门'],
   [/Read|Book|Idcard/, '阅读 书籍 学校 学习 证件 名片 身份'],
   [/Shopping|Gift|Skin/, '购物 商品 购物车 礼物 衣服'],
-  [/Dollar|Money|Pay|Wallet|AccountBook|Transaction|Euro|Pound|Alipay/, '金额 钱 支付 钱包 账单 交易 费用'],
+  [
+    /Dollar|Money|Pay|Wallet|AccountBook|Transaction|Euro|Pound|Alipay/,
+    '金额 钱 支付 钱包 账单 交易 费用'
+  ],
   [/Api|Link|Share|Disconnect|Branches|Node/, '接口 连接 分享 分支 节点'],
   [/Setting|Control|Tool|Build|Sliders/, '设置 配置 工具 调整'],
   [/Search|Zoom|Scan/, '搜索 查找 放大 缩小 扫描'],
@@ -70,7 +81,7 @@ const keywordRules: [RegExp, string][] = [
   [/Code|Terminal|Console|Html|Java|Python/, '代码 开发 终端 编程'],
   [/Car|Truck|Rocket|Send/, '汽车 车辆 物流 火箭 发送'],
   [/Wifi|Radar|Signal|Bluetooth/, '网络 无线 信号 蓝牙'],
-  [/Sun|Moon|Bulb/, '太阳 月亮 灯泡 亮度 主题'],
+  [/Sun|Moon|Bulb/, '太阳 月亮 灯泡 亮度 主题']
 ]
 
 export function resolveIconName(name?: string): string | undefined {
@@ -79,15 +90,19 @@ export function resolveIconName(name?: string): string | undefined {
   return loaders.has(canonical) ? canonical : undefined
 }
 
-export const iconCatalog = [...loaders.keys()].sort((a, b) => a.localeCompare(b, 'en')).map((name) => ({
-  name,
-  theme: (name.endsWith('TwoTone') ? 'TwoTone' : name.endsWith('Filled') ? 'Filled' : 'Outlined') as IconTheme,
-  searchText: [
+export const iconCatalog = [...loaders.keys()]
+  .sort((a, b) => a.localeCompare(b, 'en'))
+  .map((name) => ({
     name,
-    ...Object.keys(legacyIconNames).filter((alias) => legacyIconNames[alias] === name),
-    ...keywordRules.filter(([pattern]) => pattern.test(name)).map(([, words]) => words),
-  ].join(' ').toLowerCase(),
-}))
+    theme: name.endsWith('TwoTone') ? 'TwoTone' : name.endsWith('Filled') ? 'Filled' : 'Outlined',
+    searchText: [
+      name,
+      ...Object.keys(legacyIconNames).filter((alias) => legacyIconNames[alias] === name),
+      ...keywordRules.filter(([pattern]) => pattern.test(name)).map(([, words]) => words)
+    ]
+      .join(' ')
+      .toLowerCase()
+  }))
 
 const components = new Map<string, IconComponent>()
 const pending = new Map<string, Promise<IconComponent>>()
@@ -103,13 +118,15 @@ export function loadIcon(name: string): Promise<IconComponent> {
   if (running) return running
   const loader = loaders.get(name)
   if (!loader) return Promise.reject(new Error('未识别图标'))
-  const promise = loader().then((component) => {
-    components.set(name, component)
-    return component
-  }).finally(() => {
-    // 失败不永久缓存，用户可以重试；同一图标的并发展示共用一次请求。
-    pending.delete(name)
-  })
+  const promise = loader()
+    .then((component) => {
+      components.set(name, component)
+      return component
+    })
+    .finally(() => {
+      // 失败不永久缓存，用户可以重试；同一图标的并发展示共用一次请求。
+      pending.delete(name)
+    })
   pending.set(name, promise)
   return promise
 }

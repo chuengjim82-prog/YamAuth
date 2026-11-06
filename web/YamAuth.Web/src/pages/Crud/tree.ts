@@ -1,5 +1,6 @@
 import type { TreeDef } from '@/resources'
 import type { Row } from '@/types'
+import { fieldText } from './fieldText'
 
 export const ISSUE_GROUP = '__tree_issues__'
 export interface TreeRow extends Row {
@@ -10,7 +11,9 @@ export interface TreeRow extends Row {
 }
 
 export function buildTree(items: Row[], config: TreeDef) {
-  const sorted = [...items].sort((a, b) => Number(a.sortIndex) - Number(b.sortIndex) || Number(a.id) - Number(b.id))
+  const sorted = [...items].sort(
+    (a, b) => Number(a.sortIndex) - Number(b.sortIndex) || Number(a.id) - Number(b.id)
+  )
   const byId = new Map(sorted.map((row) => [Number(row.id), row]))
   const children = new Map<number, number[]>()
   for (const row of sorted) {
@@ -26,19 +29,35 @@ export function buildTree(items: Row[], config: TreeDef) {
     const seen = new Set<number>()
     let issue = ''
     while (id !== 0) {
-      if (issues.has(id)) { issue = issues.get(id)!; break }
-      if (seen.has(id)) { issue = '自身或上级存在循环关系'; break }
+      if (issues.has(id)) {
+        issue = issues.get(id)!
+        break
+      }
+      if (seen.has(id)) {
+        issue = '自身或上级存在循环关系'
+        break
+      }
       seen.add(id)
       path.push(id)
       const node = byId.get(id)!
       const parentId = Number(node.parentId)
-      if (!Number.isSafeInteger(parentId) || parentId < 0) { issue = '自身或上级的父级编号无效'; break }
-      if (parentId === id) { issue = '自身或上级指向自己'; break }
+      if (!Number.isSafeInteger(parentId) || parentId < 0) {
+        issue = '自身或上级的父级编号无效'
+        break
+      }
+      if (parentId === id) {
+        issue = '自身或上级指向自己'
+        break
+      }
       if (parentId !== 0) {
         const parent = byId.get(parentId)
-        if (!parent) { issue = '自身或上级的父节点不存在或已删除'; break }
+        if (!parent) {
+          issue = '自身或上级的父节点不存在或已删除'
+          break
+        }
         if (config.appScoped && (node.appsId ?? null) !== (parent.appsId ?? null)) {
-          issue = '自身或上级存在跨应用父子关系'; break
+          issue = '自身或上级存在跨应用父子关系'
+          break
         }
       }
       id = parentId
@@ -78,7 +97,14 @@ export function treeView(model: TreeModel, keyword: string) {
   const needle = keyword.trim().toLowerCase()
   const matches = new Set<number>()
   for (const row of model.sorted) {
-    if (!needle || model.config.searchFields.some((field) => String(row[field] ?? '').toLowerCase().includes(needle))) {
+    if (
+      !needle ||
+      model.config.searchFields.some((field) =>
+        fieldText(row[field] ?? '')
+          .toLowerCase()
+          .includes(needle)
+      )
+    ) {
       matches.add(Number(row.id))
     }
   }
@@ -93,7 +119,10 @@ export function treeView(model: TreeModel, keyword: string) {
         if (seen.has(id)) continue
         seen.add(id)
         visible.add(id)
-        const next = direction === 'up' ? [Number(model.byId.get(id)?.parentId ?? 0)] : model.children.get(id) ?? []
+        const next =
+          direction === 'up'
+            ? [Number(model.byId.get(id)?.parentId ?? 0)]
+            : (model.children.get(id) ?? [])
         for (const child of next) if (model.byId.has(child)) pending.push(child)
       }
     }
@@ -106,20 +135,40 @@ export function treeView(model: TreeModel, keyword: string) {
     if (visible.has(id)) nodes.set(id, { ...row, id, treeIssue: model.issues.get(id) })
   }
   for (const [id, node] of nodes) {
-    if (model.issues.get(id)) { abnormal.push(node); continue }
+    if (model.issues.get(id)) {
+      abnormal.push(node)
+      continue
+    }
     const parent = nodes.get(Number(node.parentId))
     if (parent) (parent.children ??= []).push(node)
     else roots.push(node)
   }
-  if (abnormal.length) roots.push({ id: ISSUE_GROUP, treeGroup: true, [model.config.nameField]: '层级异常', children: abnormal })
+  if (abnormal.length)
+    roots.push({
+      id: ISSUE_GROUP,
+      treeGroup: true,
+      [model.config.nameField]: '层级异常',
+      children: abnormal
+    })
   const expandable = [...nodes.values()].filter((row) => row.children?.length).map((row) => row.id)
   if (abnormal.length) expandable.push(ISSUE_GROUP)
   return { roots, matches, visible, expandable }
 }
 
 export function parentOptions(model: TreeModel, editingId: number | null, appsId: unknown) {
-  const excluded = editingId === null ? new Set<number>() : descendants(model, editingId).add(editingId)
-  return model.sorted.filter((row) => !excluded.has(Number(row.id)) && !model.issues.get(Number(row.id))
-    && (!model.config.appScoped || (row.appsId ?? null) === (appsId ?? null)))
-    .map((row) => ({ id: Number(row.id), pId: Number(row.parentId), value: Number(row.id), title: `${row[model.config.nameField] || '未命名'}（${row.id}）` }))
+  const excluded =
+    editingId === null ? new Set<number>() : descendants(model, editingId).add(editingId)
+  return model.sorted
+    .filter(
+      (row) =>
+        !excluded.has(Number(row.id)) &&
+        !model.issues.get(Number(row.id)) &&
+        (!model.config.appScoped || (row.appsId ?? null) === (appsId ?? null))
+    )
+    .map((row) => ({
+      id: Number(row.id),
+      pId: Number(row.parentId),
+      value: Number(row.id),
+      title: `${fieldText(row[model.config.nameField] || '未命名')}（${fieldText(row.id)}）`
+    }))
 }

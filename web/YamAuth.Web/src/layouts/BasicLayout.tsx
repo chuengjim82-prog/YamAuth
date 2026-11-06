@@ -27,13 +27,13 @@ function toMenuItem(node: MenuNode): MenuItemResult {
       key: node.menuUrl || `dir-${node.id}`,
       icon,
       label: node.menuName,
-      children: node.children.map(toMenuItem),
+      children: node.children.map(toMenuItem)
     }
   }
   return {
     key: node.menuUrl || `item-${node.id}`,
     icon,
-    label: node.menuName,
+    label: node.menuName
   }
 }
 
@@ -55,6 +55,7 @@ export default function BasicLayout() {
   const location = useLocation()
   const [collapsed, setCollapsed] = useState(false)
   const [openKeys, setOpenKeys] = useState<string[]>([])
+  const [expandedChain, setExpandedChain] = useState<MenuNode[]>([])
 
   useEffect(() => {
     if (!isLoggedIn) return
@@ -75,14 +76,12 @@ export default function BasicLayout() {
 
   const chain = useMemo(() => findChain(menus, location.pathname), [menus, location.pathname])
 
-  useEffect(() => {
-    if (chain.length > 1) {
-      setOpenKeys((prev) => {
-        const parentKeys = chain.slice(0, -1).map((node) => node.menuUrl || `dir-${node.id}`)
-        return Array.from(new Set([...prev, ...parentKeys]))
-      })
-    }
-  }, [chain])
+  // 导航变化时展开新的父级；同一路由内仍允许用户手动收起目录。
+  if (expandedChain !== chain) {
+    setExpandedChain(chain)
+    const parentKeys = chain.slice(0, -1).map((node) => node.menuUrl || `dir-${node.id}`)
+    setOpenKeys((current) => [...new Set([...current, ...parentKeys])])
+  }
 
   if (!isLoggedIn) {
     return <Navigate to="/login" replace />
@@ -124,9 +123,14 @@ export default function BasicLayout() {
         </Sider>
         <Content className={styles.content}>
           {chain.length > 1 && (
-            <Breadcrumb className={styles.breadcrumb} items={chain.map((node) => ({ title: node.menuName }))} />
+            <Breadcrumb
+              className={styles.breadcrumb}
+              items={chain.map((node) => ({ title: node.menuName }))}
+            />
           )}
-          <Suspense fallback={<Spin size="large" style={{ display: 'block', margin: '100px auto' }} />}>
+          <Suspense
+            fallback={<Spin size="large" style={{ display: 'block', margin: '100px auto' }} />}
+          >
             <Outlet />
           </Suspense>
         </Content>

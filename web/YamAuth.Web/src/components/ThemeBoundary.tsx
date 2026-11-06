@@ -6,7 +6,7 @@ import { useTheme } from '@/store/theme'
 
 const lightTheme: ThemeConfig = {
   algorithm: theme.defaultAlgorithm,
-  token: { colorPrimary: '#062cff' },
+  token: { colorPrimary: '#062cff' }
 }
 
 const darkTheme: ThemeConfig = {
@@ -19,8 +19,8 @@ const darkTheme: ThemeConfig = {
     colorBgElevated: '#22252c',
     colorBorder: '#424650',
     colorBorderSecondary: '#30343d',
-    colorTextPlaceholder: '#8a92a2',
-  },
+    colorTextPlaceholder: '#8a92a2'
+  }
 }
 
 export default function ThemeBoundary({ children }: PropsWithChildren) {
