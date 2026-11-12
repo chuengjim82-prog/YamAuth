@@ -41,6 +41,8 @@ dotnet build src/YamAuth.sln -c Release
 
 Prettier 统一使用两空格、JS/TS 单引号、JSX 双引号、无语句分号、不添加可选尾逗号、目标行宽 100 和 LF 换行。语法必需的逗号（如 TSX 单类型参数箭头函数中的 `<T,>`）仍保留。组件和类型用 `PascalCase`，变量、函数用 `camelCase`；页面入口使用 `index.tsx`。优先使用 `@/` 导入别名和 `import type`，遵守 TypeScript 严格模式。
 
+为已知结构的业务数据及接口请求、响应定义准确类型，并在通用封装中保留类型约束；允许合理类型推断，不用 `any`、宽泛字典或类型断言替代业务类型。
+
 ESLint 使用基础推荐、TypeScript 类型感知推荐及 React Hooks 完整推荐规则；通过现有 TSConfig 检查源码和 Vite 配置。禁止源码内调整规则，不使用禁用注释或通过关闭质量规则规避问题。Prettier 独立运行，`eslint-config-prettier` 仅负责关闭冲突的格式规则。依赖、构建产物和缓存不纳入检查；npm 锁文件不手工格式化。
 
 复用 `src/api/request.ts` 的鉴权及错误处理。文档和新增注释使用中文。新增代码应符合现有检查，日常修改仅格式化相关文件；首次接入已统一整理存量前端代码。本项目没有 Git 提交钩子或自动 CI 检查。
