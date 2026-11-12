@@ -9,8 +9,8 @@ export interface FieldDef {
   table?: boolean
   form?: boolean
   nullable?: boolean
-  /** 仅对显式配置的字段使用关联选择器，保留原有数据类型。 */
-  formControl?: 'tenant' | 'department'
+  /** 仅对显式配置的字段使用选择控件，保留原有数据类型。 */
+  formControl?: 'tenant' | 'department' | 'crudInfo' | 'httpMethod'
 }
 
 export interface ResourceDef {
@@ -156,9 +156,9 @@ export const resources: ResourceDef[] = [
     },
     fields: [
       id,
-      f('crudId', '功能', 'number', { nullable: true }),
+      f('crudId', '功能', 'number', { nullable: true, formControl: 'crudInfo' }),
       f('parentId', '上级', 'number'),
-      f('method', '方法', 'string', { required: true }),
+      f('method', '方法', 'string', { required: true, formControl: 'httpMethod' }),
       f('apiPath', '接口路径'),
       remark
     ]

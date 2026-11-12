@@ -11,6 +11,7 @@ import {
   Pagination,
   Popconfirm,
   Result,
+  Select,
   Space,
   Spin,
   Switch,
@@ -48,6 +49,9 @@ import { useTenantLabels } from './useTenantLabels'
 import { fieldText } from './fieldText'
 import emptyImage from './assets/list-empty.png'
 import styles from './Crud.module.css'
+import CrudInfoSelect from './CrudInfoSelect'
+
+const HTTP_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS']
 
 function emptyValue(field: FieldDef) {
   if (field.kind === 'bool') return false
@@ -765,7 +769,9 @@ function ResourceEditForm({
               getValueProps={
                 isParent && field.nullable
                   ? (value: unknown) => ({ value: value === null ? 0 : value })
-                  : undefined
+                  : field.formControl === 'httpMethod'
+                    ? (value: unknown) => ({ value: value === '' ? undefined : value })
+                    : undefined
               }
               normalize={
                 isParent && field.nullable
@@ -794,7 +800,7 @@ function ResourceEditForm({
                     ? [
                         {
                           required: true,
-                          message: `请${field.kind === 'icon' ? '选择' : '输入'}${field.label}`
+                          message: `请${field.kind === 'icon' || field.formControl ? '选择' : '输入'}${field.label}`
                         }
                       ]
                     : undefined
@@ -813,7 +819,7 @@ function ResourceEditForm({
               ) : lockedApp ? (
                 <InputNumber style={{ width: '100%' }} disabled />
               ) : (
-                renderControl(field, Boolean(editingId), active, saving)
+                renderControl(field, Boolean(editingId), active, saving, initialValues[field.name])
               )}
             </Form.Item>
           )
@@ -822,7 +828,27 @@ function ResourceEditForm({
   )
 }
 
-function renderControl(field: FieldDef, editing: boolean, active: boolean, saving: boolean) {
+function renderControl(
+  field: FieldDef,
+  editing: boolean,
+  active: boolean,
+  saving: boolean,
+  initialValue: unknown
+) {
+  if (field.formControl === 'crudInfo') return <CrudInfoSelect active={active} disabled={saving} />
+  if (field.formControl === 'httpMethod') {
+    const options = HTTP_METHODS.map((method) => ({ value: method, label: method }))
+    // 历史值只来自本次编辑的原记录，切换标准方法后仍可恢复，不转换大小写。
+    if (
+      editing &&
+      typeof initialValue === 'string' &&
+      initialValue &&
+      !HTTP_METHODS.includes(initialValue)
+    ) {
+      options.push({ value: initialValue, label: `${initialValue}（历史值）` })
+    }
+    return <Select options={options} placeholder="请选择方法" disabled={!active || saving} />
+  }
   if (field.formControl === 'tenant') return <TenantSelect active={active} disabled={saving} />
   if (field.formControl === 'department')
     return <DepartmentSelect active={active} disabled={saving} />
