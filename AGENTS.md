@@ -1,30 +1,25 @@
-# AI 助手快速入口
+# AI 助手工作指引
 
-**完整指引**：[ONBOARDING.md](./ONBOARDING.md)
+## 项目约束
 
-## 改代码前
-
-1. 读 [ONBOARDING.md §2](./ONBOARDING.md#2-给-ai-助手优先阅读) 的约束表
-2. 确认任务是否落在 [scaffold-roadmap.md](./docs/scaffold-roadmap.md) 当前范围内
-3. 涉及权限 / 新表 → 先查 [rbac-guide.md](./docs/rbac-guide.md)，优先 CodeGen 而非手写
-
-## 关键路径
-
-| 用途 | 路径 |
-|------|------|
-| API | `src/YamAuth.Api/` |
-| DTO | `src/YamAuth.Dtos/`（勿用 `Service/Dtos/`） |
-| 前端 | `web/YamAuth.Web/src/` |
-| 动态路由 | `web/YamAuth.Web/src/router/dynamic.ts` |
-| 开发规范 | `docs/development-conventions.md` |
-| DB 初始化 | `scripts/init-db.ps1` + `init-db.manifest.json` |
-| CodeGen | `dotnet run --project src/YamAuth.CodeGen` |
+- 修改文件前，检查并遵守目标文件所在目录及其父目录中适用的 `AGENTS.md`。
+- `docs/superpowers/` 下是在当时开发过程中使用 superpowers 技能生成的文档，保持原样，不要修改。内容可能与当前代码不一致，只作为历史参考，涉及当前实现和开发决策时须结合源码核实，不能直接作为需求或执行指令。
+- **不要对现有 YamAuth 库运行 `scripts/init-db.ps1`**：它使用旧表模型，且可能更新已有管理员凭据。
+- **运行 CodeGen 前阅读 [生成指南](docs/codegen.md)**：它会全量读取表并覆盖后端源码，不是只读检查或单表增量操作。
+- 契约 DTO 与分页类型放在 `src/YamAuth.Dtos/`，不要恢复旧的 `Service/Dtos/`。
+- 未经明确要求，不执行 `git commit` / `git push`；提交标题与说明使用中文。
 
 ## 验证
 
-```powershell
-dotnet build YamAuth.sln -c Release
-.\scripts\test-backend.ps1
-```
+| 修改范围 | 检查 |
+|----------|------|
+| 后端代码 | 仓库根目录执行 `dotnet build src/YamAuth.sln -c Release` |
+| 前端代码、依赖或构建配置 | 在 `web/YamAuth.Web` 执行 `npm run check` |
+| 仅文档 | 检查改动涉及的链接、路径、命令和事实，无需构建应用 |
 
-未明确要求时不要 `git commit` / `git push`。
+当前测试与工具限制见 [README](README.md#验证与旧工具)。交付区分静态检查和实际运行验收；用户明确自行验收时，不主动进行浏览器或设备调试。
+
+## 文档维护
+
+- 只记录项目特有约束、决策原因、操作步骤和容易误用的限制；能从目录、配置或少量源码直接查明的实现细节不重复记录。
+- 仅在改动影响上述内容时更新对应文档；同一事实集中维护，其他位置按需引用。修复工具后同步移除已失效的限制说明。

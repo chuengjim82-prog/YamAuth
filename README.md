@@ -1,66 +1,59 @@
 # YamAuth
 
-基于 [ForgeAbc 脚手架模板](https://github.com/your-org/forgeabc-scaffold) 创建：.NET 8 + React 19 + TypeScript 管理端，含登录、菜单导航、CodeGen、Docker 与 CI（无权限体系）。
+.NET 8 / ASP.NET Core / FreeSql 后端与 React / TypeScript / Ant Design 前端组成的管理端。
 
-> 由 `scripts/new-project.ps1` 于 2026-10-19 生成。设计文档见 `docs/`。
+## 项目边界
 
----
+当前提供登录、菜单导航与资源 CRUD。角色、功能、数据角色等表尚未接入操作授权或数据范围控制，不能仅凭这些管理页面认定已实现 RBAC 或租户隔离。
 
-## 技术栈
+当前配置使用一个物理库 `YamAuth`。`Base` / `Bzss` 是逻辑连接键，`YamBase` / `YamBzss` 是代码分区；Bzss 模块使用 Bzss 连接。
 
-| 层 | 技术 |
-|----|------|
-| API | ASP.NET Core 8、FreeSql、JWT、FluentValidation |
-| Web | React 19、TypeScript 6、Vite 8、Ant Design 6、React Router 7、Axios；状态管理使用 React Context |
-| 工具 | `YamAuth.CodeGen` |
-| 前端质量 | ESLint 10、typescript-eslint 类型感知检查、React Hooks 推荐规则、Prettier 3 |
+## 环境与配置
 
----
+需要 .NET SDK 8.x、结构匹配的 SQL Server 数据库，以及符合 [前端约定](web/YamAuth.Web/AGENTS.md#本地开发) 的 Node.js。
 
-## 本地开发
+| 使用者 | 配置入口 |
+|--------|----------|
+| API | `src/YamAuth.Api/appsettings.json`、对应环境配置和环境变量；本地可用 `Db__Base`、`Db__Bzss`、`Jwt__SecretKey` 覆盖，真实凭据不提交 |
+| Web | `VITE_API_BASE_URL`，默认为 `/api`；开发代理配置在 `web/YamAuth.Web/vite.config.ts` |
+| CodeGen | 独立配置，见 [生成指南](docs/codegen.md) |
 
-### 1. 数据库
+API 不会自动读取旧脚本的 `scripts/database.local.json`，被 Git 忽略的配置文件也不会因此自动加载。
 
-物理库是已有的 **YamAuth**（`127.0.0.1`）。`Db:Base` 与 `Db:Bzss` 都指向这个库：`tb_Bzss_*` 走 Bzss 键，其余表走 Base 键。
+## 数据库准备
 
-开发环境用户表为空时，API 启动会写入管理员 `admin` / `Admin@123`，并按现有表生成侧边栏菜单。不要对 YamAuth 执行 `init-db.ps1`，那套脚本是脚手架空库用的。
+**不要对现有 YamAuth 库运行 `scripts/init-db.ps1`。** 旧 SQL 不对应当前表模型，初始化还可能修改已有管理员凭据；当前仓库没有经过验证的完整空库初始化基线，新环境需另行准备匹配的表结构、初始数据和账号。
 
-### 2. 运行
+API 不自动建表。Development 启动时会分别向空用户表、空菜单表写入种子，不会给已有菜单表补录新增菜单；初始账号及写入条件见 [DevDataSeeder](src/YamAuth.Api/Infrastructure/DevDataSeeder.cs)。连接现有数据库前先确认运行环境和写入影响。
 
-```powershell
-.\scripts\run-api.ps1
-.\scripts\dev-web.ps1
+## 本地运行
+
+完成配置后，在仓库根目录打开后端终端：
+
+```sh
+dotnet run --project src/YamAuth.Api/YamAuth.Api.csproj
 ```
 
-（也可双击 `scripts\run-api.cmd`、`scripts\dev-web.cmd`。）
+另开终端，从仓库根目录启动前端：
 
-前端开发使用 Node.js 22.13+（22.x）或 24+，在 `web/YamAuth.Web` 执行 `npm ci` 安装锁定依赖。`npm run lint` 检查代码，`npm run lint:fix` 自动修复支持的问题，`npm run format` 统一格式，`npm run format:check` 只检查格式。交付前执行 `npm run check`，依次检查代码、格式并构建；日常 `dev`、`build` 的职责保持不变。具体规则见 [前端开发约定](web/YamAuth.Web/AGENTS.md)。
-
-### 3. CodeGen（新业务表）
-
-```bash
-dotnet run --project src/YamAuth.CodeGen
-```
-
----
-
-## 文档索引
-
-| 文档 | 说明 |
-|------|------|
-| [docs/scaffold-roadmap.md](docs/scaffold-roadmap.md) | 脚手架路线图 |
-| [docs/rbac-guide.md](docs/rbac-guide.md) | 权限开发 |
-| [docs/data-permission-design.md](docs/data-permission-design.md) | 数据权限 |
-| [deploy/README.md](deploy/README.md) | Docker / 上线 |
-
----
-
-## 测试
-
-```bash
-dotnet test YamAuth.sln -c Release
+```sh
 cd web/YamAuth.Web
-npm run check
+npm ci
+npm run dev
 ```
 
-前端检查要求零 lint 错误和警告、格式一致及构建成功。当前未配置 `test:e2e` 或自动化测试框架，交互仍需按影响范围验收；模拟接口浏览器回归不等同于真实后端联调。
+默认 API 为 `http://localhost:6500`，前端为 `http://127.0.0.1:6503`，开发时 `/api` 代理到 API。
+
+PowerShell 可在仓库根目录分别使用 `scripts/run-api.ps1` 与 `scripts/dev-web.ps1 -SkipInstall`；后者要求已安装依赖，不传 `-SkipInstall` 会运行 `npm install`，可能更新锁文件。
+
+## 验证与旧工具
+
+- 检查命令见 [AGENTS](AGENTS.md#验证)。当前没有后端测试项目、前端自动化交互测试或 CI 工作流，构建不能替代接口和页面验收。
+- `scripts/test-backend.ps1` 仍查找不存在的根目录解决方案；`scripts/gen-crud-views.ps1` 仍生成 Vue 页面，均不作为当前开发入口。
+- Docker 与 OpenAPI 工具存在适配缺口，使用前查看 [部署说明](deploy/README.md) 和 [契约说明](openapi/README.md)。
+
+## 项目模板
+
+`scripts/new-project.ps1` 尚未完整适配当前项目：文本替换不覆盖 `.tsx`、排除前端锁文件，且末尾仍提示旧初始化和测试步骤。生成后必须核对重命名、数据库及配置，建立锁文件后才能使用 `npm ci`。
+
+不要对本仓库自身生成；`-Force` 会删除已有输出目录，`-InitGit` 会创建提交，仅在相应操作已授权时使用。生成 README 使用 [模板](template/README.stub.md)，模板说明中的链接按目标仓库位置解析。

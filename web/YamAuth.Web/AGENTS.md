@@ -1,36 +1,21 @@
 # 前端开发约定
 
-## 项目入口
+## 实现约定
 
-本目录是 YamAuth 管理端，使用 React、TypeScript、Ant Design 和 Vite。历史 Vue 页面、路由和国际化说明不适用于本目录。
-
-- 通用 CRUD：`src/resources.ts` 定义资源字段和接口映射，`src/pages/Crud/` 实现页面；新增资源优先复用现有机制。
-- 请求：复用 `src/api/request.ts` 的鉴权及错误处理。
-- 路由：`src/router/index.tsx`，由 `src/App.tsx` 中的 `HashRouter` 承载。
-- 样式：组件样式使用相邻的 `*.module.css`，全局样式在 `src/index.css`。
+- 新增资源优先复用 `src/resources.ts` 与 `src/pages/Crud/`，请求复用 `src/api/request.ts` 的鉴权及错误处理。
+- 菜单 RoutePath、资源 path 与接口地址需分别匹配；菜单记录不会自动创建页面或接口。
+- 样式沿用相邻 `*.module.css`，全局样式集中于 `src/index.css`。
+- 检查规则以 ESLint、Prettier 和 TypeScript 配置为准，不通过放宽规则掩盖问题；格式化和自动修复仅限本次改动文件。
+- 为业务数据及接口保留准确类型，不用 `any`、宽泛字典或类型断言替代业务类型。
 
 ## 本地开发
 
 使用 Node.js 22.13+（22.x）或 24+，在本目录执行：
 
 ```sh
-npm ci          # 需要安装依赖时，按锁文件安装
-npm run dev     # 启动开发服务：127.0.0.1:6503
-npm run check   # 依次执行 lint、格式检查与 TypeScript 检查及构建
+npm ci
+npm run dev
+npm run check
 ```
 
-其他命令见 `package.json`。API 地址由 `VITE_API_BASE_URL` 配置；开发服务将 `/api` 代理到 `http://localhost:6500`。前端环境变量不得保存密钥，不提交真实密码或令牌。
-
-## 实现约定
-
-- 格式和静态检查以 `.prettierrc.json`、`eslint.config.mjs` 和 `tsconfig*.json` 为准，不通过放宽检查规则掩盖问题。
-- 命名沿用所在模块惯例，优先使用 `@/` 导入别名和 `import type`。
-- 为已知结构的业务数据及接口请求、响应定义准确类型，并在通用封装中保留类型约束；允许合理类型推断，不用 `any`、宽泛字典或类型断言替代业务类型。
-- 文档和新增注释使用中文。保留用户已有改动，仅修改、格式化或自动修复本次任务相关文件。
-
-## 验证与交付
-
-- 修改前端代码、依赖或构建配置后运行 `npm run check`；仅修改文档时检查相关文档。
-- 当前未配置自动化交互测试。按受影响流程验收；修改异步请求或组件生命周期逻辑时，检查相关竞态、失败处理和资源释放。用户明确自行验收时，完成可行的静态检查并交接验收项。
-- 分别说明静态检查、模拟接口回归和真实后端联调的实际结果；静态检查与构建成功不代表交互验收通过。新增测试设施时同步补充执行命令。
-- 未经明确要求，不执行 `git commit` 或 `git push`。Git 提交标题和说明使用中文，代码标识符等必要原文保留。
+`check` 执行 lint、格式、类型检查和构建。配置与启动地址见 [项目 README](../../README.md#环境与配置)；前端环境变量会进入客户端产物，不得存放密钥。

@@ -246,25 +246,6 @@ if (Test-Path -LiteralPath $readmeStub) {
     else { [IO.File]::WriteAllText($readmeDest, $readme, $utf8NoBom) }
 }
 
-$docsReadme = Join-Path $dest 'docs\README.md'
-if (Test-Path -LiteralPath $docsReadme) {
-    $doc = [IO.File]::ReadAllText($docsReadme, $utf8NoBom)
-    $doc = $doc -replace '(?m)^>[^\r\n]*\r?\n', ''
-    $bannerStub = Join-Path $templateRoot 'template\docs-banner.stub.md'
-    if (Test-Path -LiteralPath $bannerStub) {
-        $banner = [IO.File]::ReadAllText($bannerStub, $utf8NoBom)
-        $banner = $banner.Replace('{{ProjectName}}', $Name)
-        $banner = $banner.Replace('{{GeneratedDate}}', (Get-Date -Format 'yyyy-MM-dd'))
-    }
-    else {
-        $banner = "> Project: $Name (from YamAuth scaffold $(Get-Date -Format 'yyyy-MM-dd')).`r`n`r`n"
-    }
-    if (-not $doc.StartsWith('> **项目**') -and -not $doc.StartsWith('> Project:')) {
-        if ($WhatIf) { Write-Host "[WhatIf] prepend banner to docs/README.md" }
-        else { [IO.File]::WriteAllText($docsReadme, $banner + $doc.TrimStart(), $utf8NoBom) }
-    }
-}
-
 if ($InitGit -and -not $WhatIf) {
     Push-Location $dest
     git init | Out-Null

@@ -1,146 +1,48 @@
-# YamAuth 部署指南
+# 部署说明
 
-> 脚手架阶段以 Docker Compose 为主；裸机部署见 §4。路线图见 [docs/scaffold-roadmap.md](../docs/scaffold-roadmap.md)。
+当前 Docker 工具有已知缺口，尚不能直接按 Compose 文件完成部署。先确认 [数据库准备](../README.md#数据库准备) 与 [授权边界](../README.md#项目边界)；生产环境不会执行开发种子，账号需提前准备。
 
----
+## 发布配置
 
-## 1. 前置条件
+通过目标环境配置提供以下项目，不沿用开发凭据或将真实密钥提交到仓库：
 
-- Docker 24+ 与 Docker Compose v2
-- 已创建 SQL Server 库：`YamBase`、`YamBzss`（或运行 `scripts/init-db.ps1 -StartDocker -UpdateAppSettings`）
-- 已按 [docs/README.md §常用脚本](../docs/README.md#常用脚本scripts) 执行 Auth / 数据权限相关 SQL（`init-db.ps1` 可自动完成）
+| 配置 | 要求 |
+|------|------|
+| `ASPNETCORE_ENVIRONMENT` | Production；运行发布 DLL 不读取 launchSettings |
+| `Db__Base` / `Db__Bzss` | 目标数据库的两条逻辑连接 |
+| `Jwt__SecretKey` / `Jwt__Issuer` / `Jwt__Audience` | 部署专用强随机密钥，签发与验证约定一致 |
+| `Cors__AllowedOrigins__*` | 核对最终合并列表，只保留所需来源 |
+| `Swagger__Enabled` | 生产明确设为 false；当前 Production JSON 仍为 true，Compose 会覆盖为 false |
+| `VITE_API_BASE_URL` | 前端构建时设置，默认 /api；构建完成后改运行环境变量不会更新客户端 |
 
----
+## 手工发布
 
-## 2. Docker Compose 快速启动
+需要 .NET SDK 8.x，在仓库根目录执行：
 
-在**仓库根目录**：
-
-```bash
-cp deploy/.env.example deploy/.env
-# 编辑 deploy/.env：Db__Base、Db__Bzss、Jwt__SecretKey（≥32 字节）
-
-docker compose -f deploy/docker-compose.yml up -d --build
-```
-
-| 服务 | 默认端口 | 说明 |
-|------|----------|------|
-| web | 8080 | Nginx 静态页 + `/api` 反代 |
-| api | 6500 | 直连 API（也可只用 Web 反代） |
-
-验证：
-
-- 浏览器：`http://localhost:8080`
-- 健康检查：`http://localhost:6500/health`（需数据库可达）
-
-### 2.1 可选：Compose 内置 SQL Server
-
-仅本地试用，**生产请用托管数据库**：
-
-```bash
-# deploy/.env 中设置 MSSQL_SA_PASSWORD
-docker compose -f deploy/docker-compose.yml --profile with-db up -d
-# 建库并跑 scripts/ 后再启动 api/web
-```
-
----
-
-## 3. 环境变量说明
-
-Compose 通过 `environment` 注入 ASP.NET Core 配置（`Section__Key` 格式）。
-
-| 变量 | 必填 | 说明 |
-|------|------|------|
-| `Db__Base` | 是 | YamBase 连接串 |
-| `Db__Bzss` | 是 | YamBzss 连接串 |
-| `Jwt__SecretKey` | 是 | HS256 密钥，≥32 字符 |
-| `Cors__AllowedOrigins__0` | 是 | 与 `WEB_ORIGIN` 一致 |
-| `Rbac__SyncPermissionsOnStartup` | — | 生产 **false**；开发 true |
-| `Smtp__*` | — | 找回密码；不用则 `Smtp__Enabled=false` |
-
-模板文件：`deploy/.env.example`  
-静态默认：`src/YamAuth.Api/appsettings.Production.json`（占位符，不含密钥）
-
----
-
-## 4. 裸机 / IIS / Kestrel
-
-### 4.1 后端
-
-```bash
+```sh
 dotnet publish src/YamAuth.Api/YamAuth.Api.csproj -c Release -o ./publish
-cd publish
-export ASPNETCORE_ENVIRONMENT=Production
-export Db__Base="..."
-export Db__Bzss="..."
-export Jwt__SecretKey="..."
+```
+
+在目标主机配置好上述环境后，进入发布目录，使用 .NET 8 ASP.NET Core 运行时：
+
+```sh
 dotnet YamAuth.Api.dll --urls http://0.0.0.0:6500
 ```
 
-### 4.2 前端
+前端按 [Node.js 要求](../web/YamAuth.Web/AGENTS.md#本地开发) 准备环境，从仓库根目录执行：
 
-```bash
+```sh
 cd web/YamAuth.Web
 npm ci
-npm run build   # VITE_API_BASE=/api
-# 将 dist/ 交给 Nginx/IIS，/api 反代到 Kestrel
+npm run check
 ```
 
-Nginx 参考：`deploy/docker/nginx.conf`（把 `api:8080` 改为实际后端地址）。
+将生成的 `dist/` 交给静态服务器，`/api/` 反代到后端。[Nginx 示例](docker/nginx.conf) 中的 `api:8080` 需替换为实际地址。
 
----
+## Docker 已知限制
 
-## 5. 生产 Checklist
+- [API Dockerfile](docker/Dockerfile.api) 复制了不存在的根目录解决方案，且缺少 YamAuth.Dtos，需修复后验证构建。
+- [Web Dockerfile](docker/Dockerfile.web) 使用旧变量 VITE_API_BASE，自定义地址需适配 VITE_API_BASE_URL 及构建传参。
+- [Compose](docker-compose.yml) 和环境样例保留旧 RBAC / SMTP 变量，当前代码未接入对应功能。`with-db` 只启动数据库容器，不准备业务表或账号。
 
-- [ ] `Jwt__SecretKey` 使用强随机值，且不提交到版本库
-- [ ] `Rbac__SyncPermissionsOnStartup=false`
-- [ ] `Swagger__Enabled=false`
-- [ ] CORS 仅允许正式 Web 域名
-- [ ] SQL 迁移脚本已在目标库执行完毕
-- [ ] 日志目录可写（Serilog File sink，默认 `logs/`）
-- [ ] 修改角色/菜单/数据范围后通知用户重新登录
-- [ ] CI 通过：`.github/workflows/ci.yml`（push/PR 自动 build + test）
-
----
-
-## 6. CI
-
-GitHub Actions 工作流 `.github/workflows/ci.yml`：
-
-**dotnet job**
-
-1. `dotnet restore` / `build` / `test`（Release）
-2. OpenAPI 导出 + `api.generated.ts` 漂移检查（`scripts/generate-openapi.sh`）
-3. `dotnet list package --vulnerable --include-transitive`（有漏洞则失败）
-
-**web job**
-
-1. `npm ci` / `npm run build`（含 `vue-tsc`）
-2. `npm audit --audit-level=high`
-3. Playwright E2E（冒烟 + 登录流）
-
-若使用 SVN，可在 Jenkins / Azure DevOps 中复用相同命令。
-
----
-
-## 7. 镜像单独构建
-
-```bash
-# API
-docker build -f deploy/docker/Dockerfile.api -t yam-auth-api .
-
-# Web
-docker build -f deploy/docker/Dockerfile.web -t yam-auth-web .
-```
-
----
-
-## 8. 故障排查
-
-| 现象 | 可能原因 |
-|------|----------|
-| API 启动即退出 | 连接串或 JWT 未配置 |
-| `/health` Unhealthy | 数据库不可达或库名错误 |
-| 登录 401 / CORS | `WEB_ORIGIN` 与浏览器地址不一致 |
-| 403 有菜单无数据 | 数据范围或 list 权限；重新登录 |
-| 找回密码无邮件 | `Smtp__Enabled` 与 SMTP 凭据 |
+修复后验证 Compose 时，从仓库根目录显式传入 `--env-file deploy/.env -f deploy/docker-compose.yml`，避免读错配置。本页未完成部署验收；应分别验证镜像构建、API `/health`、登录和代表性 CRUD。健康检查仅检查数据库可达性，不代表业务结构和接口正确。
