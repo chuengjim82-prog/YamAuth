@@ -85,13 +85,19 @@ public class DtoGenerator
         sb.AppendLine();
         sb.AppendLine($"namespace YamAuth.Dtos.{t.Module};");
         sb.AppendLine();
-        if (TreeResourceRules.IsTree(t))
+        if (QueryResourceRules.SupportsAll(t))
         {
+            var sortColumn = t.Columns.FirstOrDefault(c => c.Name == "SortIndex");
+            var orderDescription = sortColumn == null ? "Id" : "SortIndex、Id";
             sb.AppendLine($"public class {t.EntityName}QueryDto : PagedQuery");
             sb.AppendLine("{");
-            sb.AppendLine("    /// <summary>是否返回全部匹配记录；缺省或 false 时保留原分页、Keyword 过滤和排序，Size 上限为 200。</summary>");
+            sb.AppendLine(QueryResourceRules.UsesStablePaging(t)
+                ? "    /// <summary>是否返回全部匹配记录；缺省或 false 时保留分页和 Keyword 过滤，按 CreateTime、Id 降序返回，Size 上限为 200。</summary>"
+                : "    /// <summary>是否返回全部匹配记录；缺省或 false 时保留原分页、Keyword 过滤和排序，Size 上限为 200。</summary>");
             sb.AppendLine("    /// <remarks>");
-            sb.AppendLine("    /// true 时忽略 Page/Size，仍应用 Keyword 并排除已删除记录，按 SortIndex、Id 升序返回。");
+            sb.AppendLine($"    /// true 时忽略 Page/Size，仍应用 Keyword 并排除已删除记录，按 {orderDescription} 升序返回。");
+            if (sortColumn?.IsNullable == true)
+                sb.AppendLine("    /// SortIndex 为空时按 0 排序。");
             sb.AppendLine("    /// 保留现有响应包装及 data.total/items；items 为平面数组，取全时 total 等于返回记录数。");
             if (t.TableName == "tb_Auth_CrudMenu")
                 sb.AppendLine("    /// 菜单管理查询包含隐藏菜单，沿用原接口的授权与可见范围。");

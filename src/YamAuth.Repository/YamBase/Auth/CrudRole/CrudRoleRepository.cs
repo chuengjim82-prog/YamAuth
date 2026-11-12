@@ -17,7 +17,7 @@ public partial class CrudRoleRepository : RepositoryBase<CrudRole>, ICrudRoleRep
     public Task<int> UpdateAsync(CrudRole entity) => UpdateEntityAsync(entity);
     public Task<int> SoftDeleteAsync(long id) => SoftDeleteByIdAsync(id);
 
-    public async Task<(long total, List<CrudRole> items)> PageAsync(int page, int size, string? keyword)
+    public async Task<(long total, List<CrudRole> items)> PageAsync(int page, int size, string? keyword, bool all = false)
     {
         var select = Repo.Select.Where(x => !x.IsDeleted);
         var kw = KeywordQueryExtensions.Normalize(keyword);
@@ -25,8 +25,13 @@ public partial class CrudRoleRepository : RepositoryBase<CrudRole>, ICrudRoleRep
         {
             select = select.Where(x => (x.RoleCode != null && x.RoleCode.Contains(kw)) || (x.RoleName != null && x.RoleName.Contains(kw)) || (x.Remark != null && x.Remark.Contains(kw)) || (x.CreatorNic != null && x.CreatorNic.Contains(kw)) || (x.UpdaterNic != null && x.UpdaterNic.Contains(kw)) || (x.DeleterNic != null && x.DeleterNic.Contains(kw)));
         }
+        if (all)
+        {
+            var allItems = await select.OrderBy(x => x.SortIndex ?? 0).OrderBy(x => x.Id).ToListAsync();
+            return (allItems.Count, allItems);
+        }
         var total = await select.CountAsync();
-        var items = await select.Page(page, size).OrderByDescending(x => x.CreateTime).ToListAsync();
+        var items = await select.Page(page, size).OrderByDescending(x => x.CreateTime).OrderByDescending(x => x.Id).ToListAsync();
         return (total, items);
     }
 

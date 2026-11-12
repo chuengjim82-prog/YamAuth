@@ -27,7 +27,7 @@ public class RepositoryGenerator
         sb.AppendLine($"public partial interface I{t.EntityName}Repository : IRepository");
         sb.AppendLine("{");
         sb.AppendLine($"    Task<{t.EntityName}?> GetAsync(long id);");
-        sb.AppendLine($"    Task<(long total, List<{t.EntityName}> items)> PageAsync(int page, int size, string? keyword{(TreeResourceRules.IsTree(t) ? ", bool all = false" : "")});");
+        sb.AppendLine($"    Task<(long total, List<{t.EntityName}> items)> PageAsync(int page, int size, string? keyword{(QueryResourceRules.SupportsAll(t) ? ", bool all = false" : "")});");
         sb.AppendLine($"    Task<long> InsertAsync({t.EntityName} entity);");
         sb.AppendLine($"    Task<int> UpdateAsync({t.EntityName} entity);");
         sb.AppendLine($"    Task<int> SoftDeleteAsync(long id);");
@@ -67,7 +67,7 @@ public class RepositoryGenerator
     {
         var sb = new StringBuilder();
         sb.AppendLine();
-        sb.AppendLine($"    public async Task<(long total, List<{t.EntityName}> items)> PageAsync(int page, int size, string? keyword{(TreeResourceRules.IsTree(t) ? ", bool all = false" : "")})");
+        sb.AppendLine($"    public async Task<(long total, List<{t.EntityName}> items)> PageAsync(int page, int size, string? keyword{(QueryResourceRules.SupportsAll(t) ? ", bool all = false" : "")})");
         sb.AppendLine("    {");
         sb.AppendLine("        var select = Repo.Select.Where(x => !x.IsDeleted);");
         sb.AppendLine("        var kw = KeywordQueryExtensions.Normalize(keyword);");
@@ -84,16 +84,19 @@ public class RepositoryGenerator
             sb.AppendLine($"            select = select.Where(x => {expr});");
             sb.AppendLine("        }");
         }
-        if (TreeResourceRules.IsTree(t))
+        if (QueryResourceRules.SupportsAll(t))
         {
+            var sortColumn = t.Columns.FirstOrDefault(c => c.Name == "SortIndex");
+            var sort = sortColumn == null ? "" : $".OrderBy(x => x.SortIndex{(sortColumn.IsNullable ? " ?? 0" : "")})";
             sb.AppendLine("        if (all)");
             sb.AppendLine("        {");
-            sb.AppendLine("            var allItems = await select.OrderBy(x => x.SortIndex).OrderBy(x => x.Id).ToListAsync();");
+            sb.AppendLine($"            var allItems = await select{sort}.OrderBy(x => x.Id).ToListAsync();");
             sb.AppendLine("            return (allItems.Count, allItems);");
             sb.AppendLine("        }");
         }
         sb.AppendLine("        var total = await select.CountAsync();");
-        sb.AppendLine("        var items = await select.Page(page, size).OrderByDescending(x => x.CreateTime).ToListAsync();");
+        var stableOrder = QueryResourceRules.UsesStablePaging(t) ? ".OrderByDescending(x => x.Id)" : "";
+        sb.AppendLine($"        var items = await select.Page(page, size).OrderByDescending(x => x.CreateTime){stableOrder}.ToListAsync();");
         sb.AppendLine("        return (total, items);");
         sb.AppendLine("    }");
         return sb.ToString();

@@ -32,7 +32,16 @@ import { createCrudApi } from '@/api/crud'
 import { findResource, type FieldDef, type ResourceDef } from '@/resources'
 import type { Row } from '@/types'
 import { useApp } from '@/store/AppContext'
-import { ancestors, buildTree, ISSUE_GROUP, parentOptions, treeView, type TreeModel } from './tree'
+import {
+  ancestors,
+  buildTree,
+  ISSUE_GROUP,
+  parentOptions,
+  treeLabel,
+  treeView,
+  validateTreeResult,
+  type TreeModel
+} from './tree'
 import { useTableViewport } from './useTableViewport'
 import { useDepartmentLabels } from './useDepartmentLabels'
 import { useTenantLabels } from './useTenantLabels'
@@ -216,6 +225,7 @@ function ResourceCrudPage({
     pending
       .then((result) => {
         if (cancelled) return
+        if (request.tree) validateTreeResult(result)
         setTotal(result.total)
         const rows = result.items ?? []
         setItems(rows)
@@ -241,7 +251,7 @@ function ResourceCrudPage({
         setLoadResult({ request, failed: false })
       })
       .catch(() => {
-        // 请求拦截器负责错误提示，列表明确显示失败状态，不能误报为暂无数据。
+        // 网络错误由拦截器提示；全量结果校验失败同样显示失败状态，不能误报为暂无数据。
         if (!cancelled) setLoadResult({ request, failed: true })
       })
     return () => {
@@ -288,8 +298,8 @@ function ResourceCrudPage({
         if (field.name === resource.tree?.nameField)
           return (
             <span className={styles.treeName}>
-              <span className={styles.treeNameText} title={fieldText(value || '未命名')}>
-                {highlight(fieldText(value || '未命名'))}
+              <span className={styles.treeNameText} title={treeLabel(row, resource.tree)}>
+                {highlight(treeLabel(row, resource.tree))}
               </span>
               {Boolean(row.treeIssue) && (
                 <Tooltip title={String(row.treeIssue)}>
@@ -298,6 +308,14 @@ function ResourceCrudPage({
               )}
             </span>
           )
+        if (treeModel && field.name === 'parentId') {
+          if (value === null || value === undefined || value === '' || Number(value) === 0)
+            return ''
+          // 从完整树查找上级，搜索后的展示范围不影响名称解析；缺失上级不能伪装成顶级。
+          const parent = treeModel.byId.get(Number(value))
+          const label = `${parent ? treeLabel(parent, treeModel.config) : '上级不存在'}（${fieldText(value)}）`
+          return <span title={label}>{highlight(label)}</span>
+        }
         if (field.kind === 'bool') return value ? '是' : '否'
         if (field.kind === 'icon')
           return <IconGlyph name={value == null ? undefined : fieldText(value)} />
@@ -391,7 +409,8 @@ function ResourceCrudPage({
     setEditingId(null)
     const values = toFormValues(resource.fields)
     if (resource.tree) {
-      values.parentId = parent ? Number(parent.id) : 0
+      // 顶级沿用字段默认值：应用允许 null，其余层级资源使用 0。
+      if (parent) values.parentId = Number(parent.id)
       if (resource.tree.appScoped && parent) values.appsId = parent.appsId ?? null
     }
     setFormValues(values)
@@ -689,7 +708,11 @@ function ResourceEditForm({
     [treeModel, editingId, appsId]
   )
   const hasChildren = editingId !== null && Boolean(treeModel?.children.get(editingId)?.length)
-  const options = [{ id: 0, pId: -1, value: 0, title: `顶级${resource.title}` }, ...candidates]
+  const rootTitle = `顶级${resource.title}`
+  const options = [
+    { id: 0, pId: -1, value: 0, title: rootTitle, searchText: rootTitle },
+    ...candidates
+  ]
 
   useEffect(() => {
     // clearOnDestroy 也会在 StrictMode 试卸载时清空存储；连接后恢复本次初始值。
@@ -739,14 +762,30 @@ function ResourceEditForm({
               name={field.name}
               label={field.label}
               valuePropName={field.kind === 'bool' ? 'checked' : 'value'}
+              getValueProps={
+                isParent && field.nullable
+                  ? (value: unknown) => ({ value: value === null ? 0 : value })
+                  : undefined
+              }
+              normalize={
+                isParent && field.nullable
+                  ? (value: unknown, previous: unknown) => {
+                      // null 与 0 均显示为顶级；保留未改动的旧 0，移回顶级则使用 null。
+                      return value === 0 && previous !== 0 ? null : value
+                    }
+                  : undefined
+              }
+              required={isParent || undefined}
               extra={lockedApp ? '存在子功能，请先调整子功能后再修改所属应用' : undefined}
               rules={
                 isParent
                   ? [
-                      { required: true, message: '请选择上级或顶级' },
+                      { required: !field.nullable, message: '请选择上级或顶级' },
                       {
                         validator: (_rule, value) =>
-                          value === 0 || candidates.some((option) => option.value === value)
+                          value === 0 ||
+                          (field.nullable && value === null) ||
+                          candidates.some((option) => option.value === value)
                             ? Promise.resolve()
                             : Promise.reject(new Error('上级不合法，请重新选择'))
                       }
@@ -764,13 +803,12 @@ function ResourceEditForm({
               {isParent ? (
                 <TreeSelect
                   style={{ width: '100%' }}
-                  showSearch
+                  showSearch={{ treeNodeFilterProp: 'searchText' }}
                   allowClear
                   treeDefaultExpandAll
                   treeDataSimpleMode={{ id: 'id', pId: 'pId', rootPId: -1 }}
                   treeData={options}
                   placeholder="请选择上级或顶级"
-                  treeNodeFilterProp="title"
                 />
               ) : lockedApp ? (
                 <InputNumber style={{ width: '100%' }} disabled />

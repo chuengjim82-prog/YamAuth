@@ -1,5 +1,5 @@
 import type { TreeDef } from '@/resources'
-import type { Row } from '@/types'
+import type { PagedResult, Row } from '@/types'
 import { fieldText } from './fieldText'
 
 export const ISSUE_GROUP = '__tree_issues__'
@@ -10,9 +10,39 @@ export interface TreeRow extends Row {
   treeGroup?: boolean
 }
 
+/** 全量接口必须交付完整且编号唯一的数据，避免旧后端忽略 all 时展示残缺树。 */
+export function validateTreeResult(result: PagedResult<Row>) {
+  if (
+    !result ||
+    !Number.isSafeInteger(result.total) ||
+    result.total < 0 ||
+    !Array.isArray(result.items) ||
+    result.items.length !== result.total
+  ) {
+    throw new Error('树数据不完整或响应无效，请重新加载')
+  }
+  const ids = new Set<number>()
+  for (const row of result.items) {
+    const id = Number(row?.id)
+    if (!Number.isSafeInteger(id) || id <= 0 || ids.has(id)) {
+      throw new Error('记录编号无效或重复，请重新加载')
+    }
+    ids.add(id)
+  }
+}
+
+export function treeLabel(row: Row, config: TreeDef) {
+  return (
+    (config.labelFields ?? [config.nameField])
+      .map((field) => fieldText(row[field] ?? ''))
+      .filter((part) => part.trim())
+      .join(' ') || '未命名'
+  )
+}
+
 export function buildTree(items: Row[], config: TreeDef) {
   const sorted = [...items].sort(
-    (a, b) => Number(a.sortIndex) - Number(b.sortIndex) || Number(a.id) - Number(b.id)
+    (a, b) => Number(a.sortIndex ?? 0) - Number(b.sortIndex ?? 0) || Number(a.id) - Number(b.id)
   )
   const byId = new Map(sorted.map((row) => [Number(row.id), row]))
   const children = new Map<number, number[]>()
@@ -165,10 +195,16 @@ export function parentOptions(model: TreeModel, editingId: number | null, appsId
         !model.issues.get(Number(row.id)) &&
         (!model.config.appScoped || (row.appsId ?? null) === (appsId ?? null))
     )
-    .map((row) => ({
-      id: Number(row.id),
-      pId: Number(row.parentId),
-      value: Number(row.id),
-      title: `${fieldText(row[model.config.nameField] || '未命名')}（${fieldText(row.id)}）`
-    }))
+    .map((row) => {
+      const title = `${treeLabel(row, model.config)}（${fieldText(row.id)}）`
+      return {
+        id: Number(row.id),
+        pId: Number(row.parentId),
+        value: Number(row.id),
+        title,
+        searchText: model.config.parentSearchFields
+          ? model.config.parentSearchFields.map((field) => fieldText(row[field] ?? '')).join(' ')
+          : title
+      }
+    })
 }

@@ -24,7 +24,7 @@ public partial class CrudItemService : ICrudItemService
 
     public async Task<PagedResult<CrudItemDto>> PageAsync(CrudItemQueryDto q)
     {
-        var (total, items) = await _repo.PageAsync(q.Page, q.Size, q.Keyword);
+        var (total, items) = await _repo.PageAsync(q.Page, q.Size, q.Keyword, q.All);
         return new PagedResult<CrudItemDto>
         {
             Total = total,

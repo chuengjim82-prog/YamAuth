@@ -65,7 +65,7 @@ public class ServiceGenerator
         sb.AppendLine();
         sb.AppendLine($"    public async Task<PagedResult<{t.EntityName}Dto>> PageAsync({t.EntityName}QueryDto q)");
         sb.AppendLine("    {");
-        sb.AppendLine($"        var (total, items) = await _repo.PageAsync(q.Page, q.Size, q.Keyword{(TreeResourceRules.IsTree(t) ? ", q.All" : "")});");
+        sb.AppendLine($"        var (total, items) = await _repo.PageAsync(q.Page, q.Size, q.Keyword{(QueryResourceRules.SupportsAll(t) ? ", q.All" : "")});");
         sb.AppendLine($"        return new PagedResult<{t.EntityName}Dto>");
         sb.AppendLine("        {");
         sb.AppendLine("            Total = total,");

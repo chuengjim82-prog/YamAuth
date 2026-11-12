@@ -24,7 +24,7 @@ public partial class DataRoleService : IDataRoleService
 
     public async Task<PagedResult<DataRoleDto>> PageAsync(DataRoleQueryDto q)
     {
-        var (total, items) = await _repo.PageAsync(q.Page, q.Size, q.Keyword);
+        var (total, items) = await _repo.PageAsync(q.Page, q.Size, q.Keyword, q.All);
         return new PagedResult<DataRoleDto>
         {
             Total = total,

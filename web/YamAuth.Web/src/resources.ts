@@ -26,6 +26,10 @@ export interface TreeDef {
   nameField: string
   searchFields: string[]
   appScoped?: boolean
+  /** 组合展示节点文字，不增加接口字段或改变提交数据。 */
+  labelFields?: string[]
+  /** 上级选择器独立搜索字段；未配置时仍按节点文字和编号搜索。 */
+  parentSearchFields?: string[]
 }
 
 function f(
@@ -83,6 +87,19 @@ export const resources: ResourceDef[] = [
     path: '/auth/apps-infos',
     api: '/v1/auth/apps-infos',
     title: '应用',
+    tree: {
+      nameField: 'appsName',
+      searchFields: [
+        'appsCode',
+        'appsName',
+        'appKey',
+        'remark',
+        'creatorNic',
+        'updaterNic',
+        'deleterNic'
+      ],
+      parentSearchFields: ['appsName', 'appsCode', 'id']
+    },
     fields: [
       id,
       { ...tenantId, formControl: 'tenant' },
@@ -131,6 +148,12 @@ export const resources: ResourceDef[] = [
     path: '/auth/crud-items',
     api: '/v1/auth/crud-items',
     title: '功能接口',
+    tree: {
+      nameField: 'apiPath',
+      labelFields: ['method', 'apiPath'],
+      searchFields: ['method', 'apiPath', 'remark', 'creatorNic', 'updaterNic', 'deleterNic'],
+      parentSearchFields: ['method', 'apiPath', 'id']
+    },
     fields: [
       id,
       f('crudId', '功能', 'number', { nullable: true }),
@@ -180,6 +203,11 @@ export const resources: ResourceDef[] = [
     path: '/auth/crud-roles',
     api: '/v1/auth/crud-roles',
     title: '功能角色',
+    tree: {
+      nameField: 'roleName',
+      searchFields: ['roleCode', 'roleName', 'remark', 'creatorNic', 'updaterNic', 'deleterNic'],
+      parentSearchFields: ['roleName', 'roleCode', 'id']
+    },
     fields: [
       id,
       { ...tenantId, formControl: 'tenant' },
@@ -216,6 +244,11 @@ export const resources: ResourceDef[] = [
     path: '/auth/data-roles',
     api: '/v1/auth/data-roles',
     title: '数据角色',
+    tree: {
+      nameField: 'roleName',
+      searchFields: ['roleCode', 'roleName', 'remark', 'creatorNic', 'updaterNic', 'deleterNic'],
+      parentSearchFields: ['roleName', 'roleCode', 'id']
+    },
     fields: [
       id,
       { ...tenantId, formControl: 'tenant' },
