@@ -55,7 +55,7 @@ export const resources: ResourceDef[] = [
     title: '用户',
     fields: [
       id,
-      tenantId,
+      { ...tenantId, formControl: 'tenant' },
       f('userName', '用户名', 'string', { required: true }),
       f('nickName', '昵称', 'string', { required: true }),
       f('password', '密码', 'password', { required: true }),
@@ -85,7 +85,7 @@ export const resources: ResourceDef[] = [
     title: '应用',
     fields: [
       id,
-      tenantId,
+      { ...tenantId, formControl: 'tenant' },
       f('parentId', '上级', 'number', { nullable: true }),
       f('appsCode', '应用编码'),
       f('appsName', '应用名称'),
@@ -100,7 +100,7 @@ export const resources: ResourceDef[] = [
     title: '应用用户',
     fields: [
       id,
-      tenantId,
+      { ...tenantId, formControl: 'tenant' },
       f('appsId', '应用', 'number', { nullable: true }),
       f('userId', '用户', 'number', { nullable: true }),
       f('isAdmin', '管理员', 'bool'),
@@ -182,7 +182,7 @@ export const resources: ResourceDef[] = [
     title: '功能角色',
     fields: [
       id,
-      tenantId,
+      { ...tenantId, formControl: 'tenant' },
       f('appsId', '应用', 'number', { nullable: true }),
       f('parentId', '上级', 'number'),
       f('roleCode', '角色编码'),
@@ -218,7 +218,7 @@ export const resources: ResourceDef[] = [
     title: '数据角色',
     fields: [
       id,
-      tenantId,
+      { ...tenantId, formControl: 'tenant' },
       f('appsId', '应用', 'number', { nullable: true }),
       f('parentId', '上级', 'number'),
       f('roleCode', '角色编码'),
