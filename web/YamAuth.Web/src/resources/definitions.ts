@@ -835,7 +835,10 @@ export const employeeResource = {
   path: '/unit/employees',
   title: '员工',
   api: api.employeeApi,
-  relations: { departmentId: (row) => row.departmentId },
+  relations: {
+    departmentId: (row) => row.departmentId,
+    userId: (row) => row.userId
+  },
   load: (page, size, keyword) =>
     api.employeeApi.page({ page, size, ...(keyword ? { keyword } : {}) }),
   toForm: unitForms.employeeToForm,
@@ -852,7 +855,7 @@ export const employeeResource = {
     employeeFields.form(
       'userId',
       '用户',
-      { kind: 'number', table: true, nullable: true },
+      { kind: 'number', table: true, nullable: true, formControl: 'user' },
       (row) => row.userId
     ),
     employeeFields.form('remark', '备注', { kind: 'textarea', table: true }, (row) => row.remark)
