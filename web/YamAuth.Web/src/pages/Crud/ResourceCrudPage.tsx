@@ -52,6 +52,8 @@ import { fieldText } from './fieldText'
 import emptyImage from './assets/list-empty.png'
 import styles from './Crud.module.css'
 import CrudInfoSelect from './CrudInfoSelect'
+import CrudRelationSelect from './CrudRelationSelect'
+import { useCrudRelationOptions } from './useCrudRelationOptions'
 import { crudMenuTypeLabel, crudMenuTypeOptions } from './menuType'
 
 const HTTP_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS']
@@ -85,6 +87,16 @@ export default function ResourceCrudPage<E extends Entity, F extends object, C, 
   const departmentLabel = useDepartmentLabels(items, resource.relations?.departmentId)
   const tenantLabel = useTenantLabels(items, resource.relations?.tenantId)
   const crudInfoLabel = useCrudInfoLabels(items, resource.relations?.crudId)
+  const roleOptions = useCrudRelationOptions(
+    'crudRole',
+    Boolean(resource.relations?.crudRoleId),
+    items
+  )
+  const infoOptions = useCrudRelationOptions(
+    'crudInfoId',
+    Boolean(resource.relations?.crudInfoId),
+    items
+  )
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
@@ -264,6 +276,10 @@ export default function ResourceCrudPage<E extends Entity, F extends object, C, 
           const label = `${parent ? treeLabel(parent, treeModel.config) : '上级不存在'}（${fieldText(value)}）`
           return <span title={label}>{highlight(label)}</span>
         }
+        if (field.formControl === 'crudRole')
+          return roleOptions.label(resource.relations?.crudRoleId?.(row))
+        if (field.formControl === 'crudInfoId')
+          return infoOptions.label(resource.relations?.crudInfoId?.(row))
         if (field.formControl === 'menuType') return crudMenuTypeLabel(value)
         if (field.kind === 'bool') return value ? '是' : '否'
         if (field.kind === 'icon')
@@ -833,6 +849,8 @@ function renderControl<E, F>(
   initialValue: unknown,
   onManualSelect: () => void
 ) {
+  if (field.formControl === 'crudRole' || field.formControl === 'crudInfoId')
+    return <CrudRelationSelect kind={field.formControl} active={active} disabled={saving} />
   if (field.formControl === 'app') return <AppSelect active={active} disabled={saving} />
   if (field.formControl === 'user') return <UserSelect active={active} disabled={saving} />
   if (field.formControl === 'crudInfo') return <CrudInfoSelect active={active} disabled={saving} />

@@ -442,8 +442,8 @@ export interface CrudRoleCrudForm {
 
 export function crudRoleCrudToForm(row?: CrudRoleCrudDto): CrudRoleCrudForm {
   return {
-    crudRoleId: row?.crudRoleId ?? 0,
-    crudInfoId: row?.crudInfoId ?? 0
+    crudRoleId: row?.crudRoleId ?? null,
+    crudInfoId: row?.crudInfoId ?? null
   }
 }
 

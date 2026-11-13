@@ -7,7 +7,8 @@ export interface Entity {
   id: number
 }
 type StringControl = 'httpMethod' | 'menuType'
-type NumberControl = 'tenant' | 'department' | 'crudInfo' | 'app' | 'user'
+type NumberControl =
+  'tenant' | 'department' | 'crudInfo' | 'app' | 'user' | 'crudRole' | 'crudInfoId'
 interface FieldOptionsBase {
   required?: boolean
   table?: boolean
@@ -99,6 +100,8 @@ export interface ResourceDef<E extends Entity, F extends object, C, U> {
     departmentId?: (row: E) => number | null
     appsId?: (row: E) => number | null
     userId?: (row: E) => number | null
+    crudRoleId?: (row: E) => number | null
+    crudInfoId?: (row: E) => number | null
     crudId?: (row: E) => number | null
   }
   tree?: TreeDef<E, F>

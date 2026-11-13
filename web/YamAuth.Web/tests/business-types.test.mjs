@@ -192,3 +192,88 @@ test('菜单类型不参与列表关键词搜索，名称搜索保留祖先后�
   assert.deepEqual([...view.matches], [2])
   assert.deepEqual([...view.visible].sort(), [1, 2])
 })
+
+test('角色功能新增必须选择，编辑保留历史编号且清空不能提交', () => {
+  const empty = authForms.crudRoleCrudToForm()
+  assert.deepEqual(empty, { crudRoleId: null, crudInfoId: null })
+  assert.throws(() => authForms.crudRoleCrudToCreate(empty), /功能角色/)
+  assert.throws(() => authForms.crudRoleCrudToCreate({ crudRoleId: 12, crudInfoId: null }), /功能/)
+  const historical = authForms.crudRoleCrudToForm({ crudRoleId: 0, crudInfoId: 999 })
+  assert.deepEqual(authForms.crudRoleCrudToUpdate(historical), { crudRoleId: 0, crudInfoId: 999 })
+  assert.throws(
+    () => authForms.crudRoleCrudToUpdate({ ...historical, crudRoleId: null }),
+    /功能角色/
+  )
+})
+
+test('角色功能选择器保留真实父子关系、失效父链及空名称，并拒绝不完整数据', async () => {
+  const { loadCrudRelationOptions } = await server.ssrLoadModule('/src/pages/Crud/crudRelation.ts')
+  const { crudRoleApi, crudInfoApi } = await server.ssrLoadModule('/src/api/entities.ts')
+  for (const [kind, api, nameField] of [
+    ['crudRole', crudRoleApi, 'roleName'],
+    ['crudInfoId', crudInfoApi, 'crudName']
+  ]) {
+    const original = api.all
+    try {
+      api.all = async () => ({
+        total: 3,
+        items: [
+          { ...row(1, 0, ''), [nameField]: '根' },
+          { ...row(2, 1, ''), [nameField]: '子节点' },
+          { ...row(3, 99, ''), [nameField]: null }
+        ]
+      })
+      const options = await loadCrudRelationOptions(kind)
+      assert.equal(options.find((item) => item.value === 2).pId, 1)
+      assert.equal(options.find((item) => item.value === 2).title, '子节点（编号：2）')
+      assert.equal(options.find((item) => item.value === 2).searchText, '子节点 2')
+      assert.equal(options.find((item) => item.value === 3).pId, 0)
+      assert.match(options.find((item) => item.value === 3).title, /未命名/)
+      api.all = async () => ({ total: 2, items: [{ id: 1 }] })
+      await assert.rejects(loadCrudRelationOptions(kind), /不完整/)
+    } finally {
+      api.all = original
+    }
+  }
+})
+
+test('角色选择器保留跨应用父子层级，功能选择器仍检查同应用约束', async () => {
+  const { loadCrudRelationOptions } = await server.ssrLoadModule('/src/pages/Crud/crudRelation.ts')
+  const { crudRoleApi, crudInfoApi } = await server.ssrLoadModule('/src/api/entities.ts')
+  for (const [kind, api, nameField] of [
+    ['crudRole', crudRoleApi, 'roleName'],
+    ['crudInfoId', crudInfoApi, 'crudName']
+  ]) {
+    const original = api.all
+    try {
+      // 父节点未关联应用或关联不同应用，都不应破坏合法的角色层级。
+      for (const parentAppsId of [null, 1]) {
+        api.all = async () => ({
+          total: 3,
+          items: [
+            { ...row(1, 0, '', parentAppsId), [nameField]: '根' },
+            { ...row(2, 1, '', 10), [nameField]: '子节点' },
+            { ...row(3, 2, '', 10), [nameField]: '孙节点' }
+          ]
+        })
+        const options = await loadCrudRelationOptions(kind)
+        assert.deepEqual(
+          options.map(({ value, pId }) => [value, pId]),
+          kind === 'crudRole'
+            ? [
+                [1, 0],
+                [2, 1],
+                [3, 2]
+              ]
+            : [
+                [1, 0],
+                [2, 0],
+                [3, 0]
+              ]
+        )
+      }
+    } finally {
+      api.all = original
+    }
+  }
+})

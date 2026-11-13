@@ -535,18 +535,22 @@ export const crudRoleCrudResource = {
   toForm: authForms.crudRoleCrudToForm,
   toCreate: authForms.crudRoleCrudToCreate,
   toUpdate: authForms.crudRoleCrudToUpdate,
+  relations: {
+    crudRoleId: (row) => row.crudRoleId,
+    crudInfoId: (row) => row.crudInfoId
+  },
   fields: [
     crudRoleCrudFields.id,
     crudRoleCrudFields.form(
       'crudRoleId',
       '功能角色',
-      { kind: 'number', required: true, table: true },
+      { kind: 'number', required: true, table: true, formControl: 'crudRole' },
       (row) => row.crudRoleId
     ),
     crudRoleCrudFields.form(
       'crudInfoId',
       '功能',
-      { kind: 'number', required: true, table: true },
+      { kind: 'number', required: true, table: true, formControl: 'crudInfoId' },
       (row) => row.crudInfoId
     )
   ]
