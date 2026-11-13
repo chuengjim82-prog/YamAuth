@@ -54,7 +54,7 @@ function previousPage<T>(result: PageResult<T> | undefined, request: PageRequest
 
 const PAGE_SIZE = 20
 
-// 租户与部门共用分页、搜索和失效绑定处理，各自提供接口及展示文案。
+// 租户、部门与用户共用分页、搜索和失效绑定处理，各自提供接口及展示文案。
 export default function RemoteEntitySelect<T extends { id: number }>({
   apiPath,
   entityName,

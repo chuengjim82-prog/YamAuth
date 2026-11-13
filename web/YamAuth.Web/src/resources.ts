@@ -10,7 +10,7 @@ export interface FieldDef {
   form?: boolean
   nullable?: boolean
   /** 仅对显式配置的字段使用选择控件，保留原有数据类型。 */
-  formControl?: 'tenant' | 'department' | 'crudInfo' | 'httpMethod'
+  formControl?: 'tenant' | 'department' | 'crudInfo' | 'httpMethod' | 'app' | 'user'
 }
 
 export interface ResourceDef {
@@ -118,8 +118,8 @@ export const resources: ResourceDef[] = [
     fields: [
       id,
       { ...tenantId, formControl: 'tenant' },
-      f('appsId', '应用', 'number', { nullable: true }),
-      f('userId', '用户', 'number', { nullable: true }),
+      f('appsId', '应用', 'number', { nullable: true, formControl: 'app' }),
+      f('userId', '用户', 'number', { nullable: true, formControl: 'user' }),
       f('isAdmin', '管理员', 'bool'),
       remark
     ]

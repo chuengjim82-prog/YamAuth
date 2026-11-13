@@ -28,6 +28,9 @@ import PageHeader from '@/components/PageHeader'
 import IconPicker from '@/components/IconPicker'
 import TenantSelect from '@/components/TenantSelect'
 import DepartmentSelect from '@/components/DepartmentSelect'
+import UserSelect from '@/components/UserSelect'
+import AppSelect from './AppSelect'
+import { useAppsUserLabels } from './useAppsUserLabels'
 import IconGlyph from '@/components/icons/IconGlyph'
 import { createCrudApi } from '@/api/crud'
 import { findResource, type FieldDef, type ResourceDef } from '@/resources'
@@ -136,6 +139,7 @@ function ResourceCrudPage({
   const pendingLocate = useRef<number | null>(null)
   const [total, setTotal] = useState(0)
   const [items, setItems] = useState<Row[]>([])
+  const appsUserLabel = useAppsUserLabels(items, resource.path === '/auth/apps-users')
   const departmentLabel = useDepartmentLabels(items, resource.path === '/unit/employees')
   const tenantLabel = useTenantLabels(
     items,
@@ -325,6 +329,8 @@ function ResourceCrudPage({
           return <IconGlyph name={value == null ? undefined : fieldText(value)} />
         if (field.kind === 'date' && value)
           return dayjs(fieldText(value)).format('YYYY-MM-DD HH:mm')
+        if (field.formControl === 'app') return appsUserLabel('appsId', value)
+        if (field.formControl === 'user') return appsUserLabel('userId', value)
         if (field.formControl === 'department') return departmentLabel(value)
         if (field.formControl === 'tenant') return tenantLabel(value)
         if (value === null || value === undefined || value === '') return ''
@@ -835,6 +841,8 @@ function renderControl(
   saving: boolean,
   initialValue: unknown
 ) {
+  if (field.formControl === 'app') return <AppSelect active={active} disabled={saving} />
+  if (field.formControl === 'user') return <UserSelect active={active} disabled={saving} />
   if (field.formControl === 'crudInfo') return <CrudInfoSelect active={active} disabled={saving} />
   if (field.formControl === 'httpMethod') {
     const options = HTTP_METHODS.map((method) => ({ value: method, label: method }))
