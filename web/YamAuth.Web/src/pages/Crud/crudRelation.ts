@@ -1,8 +1,8 @@
-import { crudInfoApi, crudRoleApi } from '@/api/entities'
+import { crudInfoApi, crudRoleApi, dataRoleApi } from '@/api/entities'
 import { buildTree, validateTreeResult } from './tree'
 
-export type CrudRelationKind = 'crudRole' | 'crudInfoId'
-export const crudRelationNames = { crudRole: '功能角色', crudInfoId: '功能' }
+export type CrudRelationKind = 'crudRole' | 'dataRole' | 'crudInfoId'
+export const crudRelationNames = { crudRole: '功能角色', dataRole: '数据角色', crudInfoId: '功能' }
 
 interface RelationNode {
   id: number
@@ -14,8 +14,8 @@ interface RelationNode {
 
 export async function loadCrudRelationOptions(kind: CrudRelationKind) {
   let nodes: RelationNode[]
-  if (kind === 'crudRole') {
-    const data = await crudRoleApi.all()
+  if (kind === 'crudRole' || kind === 'dataRole') {
+    const data = await (kind === 'crudRole' ? crudRoleApi : dataRoleApi).all()
     validateTreeResult(data)
     nodes = data.items.map((row) => ({ ...row, name: row.roleName }))
   } else {

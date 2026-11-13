@@ -8,7 +8,7 @@ export interface Entity {
 }
 type StringControl = 'httpMethod' | 'menuType'
 type NumberControl =
-  'tenant' | 'department' | 'crudInfo' | 'app' | 'user' | 'crudRole' | 'crudInfoId'
+  'tenant' | 'department' | 'crudInfo' | 'app' | 'user' | 'crudRole' | 'dataRole' | 'crudInfoId'
 interface FieldOptionsBase {
   required?: boolean
   table?: boolean
@@ -101,6 +101,7 @@ export interface ResourceDef<E extends Entity, F extends object, C, U> {
     appsId?: (row: E) => number | null
     userId?: (row: E) => number | null
     crudRoleId?: (row: E) => number | null
+    dataRoleId?: (row: E) => number | null
     crudInfoId?: (row: E) => number | null
     crudId?: (row: E) => number | null
   }

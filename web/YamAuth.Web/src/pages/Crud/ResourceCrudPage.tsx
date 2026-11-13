@@ -92,6 +92,11 @@ export default function ResourceCrudPage<E extends Entity, F extends object, C, 
     Boolean(resource.relations?.crudRoleId),
     items
   )
+  const dataRoleOptions = useCrudRelationOptions(
+    'dataRole',
+    Boolean(resource.relations?.dataRoleId),
+    items
+  )
   const infoOptions = useCrudRelationOptions(
     'crudInfoId',
     Boolean(resource.relations?.crudInfoId),
@@ -278,6 +283,8 @@ export default function ResourceCrudPage<E extends Entity, F extends object, C, 
         }
         if (field.formControl === 'crudRole')
           return roleOptions.label(resource.relations?.crudRoleId?.(row))
+        if (field.formControl === 'dataRole')
+          return dataRoleOptions.label(resource.relations?.dataRoleId?.(row))
         if (field.formControl === 'crudInfoId')
           return infoOptions.label(resource.relations?.crudInfoId?.(row))
         if (field.formControl === 'menuType') return crudMenuTypeLabel(value)
@@ -849,7 +856,11 @@ function renderControl<E, F>(
   initialValue: unknown,
   onManualSelect: () => void
 ) {
-  if (field.formControl === 'crudRole' || field.formControl === 'crudInfoId')
+  if (
+    field.formControl === 'crudRole' ||
+    field.formControl === 'dataRole' ||
+    field.formControl === 'crudInfoId'
+  )
     return <CrudRelationSelect kind={field.formControl} active={active} disabled={saving} />
   if (field.formControl === 'app') return <AppSelect active={active} disabled={saving} />
   if (field.formControl === 'user') return <UserSelect active={active} disabled={saving} />

@@ -571,18 +571,22 @@ export const crudRoleUserResource = {
   toForm: authForms.crudRoleUserToForm,
   toCreate: authForms.crudRoleUserToCreate,
   toUpdate: authForms.crudRoleUserToUpdate,
+  relations: {
+    crudRoleId: (row) => row.roleId,
+    userId: (row) => row.userId
+  },
   fields: [
     crudRoleUserFields.id,
     crudRoleUserFields.form(
       'roleId',
       '角色',
-      { kind: 'number', required: true, table: true },
+      { kind: 'number', required: true, table: true, formControl: 'crudRole' },
       (row) => row.roleId
     ),
     crudRoleUserFields.form(
       'userId',
       '用户',
-      { kind: 'number', required: true, table: true },
+      { kind: 'number', required: true, table: true, formControl: 'user' },
       (row) => row.userId
     )
   ]
@@ -668,18 +672,22 @@ export const dataRoleUserResource = {
   toForm: authForms.dataRoleUserToForm,
   toCreate: authForms.dataRoleUserToCreate,
   toUpdate: authForms.dataRoleUserToUpdate,
+  relations: {
+    dataRoleId: (row) => row.roleId,
+    userId: (row) => row.userId
+  },
   fields: [
     dataRoleUserFields.id,
     dataRoleUserFields.form(
       'roleId',
       '角色',
-      { kind: 'number', required: true, table: true },
+      { kind: 'number', required: true, table: true, formControl: 'dataRole' },
       (row) => row.roleId
     ),
     dataRoleUserFields.form(
       'userId',
       '用户',
-      { kind: 'number', required: true, table: true },
+      { kind: 'number', required: true, table: true, formControl: 'user' },
       (row) => row.userId
     )
   ]

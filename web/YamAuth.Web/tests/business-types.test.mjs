@@ -193,7 +193,7 @@ test('菜单类型不参与列表关键词搜索，名称搜索保留祖先后�
   assert.deepEqual([...view.visible].sort(), [1, 2])
 })
 
-test('角色功能新增必须选择，编辑保留历史编号且清空不能提交', () => {
+test('角色关联新增必须选择，编辑保留历史编号且清空不能提交', () => {
   const empty = authForms.crudRoleCrudToForm()
   assert.deepEqual(empty, { crudRoleId: null, crudInfoId: null })
   assert.throws(() => authForms.crudRoleCrudToCreate(empty), /功能角色/)
@@ -204,13 +204,32 @@ test('角色功能新增必须选择，编辑保留历史编号且清空不能�
     () => authForms.crudRoleCrudToUpdate({ ...historical, crudRoleId: null }),
     /功能角色/
   )
+  for (const prefix of ['crudRoleUser', 'dataRoleUser']) {
+    const toForm = authForms[`${prefix}ToForm`]
+    const toCreate = authForms[`${prefix}ToCreate`]
+    const toUpdate = authForms[`${prefix}ToUpdate`]
+    assert.deepEqual(toForm(), { roleId: null, userId: null })
+    assert.throws(() => toCreate(toForm()), /角色/)
+    assert.throws(() => toCreate({ roleId: 12, userId: null }), /用户/)
+    for (const binding of [
+      { roleId: 0, userId: 999 },
+      { roleId: 999, userId: 0 }
+    ]) {
+      assert.deepEqual(toUpdate(toForm(binding)), binding)
+      assert.throws(() => toUpdate({ ...toForm(binding), roleId: null }), /角色/)
+      assert.throws(() => toUpdate({ ...toForm(binding), userId: null }), /用户/)
+    }
+    assert.deepEqual(toCreate({ roleId: 12, userId: 34 }), { roleId: 12, userId: 34 })
+  }
 })
 
 test('角色功能选择器保留真实父子关系、失效父链及空名称，并拒绝不完整数据', async () => {
   const { loadCrudRelationOptions } = await server.ssrLoadModule('/src/pages/Crud/crudRelation.ts')
-  const { crudRoleApi, crudInfoApi } = await server.ssrLoadModule('/src/api/entities.ts')
+  const { crudRoleApi, dataRoleApi, crudInfoApi } =
+    await server.ssrLoadModule('/src/api/entities.ts')
   for (const [kind, api, nameField] of [
     ['crudRole', crudRoleApi, 'roleName'],
+    ['dataRole', dataRoleApi, 'roleName'],
     ['crudInfoId', crudInfoApi, 'crudName']
   ]) {
     const original = api.all
@@ -239,9 +258,11 @@ test('角色功能选择器保留真实父子关系、失效父链及空名称�
 
 test('角色选择器保留跨应用父子层级，功能选择器仍检查同应用约束', async () => {
   const { loadCrudRelationOptions } = await server.ssrLoadModule('/src/pages/Crud/crudRelation.ts')
-  const { crudRoleApi, crudInfoApi } = await server.ssrLoadModule('/src/api/entities.ts')
+  const { crudRoleApi, dataRoleApi, crudInfoApi } =
+    await server.ssrLoadModule('/src/api/entities.ts')
   for (const [kind, api, nameField] of [
     ['crudRole', crudRoleApi, 'roleName'],
+    ['dataRole', dataRoleApi, 'roleName'],
     ['crudInfoId', crudInfoApi, 'crudName']
   ]) {
     const original = api.all
@@ -259,7 +280,7 @@ test('角色选择器保留跨应用父子层级，功能选择器仍检查同�
         const options = await loadCrudRelationOptions(kind)
         assert.deepEqual(
           options.map(({ value, pId }) => [value, pId]),
-          kind === 'crudRole'
+          kind !== 'crudInfoId'
             ? [
                 [1, 0],
                 [2, 1],

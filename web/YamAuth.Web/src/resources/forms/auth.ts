@@ -468,8 +468,9 @@ export interface CrudRoleUserForm {
 
 export function crudRoleUserToForm(row?: CrudRoleUserDto): CrudRoleUserForm {
   return {
-    roleId: row?.roleId ?? 0,
-    userId: row?.userId ?? 0
+    // 新增必须主动选择；编辑保留包括 0 在内的历史关联编号。
+    roleId: row?.roleId ?? null,
+    userId: row?.userId ?? null
   }
 }
 
@@ -544,8 +545,9 @@ export interface DataRoleUserForm {
 
 export function dataRoleUserToForm(row?: DataRoleUserDto): DataRoleUserForm {
   return {
-    roleId: row?.roleId ?? 0,
-    userId: row?.userId ?? 0
+    // 新增必须主动选择；编辑保留包括 0 在内的历史关联编号。
+    roleId: row?.roleId ?? null,
+    userId: row?.userId ?? null
   }
 }
 
