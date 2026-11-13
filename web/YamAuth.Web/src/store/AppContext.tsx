@@ -7,7 +7,9 @@ import {
   useState,
   type ReactNode
 } from 'react'
-import { ACCOUNT_KEY, SESSION_CLEARED, TOKEN_KEY } from '@/api/request'
+import { ACCOUNT_KEY, SESSION_CLEARED, TOKEN_KEY, advanceRequestSession } from '@/auth/session'
+import { loginRecovery } from '@/auth/recovery'
+import { notifyRecoveryStorage, replaceWithLogin } from '@/auth/loginRedirect'
 import type { MenuNode } from '@/types/auth'
 
 interface UserInfo {
@@ -69,6 +71,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const login = useCallback(
     (userInfo: UserInfo, token: string) => {
       advanceSession()
+      advanceRequestSession()
       localStorage.setItem(TOKEN_KEY, token)
       localStorage.setItem(ACCOUNT_KEY, JSON.stringify(userInfo))
       setUser(userInfo)
@@ -77,7 +80,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   )
 
   const logout = useCallback(() => {
+    notifyRecoveryStorage(loginRecovery.clear())
+    // 先替换地址，避免未登录守卫把主动退出的页面重新记为恢复目标。
+    replaceWithLogin()
     advanceSession()
+    advanceRequestSession()
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(ACCOUNT_KEY)
     setUser(null)

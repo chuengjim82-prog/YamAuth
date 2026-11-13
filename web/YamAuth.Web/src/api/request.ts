@@ -1,10 +1,25 @@
 import axios, { type AxiosResponse, type InternalAxiosRequestConfig } from 'axios'
 import { message } from 'antd'
 import type { ApiResponse } from '@/types/api'
+import {
+  ACCOUNT_KEY,
+  SESSION_CLEARED,
+  TOKEN_KEY,
+  advanceRequestSession,
+  captureRequestSession,
+  isCurrentRequestSession,
+  readAccountUserName,
+  type RequestSession
+} from '@/auth/session'
+import { loginRecovery } from '@/auth/recovery'
+import {
+  currentHashTarget,
+  isLoginTarget,
+  notifyRecoveryStorage,
+  replaceWithLogin
+} from '@/auth/loginRedirect'
 
-export const TOKEN_KEY = 'yamauth-token'
-export const ACCOUNT_KEY = 'yamauth-account'
-export const SESSION_CLEARED = 'yamauth-session-cleared'
+export { TOKEN_KEY, ACCOUNT_KEY, SESSION_CLEARED } from '@/auth/session'
 
 function resolveApiBaseURL() {
   const raw = (import.meta.env.VITE_API_BASE_URL || '').trim().replace(/\/+$/, '')
@@ -18,28 +33,35 @@ const request = axios.create({
 })
 
 const ERROR_MESSAGE_KEY = 'api-request-error'
-let lastUnauthorizedToken: string | null = null
+const requestSessions = new WeakMap<object, RequestSession>()
 
-function clearSessionAndRedirectToLogin() {
-  const token = localStorage.getItem(TOKEN_KEY)
+function handleUnauthorized(config: object | undefined) {
+  const session = config && requestSessions.get(config)
+  if (!session) return false
+  // 即使服务端再次签发相同 token，旧会话响应也不能清除新登录态。
+  if (!isCurrentRequestSession(session)) return true
+  if (!session.token) return false
+
+  const target = currentHashTarget()
+  if (!isLoginTarget(target)) {
+    notifyRecoveryStorage(
+      loginRecovery.save({ reason: 'expired', target, userName: readAccountUserName() })
+    )
+  }
+  replaceWithLogin()
+  advanceRequestSession()
   localStorage.removeItem(TOKEN_KEY)
   localStorage.removeItem(ACCOUNT_KEY)
   window.dispatchEvent(new Event(SESSION_CLEARED))
-
-  if (token && lastUnauthorizedToken !== token) {
-    lastUnauthorizedToken = token
-    message.error({ content: '登录已过期，请重新登录', key: ERROR_MESSAGE_KEY })
-  }
-
-  if (!window.location.hash.startsWith('#/login')) {
-    window.location.hash = '#/login'
-  }
+  message.error({ content: '登录已过期，请重新登录', key: ERROR_MESSAGE_KEY })
+  return true
 }
 
 request.interceptors.request.use((config: InternalAxiosRequestConfig<unknown, unknown>) => {
-  const token = localStorage.getItem(TOKEN_KEY)
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
+  const session = captureRequestSession()
+  requestSessions.set(config, session)
+  if (session.token) {
+    config.headers.Authorization = `Bearer ${session.token}`
   }
   return config
 })
@@ -55,9 +77,7 @@ request.interceptors.response.use(
       data.code !== 200
     ) {
       const errorMessage = 'message' in data && typeof data.message === 'string' ? data.message : ''
-      if (data.code === 401 && localStorage.getItem(TOKEN_KEY)) {
-        clearSessionAndRedirectToLogin()
-      } else {
+      if (!(data.code === 401 && handleUnauthorized(response.config))) {
         message.error({ content: errorMessage || '请求失败', key: ERROR_MESSAGE_KEY })
       }
       return Promise.reject(new Error(errorMessage || '请求失败'))
@@ -65,17 +85,14 @@ request.interceptors.response.use(
     return response
   },
   (error: unknown) => {
-    const response = axios.isAxiosError<unknown, unknown, unknown>(error)
-      ? error.response
-      : undefined
+    const axiosError = axios.isAxiosError<unknown, unknown, unknown>(error) ? error : undefined
+    const response = axiosError?.response
     const body = response?.data
     const errorMessage =
       body && typeof body === 'object' && 'message' in body && typeof body.message === 'string'
         ? body.message
         : ''
-    if (response?.status === 401 && localStorage.getItem(TOKEN_KEY)) {
-      clearSessionAndRedirectToLogin()
-    } else {
+    if (!(response?.status === 401 && handleUnauthorized(axiosError?.config))) {
       message.error({
         content: errorMessage || '网络错误',
         key: ERROR_MESSAGE_KEY

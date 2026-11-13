@@ -16,7 +16,6 @@ export default function HeaderBar() {
       content: '确定要退出登录吗？',
       onOk: () => {
         logout()
-        navigate('/login', { replace: true })
       }
     })
   }

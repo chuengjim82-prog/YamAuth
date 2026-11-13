@@ -1,5 +1,4 @@
 import { useRef, useState } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
 import { Button, Form, Input, message } from 'antd'
 import { LockOutlined, UserOutlined } from '@ant-design/icons'
 import type { InputRef } from 'antd'
@@ -8,16 +7,19 @@ import type { LoginRequest } from '@/types/auth'
 import { useApp } from '@/store/AppContext'
 import ThemeSwitch from '@/components/ThemeSwitch'
 import styles from './Login.module.css'
+import type { LoginDestination } from '@/auth/recovery'
+import { prepareLoginDestination } from './redirect'
+import LoginRedirect from './LoginRedirect'
 
 export default function Login() {
-  const navigate = useNavigate()
-  const { isLoggedIn, login: saveLogin } = useApp()
+  const { user, login: saveLogin } = useApp()
   const [loading, setLoading] = useState(false)
+  const [destination, setDestination] = useState<LoginDestination | null>(null)
   const passwordInputRef = useRef<InputRef>(null)
   const submittingRef = useRef(false)
 
-  if (isLoggedIn) {
-    return <Navigate to="/home" replace />
+  if (user) {
+    return <LoginRedirect key={user.userName} userName={user.userName} destination={destination} />
   }
 
   const onFinish = async (values: LoginRequest) => {
@@ -26,11 +28,13 @@ export default function Login() {
     setLoading(true)
     try {
       const result = await login(values.userName, values.password)
+      // 先固定目标，再更新会话；已登录分支负责唯一一次消费和跳转。
+      const next = await prepareLoginDestination(result.userName)
+      setDestination(next)
       saveLogin({ userName: result.userName, nickName: result.nickName }, result.token)
       message.success('登录成功')
-      navigate('/home', { replace: true })
     } catch {
-      // 错误提示由请求拦截器处理
+      // 登录及目标解析分别负责错误提示；失败时保留恢复记录。
     } finally {
       submittingRef.current = false
       setLoading(false)

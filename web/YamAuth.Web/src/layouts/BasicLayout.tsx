@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useMemo, useState } from 'react'
-import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Breadcrumb, Button, Layout, Menu, Spin, Tooltip } from 'antd'
 import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
@@ -10,6 +10,7 @@ import { menuIcon } from './menuIcons'
 import HeaderBar from './HeaderBar'
 import styles from './BasicLayout.module.css'
 import type { MenuNode } from '@/types/auth'
+import { redirectUnauthenticated } from '@/auth/loginRedirect'
 
 const { Sider, Content } = Layout
 
@@ -53,6 +54,12 @@ export default function BasicLayout() {
   const [expandedChain, setExpandedChain] = useState<MenuNode[]>([])
 
   useEffect(() => {
+    if (!isLoggedIn) {
+      redirectUnauthenticated(location.pathname + location.search + location.hash)
+    }
+  }, [isLoggedIn, location.pathname, location.search, location.hash])
+
+  useEffect(() => {
     if (!isLoggedIn) return
     let cancelled = false
     const sessionToken = localStorage.getItem(TOKEN_KEY)
@@ -79,7 +86,7 @@ export default function BasicLayout() {
   }
 
   if (!isLoggedIn) {
-    return <Navigate to="/login" replace />
+    return null
   }
 
   return (
