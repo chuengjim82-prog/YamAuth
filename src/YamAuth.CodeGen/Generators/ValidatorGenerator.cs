@@ -6,7 +6,7 @@ namespace YamAuth.CodeGen.Generators;
 
 /// <summary>
 /// 为 CodeGen CRUD 的 Create/Update DTO 生成 FluentValidation 桩。
-/// 输出至 YamAuth.Api/Validators/Generated/*.g.cs；手写校验器（如 User）在生成时跳过。
+/// 输出至 YamAuth.Api/Validators/Generated/*.g.cs；手写校验器（如 User、CrudMenu）在生成时跳过。
 /// </summary>
 public class ValidatorGenerator
 {
@@ -15,7 +15,8 @@ public class ValidatorGenerator
 
     static readonly HashSet<string> ManualValidatorEntities = new(StringComparer.OrdinalIgnoreCase)
     {
-        "User"
+        "User",
+        "CrudMenu"
     };
 
     public void Generate(IReadOnlyList<TableInfo> tables)

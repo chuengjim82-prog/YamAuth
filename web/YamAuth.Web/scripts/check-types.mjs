@@ -10,6 +10,19 @@ const config = ts.parseJsonConfigFileContent(loaded.config, ts.sys, process.cwd(
 const probePath = path.resolve('src/__type_contract_probe__.ts')
 const cases = [
   {
+    name: '菜单新增不能提交任意字符串',
+    code: "crudMenuApi.create({ ...menuCreate, menuType: 'page' })"
+  },
+  {
+    name: '菜单编辑不能提交空类型',
+    code: 'crudMenuApi.update(1, { ...menuCreate, menuType: undefined })'
+  },
+  {
+    name: '菜单表单不能传入非枚举值',
+    code: "const invalid: CrudMenuForm = { ...menuForm, menuType: 'other' }; void invalid"
+  },
+
+  {
     name: '不存在的字段名',
     code: "field.form('missing', '不存在', { kind: 'string' }, () => undefined)"
   },
@@ -73,12 +86,17 @@ const prelude = `
 import { fieldsFor } from './resources/fields'
 import type { FieldDef } from './resources/types'
 import { withAll } from './api/crud'
-import { userApi, appsInfoApi, companyApi } from './api/entities'
+import { userApi, appsInfoApi, companyApi, crudMenuApi } from './api/entities'
 import { companyToCreate } from './resources/forms/bzss'
-import type { UserDto, UserCreateDto, AppsInfoUpdateDto, TenantDto } from './types/auth'
+import { CrudMenuType } from './types/auth'
+import type { UserDto, UserCreateDto, AppsInfoUpdateDto, TenantDto, CrudMenuCreateDto } from './types/auth'
 import type { CompanyDto } from './types/bzss'
-import type { UserForm } from './resources/forms/auth'
+import type { UserForm, CrudMenuForm } from './resources/forms/auth'
 import type { CompanyForm } from './resources/forms/bzss'
+declare const menuCreate: CrudMenuCreateDto
+declare const menuForm: CrudMenuForm
+crudMenuApi.create({ ...menuCreate, menuType: CrudMenuType.Directory })
+crudMenuApi.update(1, { ...menuCreate, menuType: CrudMenuType.Menu })
 declare const userCreate: UserCreateDto
 declare const userForm: UserForm
 declare const companyForm: CompanyForm

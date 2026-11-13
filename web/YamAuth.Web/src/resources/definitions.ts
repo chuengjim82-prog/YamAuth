@@ -371,7 +371,6 @@ export const crudMenuResource = {
     searchFields: [
       'menuCode',
       'menuName',
-      'menuType',
       'iconName',
       'routePath',
       'redirect',
@@ -385,7 +384,12 @@ export const crudMenuResource = {
     form: {
       parentField: 'parentId',
       parentId: (values) => values.parentId,
-      child: (values, parent) => ({ ...values, parentId: parent.id })
+      child: (values, parent) => ({
+        ...values,
+        parentId: parent.id,
+        menuType: authForms.crudMenuDefaultForParent(parent.id)
+      }),
+      defaultFromParent: { field: 'menuType', value: authForms.crudMenuDefaultForParent }
     }
   },
   fields: [
@@ -412,7 +416,7 @@ export const crudMenuResource = {
     crudMenuFields.form(
       'menuType',
       '菜单类型',
-      { kind: 'string', required: true, table: true },
+      { kind: 'string', required: true, table: true, formControl: 'menuType' },
       (row) => row.menuType
     ),
     crudMenuFields.form(

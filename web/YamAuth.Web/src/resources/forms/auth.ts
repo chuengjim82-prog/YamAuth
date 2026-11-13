@@ -1,3 +1,5 @@
+import { CrudMenuType, isCrudMenuType } from '@/types/auth'
+import { FormValueError } from '../formValues'
 import { requiredNumber } from '../formValues'
 import type {
   UserDto,
@@ -304,7 +306,7 @@ export interface CrudMenuForm {
   parentId: number | null | undefined
   menuCode: string
   menuName: string
-  menuType: string
+  menuType: CrudMenuType | undefined
   iconName: string
   routePath: string
   redirect: string
@@ -321,7 +323,12 @@ export function crudMenuToForm(row?: CrudMenuDto): CrudMenuForm {
     parentId: row?.parentId ?? 0,
     menuCode: row?.menuCode ?? '',
     menuName: row?.menuName ?? '',
-    menuType: row?.menuType ?? '',
+    // 编辑非法历史值必须重选，不能按层级静默修复。
+    menuType: row
+      ? isCrudMenuType(row.menuType)
+        ? row.menuType
+        : undefined
+      : CrudMenuType.Directory,
     iconName: row?.iconName ?? '',
     routePath: row?.routePath ?? '',
     redirect: row?.redirect ?? '',
@@ -333,13 +340,22 @@ export function crudMenuToForm(row?: CrudMenuDto): CrudMenuForm {
   }
 }
 
+export function crudMenuDefaultForParent(parentId: number): CrudMenuType {
+  return parentId === 0 ? CrudMenuType.Directory : CrudMenuType.Menu
+}
+
+function requiredCrudMenuType(value: unknown): CrudMenuType {
+  if (!isCrudMenuType(value)) throw new FormValueError('请选择菜单类型')
+  return value
+}
+
 export function crudMenuToCreate(values: CrudMenuForm): CrudMenuCreateDto {
   return {
     crudId: values.crudId ?? null,
     parentId: requiredNumber(values.parentId, '上级'),
     menuCode: values.menuCode,
     menuName: values.menuName,
-    menuType: values.menuType,
+    menuType: requiredCrudMenuType(values.menuType),
     iconName: values.iconName,
     routePath: values.routePath,
     redirect: values.redirect,
@@ -357,7 +373,7 @@ export function crudMenuToUpdate(values: CrudMenuForm): CrudMenuUpdateDto {
     parentId: requiredNumber(values.parentId, '上级'),
     menuCode: values.menuCode,
     menuName: values.menuName,
-    menuType: values.menuType,
+    menuType: requiredCrudMenuType(values.menuType),
     iconName: values.iconName,
     routePath: values.routePath,
     redirect: values.redirect,

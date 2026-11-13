@@ -1,4 +1,5 @@
 using FreeSql;
+using YamAuth.Dtos.Auth;
 using YamAuth.Entity.YamBase.Auth;
 using YamAuth.Repository.Abstractions;
 using YamAuth.Service.Abstractions;
@@ -41,9 +42,9 @@ public static class DevDataSeeder
 
     static async Task SeedMenusAsync(IFreeSql fsql)
     {
-        var authId = await AddAsync(fsql, 0, "auth", "权限", "dir", "Lock", null, 10);
-        var bzssId = await AddAsync(fsql, 0, "bzss", "业务", "dir", "Briefcase", null, 20);
-        var unitId = await AddAsync(fsql, 0, "unit", "组织", "dir", "OfficeBuilding", null, 30);
+        var authId = await AddAsync(fsql, 0, "auth", "权限", CrudMenuType.Directory, "Lock", null, 10);
+        var bzssId = await AddAsync(fsql, 0, "bzss", "业务", CrudMenuType.Directory, "Briefcase", null, 20);
+        var unitId = await AddAsync(fsql, 0, "unit", "组织", CrudMenuType.Directory, "OfficeBuilding", null, 30);
 
         var auth = new (string Code, string Name, string Icon, string Path)[]
         {
@@ -61,23 +62,23 @@ public static class DevDataSeeder
             ("auth.data-role-users", "数据角色用户", "Avatar", "/auth/data-role-users"),
         };
         for (var i = 0; i < auth.Length; i++)
-            await AddAsync(fsql, authId, auth[i].Code, auth[i].Name, "menu", auth[i].Icon, auth[i].Path, (i + 1) * 10);
+            await AddAsync(fsql, authId, auth[i].Code, auth[i].Name, CrudMenuType.Menu, auth[i].Icon, auth[i].Path, (i + 1) * 10);
 
-        await AddAsync(fsql, bzssId, "bzss.companies", "公司", "menu", "Suitcase", "/bzss/companies", 10);
-        await AddAsync(fsql, bzssId, "bzss.projects", "项目", "menu", "Folder", "/bzss/projects", 20);
-        await AddAsync(fsql, unitId, "unit.departments", "部门", "menu", "School", "/unit/departments", 10);
-        await AddAsync(fsql, unitId, "unit.employees", "员工", "menu", "Postcard", "/unit/employees", 20);
+        await AddAsync(fsql, bzssId, "bzss.companies", "公司", CrudMenuType.Menu, "Suitcase", "/bzss/companies", 10);
+        await AddAsync(fsql, bzssId, "bzss.projects", "项目", CrudMenuType.Menu, "Folder", "/bzss/projects", 20);
+        await AddAsync(fsql, unitId, "unit.departments", "部门", CrudMenuType.Menu, "School", "/unit/departments", 10);
+        await AddAsync(fsql, unitId, "unit.employees", "员工", CrudMenuType.Menu, "Postcard", "/unit/employees", 20);
     }
 
     static async Task<long> AddAsync(
-        IFreeSql fsql, long parentId, string code, string name, string type, string icon, string? route, int sort)
+        IFreeSql fsql, long parentId, string code, string name, CrudMenuType type, string icon, string? route, int sort)
     {
         var id = await fsql.Insert(new CrudMenu
         {
             ParentId = parentId,
             MenuCode = code,
             MenuName = name,
-            MenuType = type,
+            MenuType = type.ToCode(),
             IconName = icon,
             RoutePath = route,
             SortIndex = sort,

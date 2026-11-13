@@ -52,6 +52,7 @@ import { fieldText } from './fieldText'
 import emptyImage from './assets/list-empty.png'
 import styles from './Crud.module.css'
 import CrudInfoSelect from './CrudInfoSelect'
+import { crudMenuTypeLabel, crudMenuTypeOptions } from './menuType'
 
 const HTTP_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS']
 
@@ -263,6 +264,7 @@ export default function ResourceCrudPage<E extends Entity, F extends object, C, 
           const label = `${parent ? treeLabel(parent, treeModel.config) : '上级不存在'}（${fieldText(value)}）`
           return <span title={label}>{highlight(label)}</span>
         }
+        if (field.formControl === 'menuType') return crudMenuTypeLabel(value)
         if (field.kind === 'bool') return value ? '是' : '否'
         if (field.kind === 'icon')
           return <IconGlyph name={value == null ? undefined : fieldText(value)} />
@@ -659,6 +661,7 @@ function ResourceEditForm<E extends Entity, F extends object, C, U>({
   saving: boolean
 }) {
   const [form] = Form.useForm<F>()
+  const [manuallySelected, setManuallySelected] = useState<ReadonlySet<keyof F>>(new Set())
   const watchedApp = Form.useWatch((values: F) => resource.tree?.form.appId?.(values), {
     form,
     preserve: true
@@ -693,6 +696,21 @@ function ResourceEditForm<E extends Entity, F extends object, C, U>({
       }}
       onValuesChange={(changed: Partial<F>, values: F) => {
         const binding = resource.tree?.form
+        const defaultBinding = binding?.defaultFromParent
+        if (
+          editingId === null &&
+          binding &&
+          defaultBinding &&
+          Object.hasOwn(changed, binding.parentField) &&
+          !manuallySelected.has(defaultBinding.field)
+        ) {
+          const parentId = binding.parentId(values)
+          // 清空或非法上级交给原校验处理，不把它误当成顶级。
+          if (parentId === 0 || candidates.some((option) => option.value === parentId)) {
+            if (typeof parentId === 'number')
+              form.setFieldValue(defaultBinding.field, defaultBinding.value(parentId))
+          }
+        }
         if (
           treeModel &&
           binding?.appField &&
@@ -746,7 +764,15 @@ function ResourceEditForm<E extends Entity, F extends object, C, U>({
                   }
                 : {})}
               {...(isParent ? { required: true } : {})}
-              extra={lockedApp ? '存在子功能，请先调整子功能后再修改所属应用' : undefined}
+              extra={
+                lockedApp
+                  ? '存在子功能，请先调整子功能后再修改所属应用'
+                  : editingId !== null &&
+                      field.formControl === 'menuType' &&
+                      field.initialValue(initialValues) === undefined
+                    ? '原菜单类型无效，请重新选择'
+                    : undefined
+              }
               rules={
                 isParent
                   ? [
@@ -788,7 +814,8 @@ function ResourceEditForm<E extends Entity, F extends object, C, U>({
                   Boolean(editingId),
                   active,
                   saving,
-                  field.initialValue(initialValues)
+                  field.initialValue(initialValues),
+                  () => setManuallySelected((current) => new Set(current).add(field.name))
                 )
               )}
             </Form.Item>
@@ -803,11 +830,25 @@ function renderControl<E, F>(
   editing: boolean,
   active: boolean,
   saving: boolean,
-  initialValue: unknown
+  initialValue: unknown,
+  onManualSelect: () => void
 ) {
   if (field.formControl === 'app') return <AppSelect active={active} disabled={saving} />
   if (field.formControl === 'user') return <UserSelect active={active} disabled={saving} />
   if (field.formControl === 'crudInfo') return <CrudInfoSelect active={active} disabled={saving} />
+  if (field.formControl === 'menuType') {
+    return (
+      <Select
+        options={crudMenuTypeOptions}
+        showSearch={false}
+        allowClear={false}
+        placeholder="请选择菜单类型"
+        disabled={!active || saving}
+        // onSelect 也捕获用户再次选择当前默认项，不能仅依赖值变化事件。
+        onSelect={onManualSelect}
+      />
+    )
+  }
   if (field.formControl === 'httpMethod') {
     const options = HTTP_METHODS.map((method) => ({ value: method, label: method }))
     // 历史值只来自本次编辑的原记录，切换标准方法后仍可恢复，不转换大小写。

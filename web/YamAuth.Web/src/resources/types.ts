@@ -6,7 +6,7 @@ import type { PagedQuery, PagedResult } from '@/types/api'
 export interface Entity {
   id: number
 }
-type StringControl = 'httpMethod'
+type StringControl = 'httpMethod' | 'menuType'
 type NumberControl = 'tenant' | 'department' | 'crudInfo' | 'app' | 'user'
 interface FieldOptionsBase {
   required?: boolean
@@ -66,6 +66,14 @@ export interface TreeConfig<E> {
   appId?: (row: E) => number | null
 }
 
+/** 保留联动字段名与值类型的对应关系，仅在新增且用户未手动选择时应用。 */
+type ParentDefault<F> = {
+  [K in Extract<keyof F, string>]: {
+    field: K & NonNullable<FormItemProps<F>['name']>
+    value: (parentId: number) => F[K]
+  }
+}[Extract<keyof F, string>]
+
 export interface TreeDef<E, F> extends TreeConfig<E> {
   form: {
     parentField: Extract<keyof F, string> & NonNullable<FormItemProps<F>['name']>
@@ -73,6 +81,7 @@ export interface TreeDef<E, F> extends TreeConfig<E> {
     appField?: Extract<keyof F, string>
     appId?: (values: F) => number | null
     child: (values: F, parent: E) => F
+    defaultFromParent?: ParentDefault<F>
   }
 }
 

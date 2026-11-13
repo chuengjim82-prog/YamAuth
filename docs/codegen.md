@@ -6,6 +6,7 @@
 - 当前读取 YamBase 配置连接中的全部 `tb_*` 表；没有单表过滤、差异预览或 dry-run 参数。数据库迁移需单独处理。
 - **会直接覆盖 Entity、Repository、DTO、Service、Controller 等标准文件，即使没有 `.g.cs` 后缀。** 生成校验器前会删除 `Validators/Generated/` 内全部 `*.g.cs`；中途失败不自动回滚。
 - 运行前识别已有改动和手工补丁。生成规则改在 Generator / Schema；现有 `*.Extensions.cs`、`*.Hierarchy.cs` 扩展需保持签名兼容。部分生成方法依赖手写扩展，不能假定任意新表生成后即可运行。
+- `User`、`CrudMenu` 的新增和编辑校验由手写校验器维护，`ValidatorGenerator.ManualValidatorEntities` 排除对应生成；菜单枚举及字符串映射位于 [CrudMenuType.cs](../src/YamAuth.Dtos/Auth/CrudMenuType.cs)。调整规则时保留每个 DTO 仅一个校验器。
 - React 资源、菜单和业务校验仍需按需求维护；旧 `gen-crud-views.ps1` 不适用于当前前端。
 
 ## 执行与检查

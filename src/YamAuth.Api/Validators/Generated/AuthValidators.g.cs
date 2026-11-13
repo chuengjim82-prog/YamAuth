@@ -85,34 +85,6 @@ public sealed class CrudItemUpdateDtoValidator : AbstractValidator<CrudItemUpdat
     }
 }
 
-public sealed class CrudMenuCreateDtoValidator : AbstractValidator<CrudMenuCreateDto>
-{
-    public CrudMenuCreateDtoValidator()
-    {
-        RuleFor(x => x.MenuCode).NotEmpty().MaximumLength(50);
-        RuleFor(x => x.MenuName).MaximumLength(50);
-        RuleFor(x => x.MenuType).NotEmpty().MaximumLength(50);
-        RuleFor(x => x.IconName).NotEmpty().MaximumLength(50);
-        RuleFor(x => x.RoutePath).MaximumLength(200);
-        RuleFor(x => x.Redirect).MaximumLength(200);
-        RuleFor(x => x.Remark).MaximumLength(255);
-    }
-}
-
-public sealed class CrudMenuUpdateDtoValidator : AbstractValidator<CrudMenuUpdateDto>
-{
-    public CrudMenuUpdateDtoValidator()
-    {
-        RuleFor(x => x.MenuCode).NotEmpty().MaximumLength(50);
-        RuleFor(x => x.MenuName).MaximumLength(50);
-        RuleFor(x => x.MenuType).NotEmpty().MaximumLength(50);
-        RuleFor(x => x.IconName).NotEmpty().MaximumLength(50);
-        RuleFor(x => x.RoutePath).MaximumLength(200);
-        RuleFor(x => x.Redirect).MaximumLength(200);
-        RuleFor(x => x.Remark).MaximumLength(255);
-    }
-}
-
 public sealed class CrudRoleCreateDtoValidator : AbstractValidator<CrudRoleCreateDto>
 {
     public CrudRoleCreateDtoValidator()

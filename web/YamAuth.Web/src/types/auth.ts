@@ -273,6 +273,16 @@ export interface CrudItemQueryDto extends PagedQuery {
   all?: boolean
 }
 
+/** 菜单类型的接口代码，界面标签由展示层维护。 */
+export enum CrudMenuType {
+  Directory = 'dir',
+  Menu = 'menu'
+}
+
+export function isCrudMenuType(value: unknown): value is CrudMenuType {
+  return value === CrudMenuType.Directory || value === CrudMenuType.Menu
+}
+
 export interface CrudMenuDto {
   id: number
   crudId: number | null
@@ -305,7 +315,7 @@ export interface CrudMenuCreateDto {
   parentId: number
   menuCode: string
   menuName: string | null
-  menuType: string
+  menuType: CrudMenuType
   iconName: string
   routePath: string | null
   redirect: string | null
@@ -321,7 +331,7 @@ export interface CrudMenuUpdateDto {
   parentId: number
   menuCode: string
   menuName: string | null
-  menuType: string
+  menuType: CrudMenuType
   iconName: string
   routePath: string | null
   redirect: string | null

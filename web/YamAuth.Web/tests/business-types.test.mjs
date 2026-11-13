@@ -16,6 +16,10 @@ const unitForms = await server.ssrLoadModule('/src/resources/forms/unit.ts')
 const bzssForms = await server.ssrLoadModule('/src/resources/forms/bzss.ts')
 const trees = await server.ssrLoadModule('/src/pages/Crud/tree.ts')
 
+const menuTypes = await server.ssrLoadModule('/src/types/auth.ts')
+const menuLabels = await server.ssrLoadModule('/src/pages/Crud/menuType.ts')
+const { crudMenuResource } = await server.ssrLoadModule('/src/resources/definitions.ts')
+
 const treeConfig = {
   nameField: 'name',
   searchFields: ['name'],
@@ -128,4 +132,63 @@ test('全量查询保留完整性与重复编号检查', () => {
   assert.throws(() => trees.validateTreeResult({ total: 2, items: [{ id: 1 }, { id: 1 }] }), /编号/)
   assert.throws(() => trees.validateTreeResult({ total: 1, items: [{ id: -1 }] }), /编号/)
   trees.validateTreeResult({ total: 0, items: [] })
+})
+
+test('菜单默认值区分顶级、子项和编辑，不按层级修复历史值', () => {
+  const { CrudMenuType } = menuTypes
+  const root = authForms.crudMenuToForm()
+  assert.equal(root.menuType, CrudMenuType.Directory)
+  const child = crudMenuResource.tree.form.child(root, { id: 12 })
+  assert.equal(child.parentId, 12)
+  assert.equal(child.menuType, CrudMenuType.Menu)
+  assert.equal(crudMenuResource.tree.form.defaultFromParent.value(0), CrudMenuType.Directory)
+  assert.equal(crudMenuResource.tree.form.defaultFromParent.value(12), CrudMenuType.Menu)
+  for (const parentId of [0, 12]) {
+    for (const menuType of Object.values(CrudMenuType)) {
+      const form = authForms.crudMenuToForm({ parentId, menuType })
+      assert.equal(form.menuType, menuType)
+      assert.equal(authForms.crudMenuToCreate(form).menuType, menuType)
+      assert.equal(authForms.crudMenuToUpdate(form).menuType, menuType)
+    }
+  }
+  for (const menuType of [
+    undefined,
+    null,
+    '',
+    ' ',
+    'directory',
+    'page',
+    'DIR',
+    'Menu',
+    ' dir',
+    'other'
+  ]) {
+    assert.equal(menuTypes.isCrudMenuType(menuType), false)
+    assert.equal(menuLabels.crudMenuTypeLabel(menuType), '未识别类型')
+    const form = authForms.crudMenuToForm({ parentId: 0, menuType })
+    assert.equal(form.menuType, undefined)
+    assert.throws(() => authForms.crudMenuToUpdate(form), /请选择菜单类型/)
+    assert.throws(() => authForms.crudMenuToCreate({ ...form, menuType }), /请选择菜单类型/)
+  }
+  assert.deepEqual(menuLabels.crudMenuTypeOptions, [
+    { value: 'dir', label: '目录' },
+    { value: 'menu', label: '菜单' }
+  ])
+})
+
+test('菜单类型不参与列表关键词搜索，名称搜索保留祖先后代', () => {
+  const model = trees.buildTree(
+    [
+      { id: 1, parentId: 0, sortIndex: 0, menuName: '系统', menuType: 'dir' },
+      { id: 2, parentId: 1, sortIndex: 0, menuName: '账户', menuType: 'menu' },
+      { id: 3, parentId: 0, sortIndex: 0, menuName: '历史', menuType: 'page' }
+    ],
+    crudMenuResource.tree
+  )
+  for (const keyword of ['dir', 'menu', 'page', '目录', '菜单']) {
+    assert.equal(trees.treeView(model, keyword).matches.size, 0)
+  }
+  const view = trees.treeView(model, '账户')
+  assert.deepEqual([...view.matches], [2])
+  assert.deepEqual([...view.visible].sort(), [1, 2])
 })
