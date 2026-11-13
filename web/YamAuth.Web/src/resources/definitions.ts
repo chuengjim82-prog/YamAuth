@@ -361,6 +361,7 @@ export const crudMenuResource = {
   path: '/auth/crud-menus',
   title: '菜单',
   api: api.crudMenuApi,
+  relations: { crudId: (row) => row.crudId },
   load: () => api.crudMenuApi.all(),
   toForm: authForms.crudMenuToForm,
   toCreate: authForms.crudMenuToCreate,
@@ -392,7 +393,7 @@ export const crudMenuResource = {
     crudMenuFields.form(
       'crudId',
       '功能',
-      { kind: 'number', table: true, nullable: true },
+      { kind: 'number', table: true, nullable: true, formControl: 'crudInfo' },
       (row) => row.crudId
     ),
     crudMenuFields.form('parentId', '上级', { kind: 'number', table: true }, (row) => row.parentId),

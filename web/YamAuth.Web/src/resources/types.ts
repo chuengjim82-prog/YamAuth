@@ -90,6 +90,7 @@ export interface ResourceDef<E extends Entity, F extends object, C, U> {
     departmentId?: (row: E) => number | null
     appsId?: (row: E) => number | null
     userId?: (row: E) => number | null
+    crudId?: (row: E) => number | null
   }
   tree?: TreeDef<E, F>
 }

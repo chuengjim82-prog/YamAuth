@@ -55,14 +55,16 @@ export default function CrudInfoSelect({ value, onChange, active, disabled, ...p
     return model.sorted.map((row) => {
       const id = Number(row.id)
       const issue = model.issues.get(id)
-      const title = `${fieldText(row.crudName) || '未命名'}（${fieldText(row.crudCode)}）`
+      const name = row.crudName || '未命名功能'
+      const code = fieldText(row.crudCode)
+      const title = `${name}（${code}）`
       return {
         id,
         // 异常父链不能构成树，作为根节点展示原因，仍允许关联该功能。
         pId: issue ? 0 : Number(row.parentId),
         value: id,
         title: issue ? `${title}［${issue}］` : title,
-        searchText: `${fieldText(row.crudName)} ${fieldText(row.crudCode)}`
+        searchText: `${name} ${code}`
       }
     })
   }, [current])

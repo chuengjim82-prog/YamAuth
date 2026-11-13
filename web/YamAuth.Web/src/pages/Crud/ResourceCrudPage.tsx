@@ -47,6 +47,7 @@ import {
 import { useTableViewport } from './useTableViewport'
 import { useDepartmentLabels } from './useDepartmentLabels'
 import { useTenantLabels } from './useTenantLabels'
+import { useCrudInfoLabels } from './useCrudInfoLabels'
 import { fieldText } from './fieldText'
 import emptyImage from './assets/list-empty.png'
 import styles from './Crud.module.css'
@@ -82,6 +83,7 @@ export default function ResourceCrudPage<E extends Entity, F extends object, C, 
   )
   const departmentLabel = useDepartmentLabels(items, resource.relations?.departmentId)
   const tenantLabel = useTenantLabels(items, resource.relations?.tenantId)
+  const crudInfoLabel = useCrudInfoLabels(items, resource.relations?.crudId)
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
@@ -273,6 +275,8 @@ export default function ResourceCrudPage<E extends Entity, F extends object, C, 
         if (field.formControl === 'department')
           return departmentLabel(resource.relations?.departmentId?.(row))
         if (field.formControl === 'tenant') return tenantLabel(resource.relations?.tenantId?.(row))
+        if (field.formControl === 'crudInfo' && resource.relations?.crudId)
+          return crudInfoLabel(resource.relations.crudId(row))
         if (value === null || value === undefined || value === '') return ''
         return highlight(fieldText(value))
       }
