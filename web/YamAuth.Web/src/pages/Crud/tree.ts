@@ -1,17 +1,24 @@
-import type { TreeDef } from '@/resources'
-import type { PagedResult, Row } from '@/types'
+import type { Entity, TreeConfig } from '@/resources/types'
+import type { PagedResult } from '@/types/api'
 import { fieldText } from './fieldText'
 
 export const ISSUE_GROUP = '__tree_issues__'
-export interface TreeRow extends Row {
-  id: number | string
-  children?: TreeRow[]
-  treeIssue?: string
-  treeGroup?: boolean
-}
+export type TreeRow<E> =
+  | {
+      kind: 'record'
+      id: number
+      record: E
+      treeIssue?: string | undefined
+      children?: TreeRow<E>[]
+    }
+  | {
+      kind: 'group'
+      id: typeof ISSUE_GROUP
+      children: TreeRow<E>[]
+    }
 
 /** 全量接口必须交付完整且编号唯一的数据，避免旧后端忽略 all 时展示残缺树。 */
-export function validateTreeResult(result: PagedResult<Row>) {
+export function validateTreeResult<E extends Entity>(result: PagedResult<E>) {
   if (
     !result ||
     !Number.isSafeInteger(result.total) ||
@@ -31,7 +38,7 @@ export function validateTreeResult(result: PagedResult<Row>) {
   }
 }
 
-export function treeLabel(row: Row, config: TreeDef) {
+export function treeLabel<E>(row: E, config: TreeConfig<E>) {
   return (
     (config.labelFields ?? [config.nameField])
       .map((field) => fieldText(row[field] ?? ''))
@@ -40,16 +47,19 @@ export function treeLabel(row: Row, config: TreeDef) {
   )
 }
 
-export function buildTree(items: Row[], config: TreeDef) {
+export function buildTree<E extends Entity>(items: E[], config: TreeConfig<E>) {
   const sorted = [...items].sort(
-    (a, b) => Number(a.sortIndex ?? 0) - Number(b.sortIndex ?? 0) || Number(a.id) - Number(b.id)
+    (a, b) =>
+      Number(config.sortIndex?.(a) ?? 0) - Number(config.sortIndex?.(b) ?? 0) ||
+      Number(a.id) - Number(b.id)
   )
   const byId = new Map(sorted.map((row) => [Number(row.id), row]))
   const children = new Map<number, number[]>()
   for (const row of sorted) {
-    const parent = Number(row.parentId)
-    if (!children.has(parent)) children.set(parent, [])
-    children.get(parent)!.push(Number(row.id))
+    const parent = Number(config.parentId(row))
+    const siblings = children.get(parent) ?? []
+    siblings.push(row.id)
+    children.set(parent, siblings)
   }
   const issues = new Map<number, string>()
   // 沿父链迭代并缓存结论，既能识别无根的环，也避免深树递归溢出。
@@ -60,7 +70,7 @@ export function buildTree(items: Row[], config: TreeDef) {
     let issue = ''
     while (id !== 0) {
       if (issues.has(id)) {
-        issue = issues.get(id)!
+        issue = issues.get(id) ?? ''
         break
       }
       if (seen.has(id)) {
@@ -69,8 +79,12 @@ export function buildTree(items: Row[], config: TreeDef) {
       }
       seen.add(id)
       path.push(id)
-      const node = byId.get(id)!
-      const parentId = Number(node.parentId)
+      const node = byId.get(id)
+      if (!node) {
+        issue = '自身或上级的父节点不存在或已删除'
+        break
+      }
+      const parentId = Number(config.parentId(node))
       if (!Number.isSafeInteger(parentId) || parentId < 0) {
         issue = '自身或上级的父级编号无效'
         break
@@ -85,7 +99,7 @@ export function buildTree(items: Row[], config: TreeDef) {
           issue = '自身或上级的父节点不存在或已删除'
           break
         }
-        if (config.appScoped && (node.appsId ?? null) !== (parent.appsId ?? null)) {
+        if (config.appId && config.appId(node) !== config.appId(parent)) {
           issue = '自身或上级存在跨应用父子关系'
           break
         }
@@ -97,13 +111,14 @@ export function buildTree(items: Row[], config: TreeDef) {
   return { sorted, byId, children, issues, config }
 }
 
-export type TreeModel = ReturnType<typeof buildTree>
+export type TreeModel<E extends Entity> = ReturnType<typeof buildTree<E>>
 
-export function descendants(model: TreeModel, id: number) {
+export function descendants<E extends Entity>(model: TreeModel<E>, id: number) {
   const found = new Set<number>()
   const pending = [...(model.children.get(id) ?? [])]
   while (pending.length) {
-    const child = pending.pop()!
+    const child = pending.pop()
+    if (child === undefined) break
     if (found.has(child)) continue
     found.add(child)
     pending.push(...(model.children.get(child) ?? []))
@@ -111,19 +126,24 @@ export function descendants(model: TreeModel, id: number) {
   return found
 }
 
-export function ancestors(model: TreeModel, id: number) {
+function parentIdOf<E extends Entity>(model: TreeModel<E>, id: number) {
+  const row = model.byId.get(id)
+  return row ? Number(model.config.parentId(row)) : 0
+}
+
+export function ancestors<E extends Entity>(model: TreeModel<E>, id: number) {
   const found: number[] = []
   const seen = new Set<number>([id])
-  let parent = Number(model.byId.get(id)?.parentId ?? 0)
+  let parent = parentIdOf(model, id)
   while (parent !== 0 && model.byId.has(parent) && !seen.has(parent)) {
     found.push(parent)
     seen.add(parent)
-    parent = Number(model.byId.get(parent)?.parentId ?? 0)
+    parent = parentIdOf(model, parent)
   }
   return found
 }
 
-export function treeView(model: TreeModel, keyword: string) {
+export function treeView<E extends Entity>(model: TreeModel<E>, keyword: string) {
   const needle = keyword.trim().toLowerCase()
   const matches = new Set<number>()
   for (const row of model.sorted) {
@@ -145,39 +165,38 @@ export function treeView(model: TreeModel, keyword: string) {
       const seen = new Set<number>()
       const pending = [...matches]
       while (pending.length) {
-        const id = pending.pop()!
+        const id = pending.pop()
+        if (id === undefined) break
         if (seen.has(id)) continue
         seen.add(id)
         visible.add(id)
-        const next =
-          direction === 'up'
-            ? [Number(model.byId.get(id)?.parentId ?? 0)]
-            : (model.children.get(id) ?? [])
+        const next = direction === 'up' ? [parentIdOf(model, id)] : (model.children.get(id) ?? [])
         for (const child of next) if (model.byId.has(child)) pending.push(child)
       }
     }
   }
-  const nodes = new Map<number, TreeRow>()
-  const roots: TreeRow[] = []
-  const abnormal: TreeRow[] = []
+  const nodes = new Map<number, TreeRow<E>>()
+  const roots: TreeRow<E>[] = []
+  const abnormal: TreeRow<E>[] = []
   for (const row of model.sorted) {
     const id = Number(row.id)
-    if (visible.has(id)) nodes.set(id, { ...row, id, treeIssue: model.issues.get(id) })
+    if (visible.has(id))
+      nodes.set(id, { kind: 'record', record: row, id, treeIssue: model.issues.get(id) })
   }
   for (const [id, node] of nodes) {
     if (model.issues.get(id)) {
       abnormal.push(node)
       continue
     }
-    const parent = nodes.get(Number(node.parentId))
+    if (node.kind !== 'record') continue
+    const parent = nodes.get(Number(model.config.parentId(node.record)))
     if (parent) (parent.children ??= []).push(node)
     else roots.push(node)
   }
   if (abnormal.length)
     roots.push({
       id: ISSUE_GROUP,
-      treeGroup: true,
-      [model.config.nameField]: '层级异常',
+      kind: 'group',
       children: abnormal
     })
   const expandable = [...nodes.values()].filter((row) => row.children?.length).map((row) => row.id)
@@ -185,7 +204,11 @@ export function treeView(model: TreeModel, keyword: string) {
   return { roots, matches, visible, expandable }
 }
 
-export function parentOptions(model: TreeModel, editingId: number | null, appsId: unknown) {
+export function parentOptions<E extends Entity>(
+  model: TreeModel<E>,
+  editingId: number | null,
+  appsId: number | null | undefined
+) {
   const excluded =
     editingId === null ? new Set<number>() : descendants(model, editingId).add(editingId)
   return model.sorted
@@ -193,13 +216,13 @@ export function parentOptions(model: TreeModel, editingId: number | null, appsId
       (row) =>
         !excluded.has(Number(row.id)) &&
         !model.issues.get(Number(row.id)) &&
-        (!model.config.appScoped || (row.appsId ?? null) === (appsId ?? null))
+        (!model.config.appId || model.config.appId(row) === (appsId ?? null))
     )
     .map((row) => {
       const title = `${treeLabel(row, model.config)}（${fieldText(row.id)}）`
       return {
         id: Number(row.id),
-        pId: Number(row.parentId),
+        pId: Number(model.config.parentId(row)),
         value: Number(row.id),
         title,
         searchText: model.config.parentSearchFields

@@ -1,9 +1,5 @@
-export interface Tenant {
-  id: number
-  tenantName?: string | null
-  tenantCode?: string | null
-  isActived: boolean
-}
+import type { TenantDto } from '@/types/auth'
+export type Tenant = Pick<TenantDto, 'id' | 'tenantName' | 'tenantCode' | 'isActived'>
 
 export function tenantLabel(tenant: Tenant) {
   const name = tenant.tenantName?.trim()

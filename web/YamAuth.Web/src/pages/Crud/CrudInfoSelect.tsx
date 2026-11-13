@@ -1,18 +1,9 @@
 import { useEffect, useMemo, useState, type Ref } from 'react'
 import { Button, Spin, TreeSelect, type GetRef, type TreeSelectProps } from 'antd'
-import { apiGet } from '@/api/request'
-import type { PagedResult } from '@/types'
+import { crudInfoApi } from '@/api/entities'
+import type { CrudInfoDto } from '@/types/auth'
 import { buildTree, validateTreeResult } from './tree'
 import { fieldText } from './fieldText'
-
-type CrudInfo = {
-  id: number
-  parentId: number | null
-  appsId: number | null
-  crudName: string | null
-  crudCode: string
-  sortIndex: number
-}
 
 type Props = Pick<
   TreeSelectProps<number | null>,
@@ -30,7 +21,7 @@ export default function CrudInfoSelect({ value, onChange, active, disabled, ...p
   const request = useMemo(() => ({ active, retry }), [active, retry])
   const [result, setResult] = useState<{
     request: object
-    items: CrudInfo[]
+    items: CrudInfoDto[]
     failed: boolean
   }>()
   const current = result?.request === request ? result : undefined
@@ -39,7 +30,8 @@ export default function CrudInfoSelect({ value, onChange, active, disabled, ...p
   useEffect(() => {
     if (!request.active) return
     let cancelled = false
-    apiGet<PagedResult<CrudInfo>>('/v1/auth/crud-infos', { all: true })
+    crudInfoApi
+      .all()
       .then((data) => {
         validateTreeResult(data)
         if (!cancelled) setResult({ request, items: data.items, failed: false })
@@ -56,7 +48,9 @@ export default function CrudInfoSelect({ value, onChange, active, disabled, ...p
     const model = buildTree(current?.items ?? [], {
       nameField: 'crudName',
       searchFields: ['crudName', 'crudCode'],
-      appScoped: true
+      parentId: (row) => row.parentId,
+      sortIndex: (row) => row.sortIndex,
+      appId: (row) => row.appsId
     })
     return model.sorted.map((row) => {
       const id = Number(row.id)
@@ -84,7 +78,7 @@ export default function CrudInfoSelect({ value, onChange, active, disabled, ...p
 
   return (
     <>
-      <TreeSelect<number | null>
+      <TreeSelect<number | null | undefined>
         {...props}
         style={{ width: '100%' }}
         value={value ?? undefined}

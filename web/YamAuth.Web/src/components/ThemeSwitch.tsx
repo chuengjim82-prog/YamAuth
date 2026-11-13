@@ -14,7 +14,7 @@ export default function ThemeSwitch({ onBrand = false }: { onBrand?: boolean }) 
   const buttonRef = useRef<GetRef<typeof Button>>(null)
   const focusFrameRef = useRef<number | null>(null)
   const { mode } = useTheme()
-  const current = options.find((option) => option.key === mode)!
+  const current = options.find((option) => option.key === mode) ?? options[0]
 
   useEffect(
     () => () => {
@@ -64,7 +64,7 @@ export default function ThemeSwitch({ onBrand = false }: { onBrand?: boolean }) 
         ref={buttonRef}
         type="text"
         icon={current.icon}
-        className={onBrand ? styles.onBrand : undefined}
+        className={onBrand ? (styles.onBrand ?? '') : ''}
         aria-haspopup="menu"
         aria-label={`切换主题，当前${current.label}`}
       >

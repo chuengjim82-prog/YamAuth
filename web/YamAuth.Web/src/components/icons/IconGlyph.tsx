@@ -5,7 +5,13 @@ import QuestionCircleOutlined from '@ant-design/icons/es/icons/QuestionCircleOut
 import WarningOutlined from '@ant-design/icons/es/icons/WarningOutlined'
 import { cachedIcon, loadIcon, resolveIconName, type IconComponent } from './catalog'
 
-export default function IconGlyph({ name, className }: { name?: string; className?: string }) {
+export default function IconGlyph({
+  name,
+  className
+}: {
+  name?: string | undefined
+  className?: string | undefined
+}) {
   const canonical = resolveIconName(name)
   if (!name) return null
   return (
@@ -24,14 +30,16 @@ function ResolvedIconGlyph({
   className
 }: {
   name: string
-  canonical?: string
-  className?: string
+  canonical?: string | undefined
+  className?: string | undefined
 }) {
   const [attempt, setAttempt] = useState(0)
   // 图标身份变化由 key 重建状态，已加载的组件仅在初始化或异步完成时读取。
-  const [result, setResult] = useState<{ component?: IconComponent; failed?: boolean }>(() => ({
-    component: canonical ? cachedIcon(canonical) : undefined
-  }))
+  const [result, setResult] = useState<{ component?: IconComponent | undefined; failed?: boolean }>(
+    () => ({
+      component: canonical ? cachedIcon(canonical) : undefined
+    })
+  )
   const Component = result.component
 
   useEffect(() => {

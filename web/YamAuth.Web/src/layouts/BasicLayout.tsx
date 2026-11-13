@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Breadcrumb, Button, Layout, Menu, Spin, Tooltip } from 'antd'
 import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons'
@@ -9,16 +9,11 @@ import { useApp } from '@/store/AppContext'
 import { menuIcon } from './menuIcons'
 import HeaderBar from './HeaderBar'
 import styles from './BasicLayout.module.css'
-import type { MenuNode } from '@/types'
+import type { MenuNode } from '@/types/auth'
 
 const { Sider, Content } = Layout
 
-interface MenuItemResult {
-  key: string
-  icon?: ReactNode
-  label: string
-  children?: MenuItemResult[]
-}
+type MenuItemResult = NonNullable<MenuProps['items']>[number]
 
 function toMenuItem(node: MenuNode): MenuItemResult {
   const icon = menuIcon(node.menuIcon)
@@ -107,13 +102,13 @@ export default function BasicLayout() {
             onClick={({ key }) => {
               if (key.startsWith('/')) navigate(key)
             }}
-            items={menus.map(toMenuItem) as MenuProps['items']}
+            items={menus.map(toMenuItem)}
           />
           <div className={`${styles.collapseBar} ${collapsed ? styles.collapseBarCollapsed : ''}`}>
             <Tooltip title={collapsed ? '展开菜单' : '收起菜单'} placement="right">
               <Button
                 type="text"
-                className={styles.collapseButton}
+                className={styles.collapseButton ?? ''}
                 icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
                 onClick={() => setCollapsed((value) => !value)}
                 aria-label={collapsed ? '展开菜单' : '收起菜单'}
@@ -124,7 +119,7 @@ export default function BasicLayout() {
         <Content className={styles.content}>
           {chain.length > 1 && (
             <Breadcrumb
-              className={styles.breadcrumb}
+              className={styles.breadcrumb ?? ''}
               items={chain.map((node) => ({ title: node.menuName }))}
             />
           )}

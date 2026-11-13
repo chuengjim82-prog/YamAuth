@@ -48,7 +48,7 @@ PowerShell 可在仓库根目录分别使用 `scripts/run-api.ps1` 与 `scripts/
 
 ## 验证与旧工具
 
-- 检查命令见 [AGENTS](AGENTS.md#验证)。当前没有后端测试项目、前端自动化交互测试或 CI 工作流，构建不能替代接口和页面验收。
+- 检查命令见 [AGENTS](AGENTS.md#验证)。前端检查包含编译期契约反例、表单转换与树算法测试；当前没有后端测试项目、持久化的前端自动化交互测试或 CI 工作流，构建和离线测试不能替代真实接口及页面验收。
 - `scripts/test-backend.ps1` 仍查找不存在的根目录解决方案；`scripts/gen-crud-views.ps1` 仍生成 Vue 页面，均不作为当前开发入口。
 - Docker 与 OpenAPI 工具存在适配缺口，使用前查看 [部署说明](deploy/README.md) 和 [契约说明](openapi/README.md)。
 

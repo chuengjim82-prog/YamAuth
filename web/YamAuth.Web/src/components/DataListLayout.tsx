@@ -36,7 +36,8 @@ export default function DataListLayout({
 
   useEffect(() => {
     const trackOverlayFocus = (event: FocusEvent) => {
-      ownsFocusRef.current = !!overlayRef.current?.contains(event.target as Node)
+      ownsFocusRef.current =
+        event.target instanceof Node && !!overlayRef.current?.contains(event.target)
     }
     document.addEventListener('focusin', trackOverlayFocus)
     return () => document.removeEventListener('focusin', trackOverlayFocus)

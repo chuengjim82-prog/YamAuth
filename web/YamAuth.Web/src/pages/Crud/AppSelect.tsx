@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState, type Ref } from 'react'
 import { Button, Spin, TreeSelect, type GetRef, type TreeSelectProps } from 'antd'
-import { apiGet } from '@/api/request'
-import type { PagedResult } from '@/types'
+import { appsInfoApi } from '@/api/entities'
+import type { AppsInfoDto } from '@/types/auth'
 import { buildTree, validateTreeResult } from './tree'
 import { fieldText } from './fieldText'
-import { appLabel, type AppOption } from '@/components/appsUser'
+import { appLabel } from '@/components/appsUser'
 
 type Props = Pick<
   TreeSelectProps<number | null>,
@@ -22,7 +22,7 @@ export default function AppSelect({ value, onChange, active, disabled, ...props 
   const request = useMemo(() => ({ active, retry }), [active, retry])
   const [result, setResult] = useState<{
     request: object
-    items: AppOption[]
+    items: AppsInfoDto[]
     failed: boolean
   }>()
   const current = result?.request === request ? result : undefined
@@ -31,7 +31,8 @@ export default function AppSelect({ value, onChange, active, disabled, ...props 
   useEffect(() => {
     if (!request.active) return
     let cancelled = false
-    apiGet<PagedResult<AppOption>>('/v1/auth/apps-infos', { all: true })
+    appsInfoApi
+      .all()
       .then((data) => {
         validateTreeResult(data)
         if (!cancelled) setResult({ request, items: data.items, failed: false })
@@ -46,6 +47,7 @@ export default function AppSelect({ value, onChange, active, disabled, ...props 
 
   const options = useMemo(() => {
     const model = buildTree(current?.items ?? [], {
+      parentId: (row) => row.parentId,
       nameField: 'appsName',
       searchFields: ['appsName', 'id']
     })
@@ -77,7 +79,7 @@ export default function AppSelect({ value, onChange, active, disabled, ...props 
 
   return (
     <>
-      <TreeSelect<number | null>
+      <TreeSelect<number | null | undefined>
         {...props}
         style={{ width: '100%' }}
         value={value ?? undefined}

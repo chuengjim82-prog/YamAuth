@@ -1,7 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type Ref } from 'react'
 import { Button, Select, Spin, type GetRef, type SelectProps } from 'antd'
-import { apiGet } from '@/api/request'
-import type { PagedResult } from '@/types'
+import type { EntityReader } from '@/api/crud'
 import styles from './RemoteEntitySelect.module.css'
 
 export type EntitySelectProps = Pick<
@@ -16,37 +15,37 @@ export type EntitySelectProps = Pick<
 }
 
 type RemoteEntitySelectProps<T> = EntitySelectProps & {
-  apiPath: string
+  api: EntityReader<T>
   entityName: string
   placeholder: string
   getLabel: (item: T) => string
 }
 
 type Query = { keyword: string; page: number; retry: number }
-type PageRequest = { active: boolean; apiPath: string; query: Query }
+type PageRequest<T> = { active: boolean; api: EntityReader<T>; query: Query }
 type PageResult<T> = {
-  request: PageRequest
+  request: PageRequest<T>
   items: T[]
   total: number
   loadedPage: number
   failed: boolean
 }
 type Selection<T> = { request: object; item?: T; status: 'ready' | 'missing' | 'error' }
-type EntityCache<T> = { apiPath: string; items: Map<number, T> }
+type EntityCache<T> = { api: EntityReader<T>; items: Map<number, T> }
 
 function rememberItems<T extends { id: number }>(
   cache: EntityCache<T>,
-  apiPath: string,
+  api: EntityReader<T>,
   rows: T[]
 ): EntityCache<T> {
-  const items = new Map(cache.apiPath === apiPath ? cache.items : undefined)
+  const items = new Map(cache.api === api ? cache.items : undefined)
   for (const item of rows) items.set(item.id, item)
-  return { apiPath, items }
+  return { api, items }
 }
 
-function previousPage<T>(result: PageResult<T> | undefined, request: PageRequest) {
+function previousPage<T>(result: PageResult<T> | undefined, request: PageRequest<T>) {
   return request.query.page > 1 &&
-    result?.request.apiPath === request.apiPath &&
+    result?.request.api === request.api &&
     result.request.query.keyword === request.query.keyword
     ? result
     : undefined
@@ -56,7 +55,7 @@ const PAGE_SIZE = 20
 
 // 租户、部门与用户共用分页、搜索和失效绑定处理，各自提供接口及展示文案。
 export default function RemoteEntitySelect<T extends { id: number }>({
-  apiPath,
+  api,
   entityName,
   placeholder,
   getLabel,
@@ -70,13 +69,13 @@ export default function RemoteEntitySelect<T extends { id: number }>({
   const [open, setOpen] = useState(false)
   const [searchValue, setSearchValue] = useState('')
   const [query, setQuery] = useState<Query>({ keyword: '', page: 1, retry: 0 })
-  const request = useMemo(() => ({ active, apiPath, query }), [active, apiPath, query])
+  const request = useMemo(() => ({ active, api, query }), [active, api, query])
   const [pageResult, setPageResult] = useState<PageResult<T>>()
   const [selection, setSelection] = useState<Selection<T> | null>(null)
   const [detailRetry, setDetailRetry] = useState(0)
   const [popupWidth, setPopupWidth] = useState<number>()
   const containerRef = useRef<HTMLDivElement>(null)
-  const [cache, setCache] = useState<EntityCache<T>>(() => ({ apiPath, items: new Map() }))
+  const [cache, setCache] = useState<EntityCache<T>>(() => ({ api, items: new Map() }))
   const enabled = useRef(false)
   const available = active && !disabled
   const [previousAvailable, setPreviousAvailable] = useState(available)
@@ -87,10 +86,10 @@ export default function RemoteEntitySelect<T extends { id: number }>({
   const loadedPage = visibleResult?.loadedPage ?? 0
   const loading = !currentResult
   const failed = currentResult && pageResult.failed
-  const cachedItem = cache.apiPath === apiPath && value != null ? cache.items.get(value) : undefined
+  const cachedItem = cache.api === api && value != null ? cache.items.get(value) : undefined
   const detailRequest = useMemo(
-    () => ({ active, apiPath, value, retry: detailRetry }),
-    [active, apiPath, value, detailRetry]
+    () => ({ active, api, value, retry: detailRetry }),
+    [active, api, value, detailRetry]
   )
 
   // 禁用或外层关闭时清除浮层状态，重新启用不会恢复旧弹出层。
@@ -120,19 +119,20 @@ export default function RemoteEntitySelect<T extends { id: number }>({
   useEffect(() => {
     if (!request.active) return
     let cancelled = false
-    const { apiPath, query } = request
+    const { api, query } = request
     // 搜索先清空旧候选并防抖；翻页沿用当前关键字，不能只在首批数据内筛选。
     const timer = window.setTimeout(
       () => {
-        apiGet<PagedResult<T>>(apiPath, {
-          page: query.page,
-          size: PAGE_SIZE,
-          keyword: query.keyword || undefined
-        })
+        api
+          .page({
+            page: query.page,
+            size: PAGE_SIZE,
+            ...(query.keyword ? { keyword: query.keyword } : {})
+          })
           .then((result) => {
             if (cancelled) return
             const rows = result.items ?? []
-            setCache((current) => rememberItems(current, apiPath, rows))
+            setCache((current) => rememberItems(current, api, rows))
             setPageResult((current) => ({
               request,
               items: [
@@ -172,17 +172,18 @@ export default function RemoteEntitySelect<T extends { id: number }>({
   }, [request])
 
   useEffect(() => {
-    const { active, apiPath, value } = detailRequest
+    const { active, api, value } = detailRequest
     if (!active || value == null || cachedItem) return
     let cancelled = false
     // 编辑项可能不在当前分页中；查询不到或请求失败都不能隐式改写表单里的 ID。
-    apiGet<T | null>(`${apiPath}/${value}`)
+    api
+      .detail(value)
       .then((result) => {
         if (cancelled) return
-        if (result) setCache((current) => rememberItems(current, apiPath, [result]))
+        if (result) setCache((current) => rememberItems(current, api, [result]))
         setSelection({
           request: detailRequest,
-          item: result ?? undefined,
+          ...(result ? { item: result } : {}),
           status: result ? 'ready' : 'missing'
         })
       })
@@ -216,7 +217,7 @@ export default function RemoteEntitySelect<T extends { id: number }>({
 
   return (
     <div ref={containerRef}>
-      <Select<number | null>
+      <Select<number | null | undefined>
         {...props}
         ref={ref}
         style={{ width: '100%' }}
@@ -224,7 +225,7 @@ export default function RemoteEntitySelect<T extends { id: number }>({
         allowClear
         disabled={!active || disabled}
         open={active && !disabled && open}
-        popupMatchSelectWidth={popupWidth}
+        {...(popupWidth === undefined ? {} : { popupMatchSelectWidth: popupWidth })}
         placeholder={placeholder}
         showSearch={{ searchValue, onSearch: search, filterOption: false }}
         options={options}

@@ -1,6 +1,6 @@
-import axios from 'axios'
+import axios, { type AxiosResponse, type InternalAxiosRequestConfig } from 'axios'
 import { message } from 'antd'
-import type { ApiResponse } from '@/types'
+import type { ApiResponse } from '@/types/api'
 
 export const TOKEN_KEY = 'yamauth-token'
 export const ACCOUNT_KEY = 'yamauth-account'
@@ -36,7 +36,7 @@ function clearSessionAndRedirectToLogin() {
   }
 }
 
-request.interceptors.request.use((config) => {
+request.interceptors.request.use((config: InternalAxiosRequestConfig<unknown, unknown>) => {
   const token = localStorage.getItem(TOKEN_KEY)
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
@@ -45,8 +45,8 @@ request.interceptors.request.use((config) => {
 })
 
 request.interceptors.response.use(
-  (response) => {
-    const data = response.data as ApiResponse
+  (response: AxiosResponse<unknown, unknown, object, unknown>) => {
+    const data = response.data
     if (
       data &&
       typeof data === 'object' &&
@@ -54,17 +54,20 @@ request.interceptors.response.use(
       data.code !== 0 &&
       data.code !== 200
     ) {
+      const errorMessage = 'message' in data && typeof data.message === 'string' ? data.message : ''
       if (data.code === 401 && localStorage.getItem(TOKEN_KEY)) {
         clearSessionAndRedirectToLogin()
       } else {
-        message.error({ content: data.message || '请求失败', key: ERROR_MESSAGE_KEY })
+        message.error({ content: errorMessage || '请求失败', key: ERROR_MESSAGE_KEY })
       }
-      return Promise.reject(new Error(data.message || '请求失败'))
+      return Promise.reject(new Error(errorMessage || '请求失败'))
     }
     return response
   },
   (error: unknown) => {
-    const response = axios.isAxiosError<unknown>(error) ? error.response : undefined
+    const response = axios.isAxiosError<unknown, unknown, unknown>(error)
+      ? error.response
+      : undefined
     const body = response?.data
     const errorMessage =
       body && typeof body === 'object' && 'message' in body && typeof body.message === 'string'
@@ -82,24 +85,28 @@ request.interceptors.response.use(
   }
 )
 
-export async function apiGet<T>(url: string, params?: Record<string, unknown>): Promise<T> {
-  const res = await request.get<ApiResponse<T>>(url, { params })
+// 响应、请求体和查询分别传入泛型，阻断 Axios 默认 any 进入自有接口。
+type Response<T, D, Q> = AxiosResponse<ApiResponse<T>, D, object, Q>
+
+export async function apiGet<T, Q = undefined>(url: string, params?: Q): Promise<T> {
+  const res = await request.get<ApiResponse<T>, Response<T, never, Q>, never, Q>(
+    url,
+    params === undefined ? {} : { params }
+  )
   return res.data.data
 }
 
-export async function apiPost<T>(url: string, data?: unknown): Promise<T> {
-  const res = await request.post<ApiResponse<T>>(url, data)
+export async function apiPost<T, D>(url: string, data: D): Promise<T> {
+  const res = await request.post<ApiResponse<T>, Response<T, D, never>, D, never>(url, data)
   return res.data.data
 }
 
-export async function apiPut<T>(url: string, data?: unknown): Promise<T> {
-  const res = await request.put<ApiResponse<T>>(url, data)
+export async function apiPut<T, D>(url: string, data: D): Promise<T> {
+  const res = await request.put<ApiResponse<T>, Response<T, D, never>, D, never>(url, data)
   return res.data.data
 }
 
 export async function apiDelete<T>(url: string): Promise<T> {
-  const res = await request.delete<ApiResponse<T>>(url)
+  const res = await request.delete<ApiResponse<T>, Response<T, never, never>, never, never>(url)
   return res.data.data
 }
-
-export default request

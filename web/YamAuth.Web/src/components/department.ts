@@ -1,7 +1,5 @@
-export interface Department {
-  id: number
-  deptName?: string | null
-}
+import type { DepartmentDto } from '@/types/unit'
+export type Department = Pick<DepartmentDto, 'id' | 'deptName'>
 
 export function departmentLabel(department: Department) {
   const name = department.deptName?.trim()

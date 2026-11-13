@@ -87,7 +87,7 @@ const keywordRules: [RegExp, string][] = [
 export function resolveIconName(name?: string): string | undefined {
   if (!name) return undefined
   const canonical = Object.hasOwn(legacyIconNames, name) ? legacyIconNames[name] : name
-  return loaders.has(canonical) ? canonical : undefined
+  return canonical && loaders.has(canonical) ? canonical : undefined
 }
 
 export const iconCatalog = [...loaders.keys()]

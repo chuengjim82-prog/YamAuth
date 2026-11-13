@@ -1,8 +1,8 @@
 import { apiGet, apiPost } from './request'
-import type { LoginResult, MenuNode } from '@/types'
+import type { LoginRequest, LoginResult, MenuNode } from '@/types/auth'
 
 export function login(userName: string, password: string) {
-  return apiPost<LoginResult>('/v1/auth/login', { userName, password })
+  return apiPost<LoginResult, LoginRequest>('/v1/auth/login', { userName, password })
 }
 
 export function fetchMenuTree() {

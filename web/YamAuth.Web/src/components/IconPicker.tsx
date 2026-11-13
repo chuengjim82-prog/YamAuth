@@ -110,8 +110,8 @@ export default function IconPicker({
         width={760}
         centered
         destroyOnHidden
-        className={styles.dialog}
-        classNames={{ body: styles.body }}
+        className={styles.dialog ?? ''}
+        classNames={{ body: styles.body ?? '' }}
         onCancel={() => setOpen(false)}
         afterOpenChange={(visible) => {
           if (!visible) return
@@ -160,7 +160,7 @@ export default function IconPicker({
             setPage(1)
           }}
         />
-        <Segmented
+        <Segmented<IconTheme | 'all'>
           block
           value={theme}
           options={[
@@ -170,7 +170,7 @@ export default function IconPicker({
             { label: '双色', value: 'TwoTone' }
           ]}
           onChange={(next) => {
-            setTheme(next as IconTheme | 'all')
+            setTheme(next)
             setPage(1)
           }}
         />
@@ -198,7 +198,7 @@ export default function IconPicker({
             ))
           ) : (
             <Empty
-              className={styles.empty}
+              className={styles.empty ?? ''}
               image={Empty.PRESENTED_IMAGE_SIMPLE}
               description="未找到匹配的图标"
             />

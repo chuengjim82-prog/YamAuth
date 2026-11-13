@@ -8,7 +8,12 @@ import {
   type ReactNode
 } from 'react'
 import { ACCOUNT_KEY, SESSION_CLEARED, TOKEN_KEY } from '@/api/request'
-import type { MenuNode, UserInfo } from '@/types'
+import type { MenuNode } from '@/types/auth'
+
+interface UserInfo {
+  userName: string
+  nickName: string
+}
 
 interface AppContextType {
   user: UserInfo | null
@@ -29,7 +34,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const token = localStorage.getItem(TOKEN_KEY)
       const account = localStorage.getItem(ACCOUNT_KEY)
       if (!token || !account) return null
-      return JSON.parse(account) as UserInfo
+      const parsed: unknown = JSON.parse(account)
+      if (
+        parsed &&
+        typeof parsed === 'object' &&
+        'userName' in parsed &&
+        typeof parsed.userName === 'string' &&
+        'nickName' in parsed &&
+        typeof parsed.nickName === 'string'
+      ) {
+        return { userName: parsed.userName, nickName: parsed.nickName }
+      }
+      return null
     } catch {
       // 浏览器禁用存储时仍展示登录页，使主题可以在当前页面正常切换。
       return null

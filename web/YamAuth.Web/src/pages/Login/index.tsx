@@ -4,6 +4,7 @@ import { Button, Form, Input, message } from 'antd'
 import { LockOutlined, UserOutlined } from '@ant-design/icons'
 import type { InputRef } from 'antd'
 import { login } from '@/api/auth'
+import type { LoginRequest } from '@/types/auth'
 import { useApp } from '@/store/AppContext'
 import ThemeSwitch from '@/components/ThemeSwitch'
 import styles from './Login.module.css'
@@ -19,7 +20,7 @@ export default function Login() {
     return <Navigate to="/home" replace />
   }
 
-  const onFinish = async (values: { userName: string; password: string }) => {
+  const onFinish = async (values: LoginRequest) => {
     if (submittingRef.current) return
     submittingRef.current = true
     setLoading(true)
@@ -48,7 +49,7 @@ export default function Login() {
         </div>
         <div className={styles.formWrap}>
           <h1 className={styles.formTitle}>用户登录</h1>
-          <Form<{ userName: string; password: string }>
+          <Form<LoginRequest>
             layout="vertical"
             onFinish={(values) => {
               // onFinish 内部处理请求失败并释放提交锁，Form 的回调不接收 Promise。
