@@ -1,7 +1,8 @@
 import { Suspense } from 'react'
-import { HashRouter, useRoutes } from 'react-router-dom'
+import { HashRouter, useLocation, useRoutes } from 'react-router-dom'
 import { ConfigProvider, Spin } from 'antd'
-import { AppProvider } from '@/store/AppContext'
+import { AppProvider, useApp } from '@/store/AppContext'
+import PageErrorBoundary from '@/components/PageErrorBoundary'
 import ThemeBoundary from '@/components/ThemeBoundary'
 import { routes } from '@/router'
 
@@ -11,7 +12,22 @@ ConfigProvider.config({
 })
 
 function AppRoutes() {
-  return useRoutes(routes)
+  const content = useRoutes(routes)
+  const location = useLocation()
+  const { session } = useApp()
+  return (
+    <PageErrorBoundary resetKey={`${session.revision}:${location.key}`}>
+      <Suspense
+        fallback={
+          <div role="status" style={{ padding: 48, textAlign: 'center' }}>
+            <Spin /> 正在加载页面
+          </div>
+        }
+      >
+        {content}
+      </Suspense>
+    </PageErrorBoundary>
+  )
 }
 
 export default function App() {
@@ -19,15 +35,7 @@ export default function App() {
     <AppProvider>
       <ThemeBoundary>
         <HashRouter>
-          <Suspense
-            fallback={
-              <div role="status" style={{ padding: 48, textAlign: 'center' }}>
-                <Spin /> 正在加载页面
-              </div>
-            }
-          >
-            <AppRoutes />
-          </Suspense>
+          <AppRoutes />
         </HashRouter>
       </ThemeBoundary>
     </AppProvider>

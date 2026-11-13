@@ -10,6 +10,22 @@ const config = ts.parseJsonConfigFileContent(loaded.config, ts.sys, process.cwd(
 const probePath = path.resolve('src/__type_contract_probe__.ts')
 const cases = [
   {
+    name: '原文数字输入不能绑定只接受 number 的关联选择器',
+    code: "fieldsFor<CompanyDto, CompanyForm>().form('countryId', '国家', { kind: 'number', numberKind: 'safeInteger', formControl: 'tenant' }, row => row.countryId)"
+  },
+  {
+    name: '原文数字表单不能直接作为数字 DTO 提交',
+    code: "companyApi.create({ ...companyToCreate(companyForm), countryId: '1' })"
+  },
+  {
+    name: '数字字段必须声明后端整数范围',
+    code: "field.form('tenantId', '租户', { kind: 'number' }, row => row.tenantId)"
+  },
+  {
+    name: '整数范围不能使用未知类型',
+    code: "field.form('tenantId', '租户', { kind: 'number', numberKind: 'float' }, row => row.tenantId)"
+  },
+  {
     name: '菜单新增不能提交任意字符串',
     code: "crudMenuApi.create({ ...menuCreate, menuType: 'page' })"
   },
@@ -109,12 +125,13 @@ void textAreaField
 field.form('password', '密码', { kind: 'password' }, () => undefined)
 field.form('remark', '备注', { kind: 'textarea' }, row => row.remark)
 fieldsFor<CompanyDto, CompanyForm>().form('regDate', '注册日期', { kind: 'date' }, row => row.regDate)
-field.form('tenantId', '租户', { kind: 'number', formControl: 'tenant' }, row => row.tenantId)
+field.form('tenantId', '租户', { kind: 'number', numberKind: 'safeInteger', formControl: 'tenant' }, row => row.tenantId)
 const allQuery = { all: true } as const
 withAll(appsInfoApi, allQuery).all()
 userApi.update(1, { ...userCreate, password: null })
 appsInfoApi.all()
 companyApi.create(companyToCreate(companyForm))
+companyApi.create(companyToCreate({ ...companyForm, countryId: '9007199254740991', classify: '-1' }))
 `
 const source = prelude + cases.map(({ code }) => `{ ${code} }`).join('\n')
 const firstLine = prelude.split('\n').length - 1

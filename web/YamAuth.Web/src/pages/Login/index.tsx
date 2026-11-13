@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Button, Form, Input, message } from 'antd'
+import { Alert, Button, Form, Input, message } from 'antd'
 import { LockOutlined, UserOutlined } from '@ant-design/icons'
 import type { InputRef } from 'antd'
 import { login } from '@/api/auth'
@@ -10,30 +10,47 @@ import styles from './Login.module.css'
 import type { LoginDestination } from '@/auth/recovery'
 import { prepareLoginDestination } from './redirect'
 import LoginRedirect from './LoginRedirect'
+import { isCurrentRequestSession, SessionStorageError, type RequestSession } from '@/auth/session'
 
 export default function Login() {
-  const { user, login: saveLogin } = useApp()
+  const { user, login: saveLogin, session, isCurrentSession } = useApp()
   const [loading, setLoading] = useState(false)
-  const [destination, setDestination] = useState<LoginDestination | null>(null)
+  const [destination, setDestination] = useState<{
+    session: RequestSession
+    value: LoginDestination
+  } | null>(null)
   const passwordInputRef = useRef<InputRef>(null)
   const submittingRef = useRef(false)
 
   if (user) {
-    return <LoginRedirect key={user.userName} userName={user.userName} destination={destination} />
+    return (
+      <LoginRedirect
+        key={session.revision}
+        userName={user.userName}
+        destination={destination?.session === session ? destination.value : null}
+      />
+    )
   }
 
   const onFinish = async (values: LoginRequest) => {
-    if (submittingRef.current) return
+    if (submittingRef.current || !isCurrentSession()) return
     submittingRef.current = true
     setLoading(true)
     try {
       const result = await login(values.userName, values.password)
+      if (!isCurrentSession()) return
       // 先固定目标，再更新会话；已登录分支负责唯一一次消费和跳转。
-      const next = await prepareLoginDestination(result.userName)
-      setDestination(next)
-      saveLogin({ userName: result.userName, nickName: result.nickName }, result.token)
+      const next = await prepareLoginDestination(result.userName, isCurrentSession)
+      if (!isCurrentSession()) return
+      const savedSession = await saveLogin(
+        { userName: result.userName, nickName: result.nickName },
+        result.token
+      )
+      if (!isCurrentRequestSession(savedSession)) return
+      setDestination({ session: savedSession, value: next })
       message.success('登录成功')
-    } catch {
+    } catch (error: unknown) {
+      if (error instanceof SessionStorageError) message.error(error.message)
       // 登录及目标解析分别负责错误提示；失败时保留恢复记录。
     } finally {
       submittingRef.current = false
@@ -53,6 +70,9 @@ export default function Login() {
         </div>
         <div className={styles.formWrap}>
           <h1 className={styles.formTitle}>用户登录</h1>
+          {session.storageError && (
+            <Alert type="error" showIcon title={session.storageError.message} />
+          )}
           <Form<LoginRequest>
             layout="vertical"
             onFinish={(values) => {

@@ -1,4 +1,4 @@
-import { apiDelete, apiGet, apiPost, apiPut } from './request'
+import { apiDelete, apiGet, apiPost, apiPut, invalidApiResponse } from './request'
 import type { PagedQuery, PagedResult } from '@/types/api'
 
 export interface EntityReader<TEntity> {
@@ -14,18 +14,58 @@ export interface CrudApi<TEntity, TCreate, TUpdate, TQuery extends PagedQuery> {
   remove: (id: number) => Promise<void>
 }
 
+function isEntity(value: unknown) {
+  return (
+    !!value &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    'id' in value &&
+    typeof value.id === 'number' &&
+    Number.isSafeInteger(value.id) &&
+    value.id > 0
+  )
+}
+
+function isPage(value: unknown) {
+  return (
+    !!value &&
+    typeof value === 'object' &&
+    'total' in value &&
+    typeof value.total === 'number' &&
+    Number.isSafeInteger(value.total) &&
+    value.total >= 0 &&
+    'items' in value &&
+    Array.isArray(value.items) &&
+    value.items.every(isEntity)
+  )
+}
+
 export function createCrudApi<TEntity, TCreate, TUpdate, TQuery extends PagedQuery>(
   basePath: string
 ): CrudApi<TEntity, TCreate, TUpdate, TQuery> {
   return {
-    page: (query) => apiGet<PagedResult<TEntity>, TQuery>(basePath, query),
-    detail: (id) => apiGet<TEntity | null>(`${basePath}/${id}`),
-    create: (data) => apiPost<number, TCreate>(basePath, data),
+    page: async (query) => {
+      const result = await apiGet<PagedResult<TEntity>, TQuery>(basePath, query)
+      if (!isPage(result)) return invalidApiResponse()
+      return result
+    },
+    detail: async (id) => {
+      const result = await apiGet<TEntity | null>(`${basePath}/${id}`)
+      if (result !== null && !isEntity(result)) return invalidApiResponse()
+      return result
+    },
+    create: async (data) => {
+      const result = await apiPost<number, TCreate>(basePath, data)
+      if (!Number.isSafeInteger(result) || result <= 0) return invalidApiResponse()
+      return result
+    },
     update: async (id, data) => {
-      await apiPut<null, TUpdate>(`${basePath}/${id}`, data)
+      const result = await apiPut<null, TUpdate>(`${basePath}/${id}`, data)
+      if (result !== null) invalidApiResponse()
     },
     remove: async (id) => {
-      await apiDelete<null>(`${basePath}/${id}`)
+      const result = await apiDelete<null>(`${basePath}/${id}`)
+      if (result !== null) invalidApiResponse()
     }
   }
 }

@@ -1,5 +1,6 @@
+import type { IntegerInputValue } from '../formValues'
 import dayjs, { type Dayjs } from 'dayjs'
-import { FormValueError } from '../formValues'
+import { FormValueError, nullableNumber } from '../formValues'
 import type {
   CompanyDto,
   CompanyCreateDto,
@@ -16,9 +17,9 @@ export interface CompanyForm {
   nameEn: string
   registratioNo: string
   legalName: string
-  countryId: number | null
+  countryId: IntegerInputValue
   regDate: Dayjs | null
-  classify: number | null
+  classify: IntegerInputValue
   currency: string
   remark: string
 }
@@ -41,14 +42,14 @@ export function companyToForm(row?: CompanyDto): CompanyForm {
 export function companyToCreate(values: CompanyForm): CompanyCreateDto {
   if (values.regDate && !values.regDate.isValid()) throw new FormValueError('注册日期无效')
   return {
-    tenantId: values.tenantId ?? null,
+    tenantId: nullableNumber(values.tenantId, '租户'),
     nameCn: values.nameCn,
     nameEn: values.nameEn,
     registratioNo: values.registratioNo,
     legalName: values.legalName,
-    countryId: values.countryId ?? null,
-    regDate: values.regDate ? values.regDate.format('YYYY-MM-DD HH:mm:ss') : null,
-    classify: values.classify ?? null,
+    countryId: nullableNumber(values.countryId, '国家'),
+    regDate: values.regDate ? values.regDate.format('YYYY-MM-DDTHH:mm:ss') : null,
+    classify: nullableNumber(values.classify, '分类', 'int32'),
     currency: values.currency,
     remark: values.remark
   }
@@ -57,14 +58,14 @@ export function companyToCreate(values: CompanyForm): CompanyCreateDto {
 export function companyToUpdate(values: CompanyForm): CompanyUpdateDto {
   if (values.regDate && !values.regDate.isValid()) throw new FormValueError('注册日期无效')
   return {
-    tenantId: values.tenantId ?? null,
+    tenantId: nullableNumber(values.tenantId, '租户'),
     nameCn: values.nameCn,
     nameEn: values.nameEn,
     registratioNo: values.registratioNo,
     legalName: values.legalName,
-    countryId: values.countryId ?? null,
-    regDate: values.regDate ? values.regDate.format('YYYY-MM-DD HH:mm:ss') : null,
-    classify: values.classify ?? null,
+    countryId: nullableNumber(values.countryId, '国家'),
+    regDate: values.regDate ? values.regDate.format('YYYY-MM-DDTHH:mm:ss') : null,
+    classify: nullableNumber(values.classify, '分类', 'int32'),
     currency: values.currency,
     remark: values.remark
   }
@@ -88,7 +89,7 @@ export function projectToForm(row?: ProjectDto): ProjectForm {
 
 export function projectToCreate(values: ProjectForm): ProjectCreateDto {
   return {
-    tenantId: values.tenantId ?? null,
+    tenantId: nullableNumber(values.tenantId, '租户'),
     projCode: values.projCode,
     projName: values.projName,
     remark: values.remark
@@ -97,7 +98,7 @@ export function projectToCreate(values: ProjectForm): ProjectCreateDto {
 
 export function projectToUpdate(values: ProjectForm): ProjectUpdateDto {
   return {
-    tenantId: values.tenantId ?? null,
+    tenantId: nullableNumber(values.tenantId, '租户'),
     projCode: values.projCode,
     projName: values.projName,
     remark: values.remark

@@ -4,6 +4,7 @@ import path from 'node:path'
 import { createServer } from 'vite'
 import axios from 'axios'
 import { message } from 'antd'
+import { memoryIndexedDB } from './helpers/indexedDB.mjs'
 
 const server = await createServer({
   configFile: false,
@@ -25,10 +26,11 @@ function memoryStorage() {
 
 const localStorage = memoryStorage()
 const sessionStorage = memoryStorage()
-const originalGlobals = ['localStorage', 'sessionStorage', 'window'].map((key) => [
+const originalGlobals = ['localStorage', 'sessionStorage', 'window', 'indexedDB'].map((key) => [
   key,
   Object.getOwnPropertyDescriptor(globalThis, key)
 ])
+const idb = memoryIndexedDB()
 const notices = []
 const originalError = message.error
 const originalWarning = message.warning
@@ -40,11 +42,11 @@ const location = {
     this.hash = value
   }
 }
-let cleared = 0
 Object.assign(globalThis, {
   localStorage,
   sessionStorage,
-  window: { location, dispatchEvent: () => cleared++ }
+  indexedDB: idb.factory,
+  window: { location }
 })
 
 // 拦截真实 Axios 实例的传输层，保留项目中的请求、响应拦截器。
@@ -55,6 +57,11 @@ axios.defaults.adapter = (config) =>
 const api = await server.ssrLoadModule('/src/api/request.ts')
 axios.defaults.adapter = originalAdapter
 const redirects = await server.ssrLoadModule('/src/auth/loginRedirect.ts')
+
+const auth = await server.ssrLoadModule('/src/api/auth.ts')
+await sessions.initializeSession()
+const crud = await server.ssrLoadModule('/src/api/crud.ts')
+const entityApi = crud.createCrudApi('/v1/test')
 
 after(async () => {
   message.error = originalError
@@ -232,33 +239,20 @@ test('写入及删除曾失败后，清理仍重试删除；恢复存储权限�
   assert.equal(recovery.createRecoveryStore(() => storage).read().state.kind, 'empty')
 })
 
-test('token 未变化时也通过会话序号识别旧响应；跨标签页 token 变化同样失效', () => {
-  localStorage.setItem(sessions.TOKEN_KEY, 'same-test-token')
-  const before = sessions.captureRequestSession()
-  assert.equal(sessions.isCurrentRequestSession(before), true)
-  sessions.advanceRequestSession()
-  assert.equal(sessions.isCurrentRequestSession(before), false)
-  const current = sessions.captureRequestSession()
-  localStorage.setItem(sessions.TOKEN_KEY, 'other-tab-token')
-  assert.equal(sessions.isCurrentRequestSession(current), false)
-})
-
-function beginSession() {
+async function beginSession() {
   recovery.loginRecovery.clear()
-  sessions.advanceRequestSession()
-  localStorage.setItem(sessions.TOKEN_KEY, 'old-test-token')
-  localStorage.setItem(
-    sessions.ACCOUNT_KEY,
-    JSON.stringify({ userName: 'alice', nickName: '测试' })
+  await sessions.saveSession(
+    { userName: 'alice', nickName: '测试' },
+    'old-test-token',
+    sessions.captureRequestSession()
   )
   location.hash = '#/auth/users?keyword=a%20b&page=3#row-7'
-  cleared = 0
   notices.length = 0
 }
 
-async function issueRequest() {
-  const result = api.apiGet('/test').then(
-    () => ({ failed: false }),
+async function issueRequest(run = () => api.apiGet('/test')) {
+  const result = run().then(
+    (value) => ({ failed: false, value }),
     () => ({ failed: true })
   )
   await new Promise((resolve) => setImmediate(resolve))
@@ -284,7 +278,7 @@ function unauthorized(request, transport) {
 
 for (const transport of ['http', 'business']) {
   test(`${transport} 401 记录原账号及完整地址，重复响应不覆盖恢复记录`, async () => {
-    beginSession()
+    await beginSession()
     const first = await issueRequest()
     const second = await issueRequest()
     unauthorized(first.request, transport)
@@ -292,8 +286,8 @@ for (const transport of ['http', 'business']) {
     unauthorized(second.request, transport)
     await second.result
     assert.equal(location.hash, '#/login')
-    assert.equal(localStorage.getItem(sessions.TOKEN_KEY), null)
-    assert.equal(cleared, 1)
+    assert.equal(sessions.captureRequestSession().record, null)
+    assert.equal(JSON.parse(localStorage.getItem(sessions.SESSION_KEY)).status, 'signed-out')
     assert.equal(notices.length, 1)
     assert.deepEqual(recovery.loginRecovery.read().state, {
       kind: 'record',
@@ -306,38 +300,36 @@ for (const transport of ['http', 'business']) {
   })
 
   test(`${transport} 旧 401 迟于重新登录时不能清理新会话或产生过期提示`, async () => {
-    beginSession()
+    await beginSession()
     const old = await issueRequest()
     // 特意保留相同 token，保证保护依赖会话序号，而非仅比较字符串。
-    sessions.advanceRequestSession()
-    localStorage.setItem(
-      sessions.ACCOUNT_KEY,
-      JSON.stringify({ userName: 'bob', nickName: '新账号' })
+    await sessions.saveSession(
+      { userName: 'bob', nickName: '新账号' },
+      'old-test-token',
+      sessions.captureRequestSession()
     )
     unauthorized(old.request, transport)
     assert.deepEqual(await old.result, { failed: true })
-    assert.equal(localStorage.getItem(sessions.TOKEN_KEY), 'old-test-token')
+    assert.equal(sessions.captureRequestSession().record.token, 'old-test-token')
     assert.equal(location.hash, '#/auth/users?keyword=a%20b&page=3#row-7')
-    assert.equal(cleared, 0)
     assert.equal(notices.length, 0)
     assert.equal(recovery.loginRecovery.read().state.kind, 'empty')
   })
 }
 
 test('未登录请求的 401 按请求失败提示，不清理会话也不覆盖恢复记录', async () => {
-  beginSession()
-  localStorage.removeItem(sessions.TOKEN_KEY)
+  await beginSession()
+  await sessions.clearSession(sessions.captureRequestSession())
   recovery.loginRecovery.save({ reason: 'direct', target: '/unit/employees' })
   const login = await issueRequest()
   unauthorized(login.request, 'http')
   await login.result
-  assert.equal(cleared, 0)
   assert.equal(notices[0].content, '测试未授权')
   assert.equal(recovery.loginRecovery.read().state.record.target, '/unit/employees')
 })
 
-test('守卫记录直接访问；过期记录优先；主动退出后的旧 effect 不得重建记录', () => {
-  beginSession()
+test('守卫记录直接访问；过期记录优先；主动退出后的旧 effect 不得重建记录', async () => {
+  await beginSession()
   redirects.redirectUnauthenticated('/auth/users?keyword=a%20b&page=3#row-7')
   assert.equal(recovery.loginRecovery.read().state.record.reason, 'direct')
   const expired = { reason: 'expired', target: '/auth/users', userName: 'alice' }
@@ -362,5 +354,184 @@ test('HashRouter 省略路径前导斜线及空 hash 时仍可进入登录恢复
     redirects.redirectUnauthenticated(target)
     assert.equal(location.hash, '#/login')
     assert.equal(recovery.loginRecovery.read().state.record.target, target)
+  }
+})
+
+function respond(request, data) {
+  request.resolve({ config: request.config, status: 200, statusText: 'OK', headers: {}, data })
+}
+
+test('HTTP 200 的 HTML、缺失封装及错误字段均失败；兼容 0/200 与 null，traceId 可缺省', async () => {
+  await beginSession()
+  for (const body of [
+    '<html>fallback</html>',
+    {},
+    [],
+    null,
+    { code: '0', data: null },
+    { code: 0 },
+    { code: 0, data: null, message: 7 }
+  ]) {
+    notices.length = 0
+    const current = await issueRequest(() => entityApi.update(1, { name: 'changed' }))
+    respond(current.request, body)
+    assert.equal((await current.result).failed, true)
+    assert.equal(notices.length, 1)
+    assert.match(notices[0].content, /数据格式/)
+  }
+  for (const code of [0, 200]) {
+    const current = await issueRequest(() => entityApi.update(1, {}))
+    respond(current.request, { code, data: null })
+    assert.equal((await current.result).failed, false)
+  }
+})
+
+test('CRUD 结果检查分页、实体 ID 和空写结果，保留详情 null 及合法分页子集', async () => {
+  await beginSession()
+  for (const [run, values] of [
+    [
+      () => entityApi.page({ page: 3 }),
+      [
+        { total: 2 },
+        { total: -1, items: [] },
+        { total: 1.5, items: [] },
+        { total: 1, items: [{}] },
+        { total: 1, items: [{ id: 0 }] }
+      ]
+    ],
+    [() => entityApi.detail(1), [{}, [], { id: Number.MAX_SAFE_INTEGER + 1 }]],
+    [() => entityApi.create({}), [null, 0, -1, '1', 1.5, Number.MAX_SAFE_INTEGER + 1]],
+    [() => entityApi.update(1, {}), [true, {}, []]],
+    [() => entityApi.remove(1), [true, {}, []]]
+  ]) {
+    for (const value of values) {
+      const current = await issueRequest(run)
+      respond(current.request, { code: 0, data: value })
+      assert.equal((await current.result).failed, true)
+    }
+  }
+  for (const [run, data] of [
+    [() => entityApi.page({ page: 2 }), { total: 21, items: [{ id: 21, extra: 'kept' }] }],
+    [() => entityApi.detail(999), null],
+    [() => entityApi.detail(1), { id: 1, extra: 'kept' }],
+    [() => entityApi.create({}), 42],
+    [() => entityApi.remove(1), null]
+  ]) {
+    const current = await issueRequest(run)
+    respond(current.request, { code: 0, data })
+    assert.equal((await current.result).failed, false)
+  }
+})
+
+test('同 token 新登录使旧成功响应、网络错误和登录响应静默失效', async () => {
+  await beginSession()
+  const previous = sessions.captureRequestSession()
+  const oldData = await issueRequest()
+  const oldFailure = await issueRequest()
+  const oldLogin = await issueRequest(() => api.apiPost('/v1/auth/login', {}))
+  await sessions.saveSession(
+    { userName: 'alice', nickName: '再次登录' },
+    'old-test-token',
+    previous
+  )
+  assert.equal(sessions.isCurrentRequestSession(previous), false)
+  respond(oldData.request, { code: 0, data: { id: 1 } })
+  oldFailure.request.reject(
+    new axios.AxiosError('failed', 'ERR_NETWORK', oldFailure.request.config)
+  )
+  respond(oldLogin.request, { code: 0, data: { token: 'late', userName: 'bob', nickName: '迟到' } })
+  for (const request of [oldData, oldFailure, oldLogin])
+    assert.equal((await request.result).failed, true)
+  assert.equal(notices.length, 0)
+  assert.equal(sessions.captureRequestSession().record.user.userName, 'alice')
+})
+
+test('请求同步捕获发起账号；磁盘会话先变化时拒绝旧页面提交，静默同步到首页', async () => {
+  await beginSession()
+  const old = sessions.captureRequestSession()
+  localStorage.setItem(
+    sessions.SESSION_KEY,
+    JSON.stringify({
+      version: 1,
+      status: 'authenticated',
+      sessionId: 'other-tab',
+      token: 'new-token',
+      user: { userName: 'bob', nickName: '新账号' }
+    })
+  )
+  await assert.rejects(api.apiPost('/v1/test', { oldDraft: true }), sessions.StaleSessionError)
+  assert.equal(pending.length, 0)
+  assert.equal(sessions.isCurrentRequestSession(old), false)
+  assert.equal(location.hash, '#/home')
+  assert.equal(notices.length, 0)
+  const next = await issueRequest()
+  assert.equal(next.request.config.headers.Authorization, 'Bearer new-token')
+  respond(next.request, { code: 0, data: null })
+  assert.equal((await next.result).failed, false)
+})
+
+for (const transport of ['http', 'business']) {
+  test(`${transport} 401 等待写锁时出现新登录，不退出新账号或改动恢复目标`, async () => {
+    await beginSession()
+    const old = await issueRequest()
+    const release = idb.hold()
+    const save = sessions.saveSession(
+      { userName: 'bob', nickName: '新账号' },
+      'new-token',
+      sessions.captureRequestSession()
+    )
+    await new Promise((resolve) => setImmediate(resolve))
+    unauthorized(old.request, transport)
+    await new Promise((resolve) => setImmediate(resolve))
+    assert.equal(location.hash, '#/auth/users?keyword=a%20b&page=3#row-7')
+    release()
+    await save
+    assert.equal((await old.result).failed, true)
+    assert.equal(sessions.captureRequestSession().record.user.userName, 'bob')
+    assert.equal(location.hash, '#/auth/users?keyword=a%20b&page=3#row-7')
+    assert.equal(recovery.loginRecovery.read().state.kind, 'empty')
+    assert.equal(notices.length, 0)
+  })
+}
+
+test('导航菜单必须为结构完整的树，异常数据报错且不作为可用菜单返回', async () => {
+  await beginSession()
+  const node = {
+    id: 1,
+    parentId: 0,
+    menuName: '首页',
+    menuUrl: '/home',
+    menuIcon: '',
+    children: []
+  }
+  for (const value of [
+    null,
+    {},
+    'bad',
+    [null],
+    [{}],
+    [{ ...node, id: 0 }],
+    [{ ...node, parentId: 0.5 }],
+    [{ ...node, menuName: null }],
+    [{ ...node, menuUrl: 1 }],
+    [{ ...node, menuIcon: null }],
+    [{ ...node, children: null }],
+    [{ ...node, children: [{}] }]
+  ]) {
+    notices.length = 0
+    const request = await issueRequest(() => auth.fetchMenuTree())
+    respond(request.request, { code: 0, data: value })
+    assert.equal((await request.result).failed, true)
+    assert.equal(notices.length, 1)
+    assert.match(notices[0].content, /数据格式/)
+  }
+  for (const value of [
+    [],
+    [node],
+    [{ ...node, children: [{ ...node, id: 2, parentId: 1, extra: true }] }]
+  ]) {
+    const request = await issueRequest(() => auth.fetchMenuTree())
+    respond(request.request, { code: 0, data: value })
+    assert.deepEqual(await request.result, { failed: false, value })
   }
 })

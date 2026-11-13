@@ -1,5 +1,6 @@
 import type { Dayjs } from 'dayjs'
 import type { FormItemProps } from 'antd'
+import type { NumberKind } from './formValues'
 import type { CrudApi } from '@/api/crud'
 import type { PagedQuery, PagedResult } from '@/types/api'
 
@@ -16,15 +17,19 @@ interface FieldOptionsBase {
 }
 /** 控件必须接受该表单字段的值类型；NoInfer 防止错误控件反向扩大字段名。 */
 export type FieldOptions<T> = FieldOptionsBase &
-  (NonNullable<T> extends number
-    ? { kind: 'number'; formControl?: NumberControl }
+  (NonNullable<T> extends number | string
+    ? NonNullable<T> extends string
+      ? { kind: 'string' | 'password' | 'textarea' | 'icon'; formControl?: StringControl }
+      : {
+          kind: 'number'
+          numberKind: NumberKind
+          formControl?: NonNullable<T> extends number ? NumberControl : never
+        }
     : NonNullable<T> extends boolean
       ? { kind: 'bool'; formControl?: never }
       : NonNullable<T> extends Dayjs
         ? { kind: 'date'; formControl?: never }
-        : NonNullable<T> extends string
-          ? { kind: 'string' | 'password' | 'textarea' | 'icon'; formControl?: StringControl }
-          : never)
+        : never)
 
 interface IdFieldDef<E> extends FieldOptionsBase {
   name: 'id'

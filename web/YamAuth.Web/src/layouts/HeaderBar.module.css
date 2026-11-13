@@ -19,11 +19,25 @@
 }
 
 .userMenu {
+  border: 0;
+  background: transparent;
+  padding: 4px;
+  font: inherit;
   color: var(--app-on-brand);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   min-width: 0;
+}
+
+.brand:hover {
+  color: var(--app-on-brand);
+}
+
+.brand:focus-visible,
+.userMenu:focus-visible {
+  outline: 2px solid var(--app-on-brand);
+  outline-offset: 4px;
 }
 
 .userName {

@@ -2,13 +2,11 @@ import axios, { type AxiosResponse, type InternalAxiosRequestConfig } from 'axio
 import { message } from 'antd'
 import type { ApiResponse } from '@/types/api'
 import {
-  ACCOUNT_KEY,
-  SESSION_CLEARED,
-  TOKEN_KEY,
-  advanceRequestSession,
+  StaleSessionError,
+  assertCurrentRequestSession,
+  clearSession,
   captureRequestSession,
   isCurrentRequestSession,
-  readAccountUserName,
   type RequestSession
 } from '@/auth/session'
 import { loginRecovery } from '@/auth/recovery'
@@ -18,8 +16,6 @@ import {
   notifyRecoveryStorage,
   replaceWithLogin
 } from '@/auth/loginRedirect'
-
-export { TOKEN_KEY, ACCOUNT_KEY, SESSION_CLEARED } from '@/auth/session'
 
 function resolveApiBaseURL() {
   const raw = (import.meta.env.VITE_API_BASE_URL || '').trim().replace(/\/+$/, '')
@@ -35,64 +31,97 @@ const request = axios.create({
 const ERROR_MESSAGE_KEY = 'api-request-error'
 const requestSessions = new WeakMap<object, RequestSession>()
 
-function handleUnauthorized(config: object | undefined) {
+export class ApiProtocolError extends Error {}
+
+export function invalidApiResponse(): never {
+  const error = new ApiProtocolError('服务器返回的数据格式不正确，请重试或联系管理员')
+  message.error({ content: error.message, key: ERROR_MESSAGE_KEY })
+  throw error
+}
+
+async function handleUnauthorized(config: object | undefined) {
   const session = config && requestSessions.get(config)
   if (!session) return false
   // 即使服务端再次签发相同 token，旧会话响应也不能清除新登录态。
   if (!isCurrentRequestSession(session)) return true
-  if (!session.token) return false
+  if (session.record?.status !== 'authenticated') return false
 
-  const target = currentHashTarget()
-  if (!isLoginTarget(target)) {
-    notifyRecoveryStorage(
-      loginRecovery.save({ reason: 'expired', target, userName: readAccountUserName() })
-    )
+  const userName = session.record.user.userName
+  try {
+    const result = await clearSession(session, () => {
+      const target = currentHashTarget()
+      if (!isLoginTarget(target)) {
+        notifyRecoveryStorage(loginRecovery.save({ reason: 'expired', target, userName }))
+      }
+      replaceWithLogin()
+    })
+    if (isCurrentRequestSession(result.session)) {
+      message.error({
+        content: result.error?.message ?? '登录已过期，请重新登录',
+        key: ERROR_MESSAGE_KEY
+      })
+    }
+  } catch (error: unknown) {
+    if (!(error instanceof StaleSessionError)) throw error
   }
-  replaceWithLogin()
-  advanceRequestSession()
-  localStorage.removeItem(TOKEN_KEY)
-  localStorage.removeItem(ACCOUNT_KEY)
-  window.dispatchEvent(new Event(SESSION_CLEARED))
-  message.error({ content: '登录已过期，请重新登录', key: ERROR_MESSAGE_KEY })
   return true
 }
 
-request.interceptors.request.use((config: InternalAxiosRequestConfig<unknown, unknown>) => {
-  const session = captureRequestSession()
-  requestSessions.set(config, session)
-  if (session.token) {
-    config.headers.Authorization = `Bearer ${session.token}`
-  }
-  return config
-})
+request.interceptors.request.use(
+  (config: InternalAxiosRequestConfig<unknown, unknown>) => {
+    const session = captureRequestSession()
+    assertCurrentRequestSession(session)
+    requestSessions.set(config, session)
+    if (session.record?.status === 'authenticated') {
+      config.headers.Authorization = `Bearer ${session.record.token}`
+    }
+    return config
+  },
+  (error: unknown) => {
+    throw error
+  },
+  { synchronous: true }
+)
+
+function assertResponseSession(config: object | undefined) {
+  const session = config && requestSessions.get(config)
+  if (session) assertCurrentRequestSession(session)
+}
 
 request.interceptors.response.use(
-  (response: AxiosResponse<unknown, unknown, object, unknown>) => {
+  async (response: AxiosResponse<unknown, unknown, object, unknown>) => {
+    assertResponseSession(response.config)
     const data = response.data
     if (
-      data &&
-      typeof data === 'object' &&
-      'code' in data &&
-      data.code !== 0 &&
-      data.code !== 200
-    ) {
+      !data ||
+      typeof data !== 'object' ||
+      Array.isArray(data) ||
+      !('code' in data) ||
+      !Number.isInteger(data.code) ||
+      ('message' in data && typeof data.message !== 'string')
+    )
+      return invalidApiResponse()
+    if (data.code !== 0 && data.code !== 200) {
       const errorMessage = 'message' in data && typeof data.message === 'string' ? data.message : ''
-      if (!(data.code === 401 && handleUnauthorized(response.config))) {
+      if (!(data.code === 401 && (await handleUnauthorized(response.config)))) {
         message.error({ content: errorMessage || '请求失败', key: ERROR_MESSAGE_KEY })
       }
       return Promise.reject(new Error(errorMessage || '请求失败'))
     }
+    if (!Object.hasOwn(data, 'data')) return invalidApiResponse()
     return response
   },
-  (error: unknown) => {
+  async (error: unknown) => {
+    if (error instanceof StaleSessionError) return Promise.reject(error)
     const axiosError = axios.isAxiosError<unknown, unknown, unknown>(error) ? error : undefined
+    assertResponseSession(axiosError?.config)
     const response = axiosError?.response
     const body = response?.data
     const errorMessage =
       body && typeof body === 'object' && 'message' in body && typeof body.message === 'string'
         ? body.message
         : ''
-    if (!(response?.status === 401 && handleUnauthorized(axiosError?.config))) {
+    if (!(response?.status === 401 && (await handleUnauthorized(axiosError?.config)))) {
       message.error({
         content: errorMessage || '网络错误',
         key: ERROR_MESSAGE_KEY

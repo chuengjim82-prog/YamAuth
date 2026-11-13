@@ -74,7 +74,13 @@ export const userResource = {
     userFields.form(
       'tenantId',
       '租户',
-      { kind: 'number', table: true, nullable: true, formControl: 'tenant' },
+      {
+        kind: 'number',
+        numberKind: 'safeInteger',
+        table: true,
+        nullable: true,
+        formControl: 'tenant'
+      },
       (row) => row.tenantId
     ),
     userFields.form(
@@ -172,13 +178,19 @@ export const appsInfoResource = {
     appsInfoFields.form(
       'tenantId',
       '租户',
-      { kind: 'number', table: true, nullable: true, formControl: 'tenant' },
+      {
+        kind: 'number',
+        numberKind: 'safeInteger',
+        table: true,
+        nullable: true,
+        formControl: 'tenant'
+      },
       (row) => row.tenantId
     ),
     appsInfoFields.form(
       'parentId',
       '上级',
-      { kind: 'number', table: true, nullable: true },
+      { kind: 'number', numberKind: 'safeInteger', table: true, nullable: true },
       (row) => row.parentId
     ),
     appsInfoFields.form(
@@ -229,19 +241,37 @@ export const appsUserResource = {
     appsUserFields.form(
       'tenantId',
       '租户',
-      { kind: 'number', table: true, nullable: true, formControl: 'tenant' },
+      {
+        kind: 'number',
+        numberKind: 'safeInteger',
+        table: true,
+        nullable: true,
+        formControl: 'tenant'
+      },
       (row) => row.tenantId
     ),
     appsUserFields.form(
       'appsId',
       '应用',
-      { kind: 'number', table: true, nullable: true, formControl: 'app' },
+      {
+        kind: 'number',
+        numberKind: 'safeInteger',
+        table: true,
+        nullable: true,
+        formControl: 'app'
+      },
       (row) => row.appsId
     ),
     appsUserFields.form(
       'userId',
       '用户',
-      { kind: 'number', table: true, nullable: true, formControl: 'user' },
+      {
+        kind: 'number',
+        numberKind: 'safeInteger',
+        table: true,
+        nullable: true,
+        formControl: 'user'
+      },
       (row) => row.userId
     ),
     appsUserFields.form('isAdmin', '管理员', { kind: 'bool', table: true }, (row) => row.isAdmin),
@@ -278,10 +308,21 @@ export const crudInfoResource = {
     crudInfoFields.form(
       'appsId',
       '应用',
-      { kind: 'number', table: true, nullable: true, formControl: 'app' },
+      {
+        kind: 'number',
+        numberKind: 'safeInteger',
+        table: true,
+        nullable: true,
+        formControl: 'app'
+      },
       (row) => row.appsId
     ),
-    crudInfoFields.form('parentId', '上级', { kind: 'number', table: true }, (row) => row.parentId),
+    crudInfoFields.form(
+      'parentId',
+      '上级',
+      { kind: 'number', numberKind: 'safeInteger', table: true },
+      (row) => row.parentId
+    ),
     crudInfoFields.form(
       'crudName',
       '功能名称',
@@ -297,13 +338,13 @@ export const crudInfoResource = {
     crudInfoFields.form(
       'crudType',
       '功能类型',
-      { kind: 'number', table: true },
+      { kind: 'number', numberKind: 'int32', table: true },
       (row) => row.crudType
     ),
     crudInfoFields.form(
       'sortIndex',
       '排序',
-      { kind: 'number', table: true },
+      { kind: 'number', numberKind: 'int32', table: true },
       (row) => row.sortIndex
     ),
     crudInfoFields.form('remark', '备注', { kind: 'textarea', table: true }, (row) => row.remark)
@@ -336,10 +377,21 @@ export const crudItemResource = {
     crudItemFields.form(
       'crudId',
       '功能',
-      { kind: 'number', table: true, nullable: true, formControl: 'crudInfo' },
+      {
+        kind: 'number',
+        numberKind: 'safeInteger',
+        table: true,
+        nullable: true,
+        formControl: 'crudInfo'
+      },
       (row) => row.crudId
     ),
-    crudItemFields.form('parentId', '上级', { kind: 'number', table: true }, (row) => row.parentId),
+    crudItemFields.form(
+      'parentId',
+      '上级',
+      { kind: 'number', numberKind: 'safeInteger', table: true },
+      (row) => row.parentId
+    ),
     crudItemFields.form(
       'method',
       '方法',
@@ -397,10 +449,21 @@ export const crudMenuResource = {
     crudMenuFields.form(
       'crudId',
       '功能',
-      { kind: 'number', table: true, nullable: true, formControl: 'crudInfo' },
+      {
+        kind: 'number',
+        numberKind: 'safeInteger',
+        table: true,
+        nullable: true,
+        formControl: 'crudInfo'
+      },
       (row) => row.crudId
     ),
-    crudMenuFields.form('parentId', '上级', { kind: 'number', table: true }, (row) => row.parentId),
+    crudMenuFields.form(
+      'parentId',
+      '上级',
+      { kind: 'number', numberKind: 'safeInteger', table: true },
+      (row) => row.parentId
+    ),
     crudMenuFields.form(
       'menuCode',
       '菜单编码',
@@ -446,7 +509,7 @@ export const crudMenuResource = {
     crudMenuFields.form(
       'sortIndex',
       '排序',
-      { kind: 'number', table: true },
+      { kind: 'number', numberKind: 'int32', table: true },
       (row) => row.sortIndex
     ),
     crudMenuFields.form('isHided', '隐藏', { kind: 'bool', table: true }, (row) => row.isHided),
@@ -487,16 +550,33 @@ export const crudRoleResource = {
     crudRoleFields.form(
       'tenantId',
       '租户',
-      { kind: 'number', table: true, nullable: true, formControl: 'tenant' },
+      {
+        kind: 'number',
+        numberKind: 'safeInteger',
+        table: true,
+        nullable: true,
+        formControl: 'tenant'
+      },
       (row) => row.tenantId
     ),
     crudRoleFields.form(
       'appsId',
       '应用',
-      { kind: 'number', table: true, nullable: true, formControl: 'app' },
+      {
+        kind: 'number',
+        numberKind: 'safeInteger',
+        table: true,
+        nullable: true,
+        formControl: 'app'
+      },
       (row) => row.appsId
     ),
-    crudRoleFields.form('parentId', '上级', { kind: 'number', table: true }, (row) => row.parentId),
+    crudRoleFields.form(
+      'parentId',
+      '上级',
+      { kind: 'number', numberKind: 'safeInteger', table: true },
+      (row) => row.parentId
+    ),
     crudRoleFields.form(
       'roleCode',
       '角色编码',
@@ -512,7 +592,7 @@ export const crudRoleResource = {
     crudRoleFields.form(
       'sortIndex',
       '排序',
-      { kind: 'number', table: true, nullable: true },
+      { kind: 'number', numberKind: 'int32', table: true, nullable: true },
       (row) => row.sortIndex
     ),
     crudRoleFields.form(
@@ -544,13 +624,25 @@ export const crudRoleCrudResource = {
     crudRoleCrudFields.form(
       'crudRoleId',
       '功能角色',
-      { kind: 'number', required: true, table: true, formControl: 'crudRole' },
+      {
+        kind: 'number',
+        numberKind: 'safeInteger',
+        required: true,
+        table: true,
+        formControl: 'crudRole'
+      },
       (row) => row.crudRoleId
     ),
     crudRoleCrudFields.form(
       'crudInfoId',
       '功能',
-      { kind: 'number', required: true, table: true, formControl: 'crudInfoId' },
+      {
+        kind: 'number',
+        numberKind: 'safeInteger',
+        required: true,
+        table: true,
+        formControl: 'crudInfoId'
+      },
       (row) => row.crudInfoId
     )
   ]
@@ -580,13 +672,25 @@ export const crudRoleUserResource = {
     crudRoleUserFields.form(
       'roleId',
       '角色',
-      { kind: 'number', required: true, table: true, formControl: 'crudRole' },
+      {
+        kind: 'number',
+        numberKind: 'safeInteger',
+        required: true,
+        table: true,
+        formControl: 'crudRole'
+      },
       (row) => row.roleId
     ),
     crudRoleUserFields.form(
       'userId',
       '用户',
-      { kind: 'number', required: true, table: true, formControl: 'user' },
+      {
+        kind: 'number',
+        numberKind: 'safeInteger',
+        required: true,
+        table: true,
+        formControl: 'user'
+      },
       (row) => row.userId
     )
   ]
@@ -624,16 +728,33 @@ export const dataRoleResource = {
     dataRoleFields.form(
       'tenantId',
       '租户',
-      { kind: 'number', table: true, nullable: true, formControl: 'tenant' },
+      {
+        kind: 'number',
+        numberKind: 'safeInteger',
+        table: true,
+        nullable: true,
+        formControl: 'tenant'
+      },
       (row) => row.tenantId
     ),
     dataRoleFields.form(
       'appsId',
       '应用',
-      { kind: 'number', table: true, nullable: true, formControl: 'app' },
+      {
+        kind: 'number',
+        numberKind: 'safeInteger',
+        table: true,
+        nullable: true,
+        formControl: 'app'
+      },
       (row) => row.appsId
     ),
-    dataRoleFields.form('parentId', '上级', { kind: 'number', table: true }, (row) => row.parentId),
+    dataRoleFields.form(
+      'parentId',
+      '上级',
+      { kind: 'number', numberKind: 'safeInteger', table: true },
+      (row) => row.parentId
+    ),
     dataRoleFields.form(
       'roleCode',
       '角色编码',
@@ -649,7 +770,7 @@ export const dataRoleResource = {
     dataRoleFields.form(
       'sortIndex',
       '排序',
-      { kind: 'number', table: true, nullable: true },
+      { kind: 'number', numberKind: 'int32', table: true, nullable: true },
       (row) => row.sortIndex
     ),
     dataRoleFields.form(
@@ -681,13 +802,25 @@ export const dataRoleUserResource = {
     dataRoleUserFields.form(
       'roleId',
       '角色',
-      { kind: 'number', required: true, table: true, formControl: 'dataRole' },
+      {
+        kind: 'number',
+        numberKind: 'safeInteger',
+        required: true,
+        table: true,
+        formControl: 'dataRole'
+      },
       (row) => row.roleId
     ),
     dataRoleUserFields.form(
       'userId',
       '用户',
-      { kind: 'number', required: true, table: true, formControl: 'user' },
+      {
+        kind: 'number',
+        numberKind: 'safeInteger',
+        required: true,
+        table: true,
+        formControl: 'user'
+      },
       (row) => row.userId
     )
   ]
@@ -714,7 +847,13 @@ export const companyResource = {
     companyFields.form(
       'tenantId',
       '租户',
-      { kind: 'number', table: true, nullable: true, formControl: 'tenant' },
+      {
+        kind: 'number',
+        numberKind: 'safeInteger',
+        table: true,
+        nullable: true,
+        formControl: 'tenant'
+      },
       (row) => row.tenantId
     ),
     companyFields.form('nameCn', '中文名', { kind: 'string', table: true }, (row) => row.nameCn),
@@ -734,14 +873,14 @@ export const companyResource = {
     companyFields.form(
       'countryId',
       '国家',
-      { kind: 'number', table: true, nullable: true },
+      { kind: 'number', numberKind: 'safeInteger', table: true, nullable: true },
       (row) => row.countryId
     ),
     companyFields.form('regDate', '注册日期', { kind: 'date', table: true }, (row) => row.regDate),
     companyFields.form(
       'classify',
       '分类',
-      { kind: 'number', table: true, nullable: true },
+      { kind: 'number', numberKind: 'int32', table: true, nullable: true },
       (row) => row.classify
     ),
     companyFields.form('currency', '币种', { kind: 'string', table: true }, (row) => row.currency),
@@ -765,7 +904,13 @@ export const projectResource = {
     projectFields.form(
       'tenantId',
       '租户',
-      { kind: 'number', table: true, nullable: true, formControl: 'tenant' },
+      {
+        kind: 'number',
+        numberKind: 'safeInteger',
+        table: true,
+        nullable: true,
+        formControl: 'tenant'
+      },
       (row) => row.tenantId
     ),
     projectFields.form(
@@ -800,7 +945,13 @@ export const departmentResource = {
     departmentFields.form(
       'tenantId',
       '租户',
-      { kind: 'number', table: true, nullable: true, formControl: 'tenant' },
+      {
+        kind: 'number',
+        numberKind: 'safeInteger',
+        table: true,
+        nullable: true,
+        formControl: 'tenant'
+      },
       (row) => row.tenantId
     ),
     departmentFields.form(
@@ -812,13 +963,13 @@ export const departmentResource = {
     departmentFields.form(
       'empCount',
       '人数',
-      { kind: 'number', table: true, nullable: true },
+      { kind: 'number', numberKind: 'int32', table: true, nullable: true },
       (row) => row.empCount
     ),
     departmentFields.form(
       'directorId',
       '负责人',
-      { kind: 'number', table: true, nullable: true },
+      { kind: 'number', numberKind: 'safeInteger', table: true, nullable: true },
       (row) => row.directorId
     ),
     departmentFields.form('remark', '备注', { kind: 'textarea', table: true }, (row) => row.remark)
@@ -849,13 +1000,25 @@ export const employeeResource = {
     employeeFields.form(
       'departmentId',
       '部门',
-      { kind: 'number', table: true, nullable: true, formControl: 'department' },
+      {
+        kind: 'number',
+        numberKind: 'safeInteger',
+        table: true,
+        nullable: true,
+        formControl: 'department'
+      },
       (row) => row.departmentId
     ),
     employeeFields.form(
       'userId',
       '用户',
-      { kind: 'number', table: true, nullable: true, formControl: 'user' },
+      {
+        kind: 'number',
+        numberKind: 'safeInteger',
+        table: true,
+        nullable: true,
+        formControl: 'user'
+      },
       (row) => row.userId
     ),
     employeeFields.form('remark', '备注', { kind: 'textarea', table: true }, (row) => row.remark)

@@ -20,6 +20,9 @@ const menuTypes = await server.ssrLoadModule('/src/types/auth.ts')
 const menuLabels = await server.ssrLoadModule('/src/pages/Crud/menuType.ts')
 const { crudMenuResource } = await server.ssrLoadModule('/src/resources/definitions.ts')
 
+const definitions = await server.ssrLoadModule('/src/resources/definitions.ts')
+const { integerError } = await server.ssrLoadModule('/src/resources/formValues.ts')
+
 const treeConfig = {
   nameField: 'name',
   searchFields: ['name'],
@@ -58,10 +61,12 @@ test('应用密钥编辑保留原值，转换不套用用户密码的省略规�
   assert.equal(authForms.crudInfoToForm().parentId, 0)
 })
 
-test('公司日期使用 Dayjs 编辑，提交格式与空值保持原约定', () => {
+test('公司日期保留本地时间，使用后端 DateTime 接受的 ISO 分隔符并保留空值', () => {
   const form = bzssForms.companyToForm({ regDate: '2026-11-13T09:08:07', countryId: null })
   assert.equal(form.regDate.format('YYYY-MM-DD HH:mm:ss'), '2026-11-13 09:08:07')
-  assert.equal(bzssForms.companyToCreate(form).regDate, '2026-11-13 09:08:07')
+  assert.equal(bzssForms.companyToCreate(form).regDate, '2026-11-13T09:08:07')
+  assert.equal(bzssForms.companyToUpdate(form).regDate, '2026-11-13T09:08:07')
+  assert.equal(bzssForms.companyToCreate({ ...form, regDate: null }).regDate, null)
   assert.equal(bzssForms.companyToUpdate({ ...form, regDate: null }).regDate, null)
   assert.equal(bzssForms.companyToCreate(form).countryId, null)
   assert.throws(
@@ -295,6 +300,66 @@ test('角色选择器保留跨应用父子层级，功能选择器仍检查同�
       }
     } finally {
       api.all = original
+    }
+  }
+})
+
+for (const resource of Object.values(definitions).filter((value) => value?.fields)) {
+  const numbers = resource.fields.filter((field) => field.form && field.kind === 'number')
+  if (!numbers.length) continue
+  test(`${resource.title}：所有数字字段在创建和编辑中检查整数范围并保留空值语义`, () => {
+    const initial = resource.toForm()
+    for (const field of numbers) initial[field.name] = 0
+    for (const field of numbers) {
+      const max = field.numberKind === 'int32' ? 2147483647 : Number.MAX_SAFE_INTEGER
+      const min = field.numberKind === 'int32' ? -2147483648 : Number.MIN_SAFE_INTEGER
+      for (const convert of [resource.toCreate, resource.toUpdate]) {
+        for (const value of [0, -1, min, max]) {
+          assert.equal(integerError(value, field.label, field.numberKind), null)
+          assert.equal(convert({ ...initial, [field.name]: value })[field.name], value)
+        }
+        for (const value of [0.5, NaN, Infinity, -Infinity, max + 1, min - 1]) {
+          assert.ok(integerError(value, field.label, field.numberKind))
+          assert.throws(() => convert({ ...initial, [field.name]: value }), /整数|之间/)
+        }
+        for (const value of [null, undefined]) {
+          if (field.nullable)
+            assert.equal(convert({ ...initial, [field.name]: value })[field.name], null)
+          else assert.throws(() => convert({ ...initial, [field.name]: value }), /请填写/)
+        }
+      }
+    }
+  })
+}
+
+test('手工数字输入在转成 number 前校验原文，创建和编辑不会接受舍入后的小数', () => {
+  for (const resource of Object.values(definitions).filter((value) => value?.fields)) {
+    const initial = resource.toForm()
+    const numbers = resource.fields.filter((field) => field.form && field.kind === 'number')
+    for (const field of numbers) initial[field.name] = 0
+    const inputs = numbers.filter((field) => !field.formControl && field.name !== 'parentId')
+    for (const field of inputs) {
+      const max = field.numberKind === 'int32' ? '2147483647' : '9007199254740991'
+      const min = field.numberKind === 'int32' ? '-2147483648' : '-9007199254740991'
+      for (const convert of [resource.toCreate, resource.toUpdate]) {
+        for (const value of ['0', '-1', min, max]) {
+          assert.equal(integerError(value, field.label, field.numberKind), null)
+          assert.equal(convert({ ...initial, [field.name]: value })[field.name], Number(value))
+        }
+        for (const value of [
+          '9007199254740990.5',
+          '1.0000000000000001',
+          '-0.00000000000000001',
+          '9007199254740992',
+          'NaN',
+          'Infinity',
+          '',
+          'oops'
+        ]) {
+          assert.ok(integerError(value, field.label, field.numberKind))
+          assert.throws(() => convert({ ...initial, [field.name]: value }), /整数|之间/)
+        }
+      }
     }
   }
 })

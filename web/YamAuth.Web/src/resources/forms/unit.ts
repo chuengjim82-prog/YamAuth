@@ -1,3 +1,5 @@
+import type { IntegerInputValue } from '../formValues'
+import { nullableNumber } from '../formValues'
 import type {
   DepartmentDto,
   DepartmentCreateDto,
@@ -10,8 +12,8 @@ import type {
 export interface DepartmentForm {
   tenantId: number | null
   deptName: string
-  empCount: number | null
-  directorId: number | null
+  empCount: IntegerInputValue
+  directorId: IntegerInputValue
   remark: string
 }
 
@@ -27,20 +29,20 @@ export function departmentToForm(row?: DepartmentDto): DepartmentForm {
 
 export function departmentToCreate(values: DepartmentForm): DepartmentCreateDto {
   return {
-    tenantId: values.tenantId ?? null,
+    tenantId: nullableNumber(values.tenantId, '租户'),
     deptName: values.deptName,
-    empCount: values.empCount ?? null,
-    directorId: values.directorId ?? null,
+    empCount: nullableNumber(values.empCount, '员工数', 'int32'),
+    directorId: nullableNumber(values.directorId, '负责人'),
     remark: values.remark
   }
 }
 
 export function departmentToUpdate(values: DepartmentForm): DepartmentUpdateDto {
   return {
-    tenantId: values.tenantId ?? null,
+    tenantId: nullableNumber(values.tenantId, '租户'),
     deptName: values.deptName,
-    empCount: values.empCount ?? null,
-    directorId: values.directorId ?? null,
+    empCount: nullableNumber(values.empCount, '员工数', 'int32'),
+    directorId: nullableNumber(values.directorId, '负责人'),
     remark: values.remark
   }
 }
@@ -61,16 +63,16 @@ export function employeeToForm(row?: EmployeeDto): EmployeeForm {
 
 export function employeeToCreate(values: EmployeeForm): EmployeeCreateDto {
   return {
-    departmentId: values.departmentId ?? null,
-    userId: values.userId ?? null,
+    departmentId: nullableNumber(values.departmentId, '部门'),
+    userId: nullableNumber(values.userId, '用户'),
     remark: values.remark
   }
 }
 
 export function employeeToUpdate(values: EmployeeForm): EmployeeUpdateDto {
   return {
-    departmentId: values.departmentId ?? null,
-    userId: values.userId ?? null,
+    departmentId: nullableNumber(values.departmentId, '部门'),
+    userId: nullableNumber(values.userId, '用户'),
     remark: values.remark
   }
 }

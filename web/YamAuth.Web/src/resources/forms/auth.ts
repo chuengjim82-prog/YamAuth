@@ -1,6 +1,7 @@
+import type { IntegerInputValue } from '../formValues'
 import { CrudMenuType, isCrudMenuType } from '@/types/auth'
 import { FormValueError } from '../formValues'
-import { requiredNumber } from '../formValues'
+import { nullableNumber, requiredNumber } from '../formValues'
 import type {
   UserDto,
   UserCreateDto,
@@ -71,7 +72,7 @@ export function userToForm(row?: UserDto): UserForm {
 
 export function userToCreate(values: UserForm): UserCreateDto {
   return {
-    tenantId: values.tenantId ?? null,
+    tenantId: nullableNumber(values.tenantId, '租户'),
     userName: values.userName,
     nickName: values.nickName,
     password: values.password,
@@ -86,7 +87,7 @@ export function userToCreate(values: UserForm): UserCreateDto {
 
 export function userToUpdate(values: UserForm): UserUpdateDto {
   return {
-    tenantId: values.tenantId ?? null,
+    tenantId: nullableNumber(values.tenantId, '租户'),
     userName: values.userName,
     nickName: values.nickName,
     ...(values.password ? { password: values.password } : {}),
@@ -157,8 +158,8 @@ export function appsInfoToForm(row?: AppsInfoDto): AppsInfoForm {
 
 export function appsInfoToCreate(values: AppsInfoForm): AppsInfoCreateDto {
   return {
-    tenantId: values.tenantId ?? null,
-    parentId: values.parentId ?? null,
+    tenantId: nullableNumber(values.tenantId, '租户'),
+    parentId: nullableNumber(values.parentId, '上级'),
     appsCode: values.appsCode,
     appsName: values.appsName,
     appKey: values.appKey,
@@ -169,8 +170,8 @@ export function appsInfoToCreate(values: AppsInfoForm): AppsInfoCreateDto {
 
 export function appsInfoToUpdate(values: AppsInfoForm): AppsInfoUpdateDto {
   return {
-    tenantId: values.tenantId ?? null,
-    parentId: values.parentId ?? null,
+    tenantId: nullableNumber(values.tenantId, '租户'),
+    parentId: nullableNumber(values.parentId, '上级'),
     appsCode: values.appsCode,
     appsName: values.appsName,
     appKey: values.appKey,
@@ -199,9 +200,9 @@ export function appsUserToForm(row?: AppsUserDto): AppsUserForm {
 
 export function appsUserToCreate(values: AppsUserForm): AppsUserCreateDto {
   return {
-    tenantId: values.tenantId ?? null,
-    appsId: values.appsId ?? null,
-    userId: values.userId ?? null,
+    tenantId: nullableNumber(values.tenantId, '租户'),
+    appsId: nullableNumber(values.appsId, '所属应用'),
+    userId: nullableNumber(values.userId, '用户'),
     isAdmin: values.isAdmin,
     remark: values.remark
   }
@@ -209,9 +210,9 @@ export function appsUserToCreate(values: AppsUserForm): AppsUserCreateDto {
 
 export function appsUserToUpdate(values: AppsUserForm): AppsUserUpdateDto {
   return {
-    tenantId: values.tenantId ?? null,
-    appsId: values.appsId ?? null,
-    userId: values.userId ?? null,
+    tenantId: nullableNumber(values.tenantId, '租户'),
+    appsId: nullableNumber(values.appsId, '所属应用'),
+    userId: nullableNumber(values.userId, '用户'),
     isAdmin: values.isAdmin,
     remark: values.remark
   }
@@ -222,8 +223,8 @@ export interface CrudInfoForm {
   parentId: number | null | undefined
   crudName: string
   crudCode: string
-  crudType: number | null
-  sortIndex: number | null
+  crudType: IntegerInputValue
+  sortIndex: IntegerInputValue
   remark: string
 }
 
@@ -241,24 +242,24 @@ export function crudInfoToForm(row?: CrudInfoDto): CrudInfoForm {
 
 export function crudInfoToCreate(values: CrudInfoForm): CrudInfoCreateDto {
   return {
-    appsId: values.appsId ?? null,
+    appsId: nullableNumber(values.appsId, '所属应用'),
     parentId: requiredNumber(values.parentId, '上级'),
     crudName: values.crudName,
     crudCode: values.crudCode,
-    crudType: requiredNumber(values.crudType, '功能类型'),
-    sortIndex: requiredNumber(values.sortIndex, '排序'),
+    crudType: requiredNumber(values.crudType, '功能类型', 'int32'),
+    sortIndex: requiredNumber(values.sortIndex, '排序', 'int32'),
     remark: values.remark
   }
 }
 
 export function crudInfoToUpdate(values: CrudInfoForm): CrudInfoUpdateDto {
   return {
-    appsId: values.appsId ?? null,
+    appsId: nullableNumber(values.appsId, '所属应用'),
     parentId: requiredNumber(values.parentId, '上级'),
     crudName: values.crudName,
     crudCode: values.crudCode,
-    crudType: requiredNumber(values.crudType, '功能类型'),
-    sortIndex: requiredNumber(values.sortIndex, '排序'),
+    crudType: requiredNumber(values.crudType, '功能类型', 'int32'),
+    sortIndex: requiredNumber(values.sortIndex, '排序', 'int32'),
     remark: values.remark
   }
 }
@@ -283,7 +284,7 @@ export function crudItemToForm(row?: CrudItemDto): CrudItemForm {
 
 export function crudItemToCreate(values: CrudItemForm): CrudItemCreateDto {
   return {
-    crudId: values.crudId ?? null,
+    crudId: nullableNumber(values.crudId, '所属功能'),
     parentId: requiredNumber(values.parentId, '上级'),
     method: values.method,
     apiPath: values.apiPath,
@@ -293,7 +294,7 @@ export function crudItemToCreate(values: CrudItemForm): CrudItemCreateDto {
 
 export function crudItemToUpdate(values: CrudItemForm): CrudItemUpdateDto {
   return {
-    crudId: values.crudId ?? null,
+    crudId: nullableNumber(values.crudId, '所属功能'),
     parentId: requiredNumber(values.parentId, '上级'),
     method: values.method,
     apiPath: values.apiPath,
@@ -311,7 +312,7 @@ export interface CrudMenuForm {
   routePath: string
   redirect: string
   openType: boolean
-  sortIndex: number | null
+  sortIndex: IntegerInputValue
   isHided: boolean
   allowAny: boolean
   remark: string
@@ -351,7 +352,7 @@ function requiredCrudMenuType(value: unknown): CrudMenuType {
 
 export function crudMenuToCreate(values: CrudMenuForm): CrudMenuCreateDto {
   return {
-    crudId: values.crudId ?? null,
+    crudId: nullableNumber(values.crudId, '所属功能'),
     parentId: requiredNumber(values.parentId, '上级'),
     menuCode: values.menuCode,
     menuName: values.menuName,
@@ -360,7 +361,7 @@ export function crudMenuToCreate(values: CrudMenuForm): CrudMenuCreateDto {
     routePath: values.routePath,
     redirect: values.redirect,
     openType: values.openType,
-    sortIndex: requiredNumber(values.sortIndex, '排序'),
+    sortIndex: requiredNumber(values.sortIndex, '排序', 'int32'),
     isHided: values.isHided,
     allowAny: values.allowAny,
     remark: values.remark
@@ -369,7 +370,7 @@ export function crudMenuToCreate(values: CrudMenuForm): CrudMenuCreateDto {
 
 export function crudMenuToUpdate(values: CrudMenuForm): CrudMenuUpdateDto {
   return {
-    crudId: values.crudId ?? null,
+    crudId: nullableNumber(values.crudId, '所属功能'),
     parentId: requiredNumber(values.parentId, '上级'),
     menuCode: values.menuCode,
     menuName: values.menuName,
@@ -378,7 +379,7 @@ export function crudMenuToUpdate(values: CrudMenuForm): CrudMenuUpdateDto {
     routePath: values.routePath,
     redirect: values.redirect,
     openType: values.openType,
-    sortIndex: requiredNumber(values.sortIndex, '排序'),
+    sortIndex: requiredNumber(values.sortIndex, '排序', 'int32'),
     isHided: values.isHided,
     allowAny: values.allowAny,
     remark: values.remark
@@ -391,7 +392,7 @@ export interface CrudRoleForm {
   parentId: number | null | undefined
   roleCode: string
   roleName: string
-  sortIndex: number | null
+  sortIndex: IntegerInputValue
   isSystem: boolean
   remark: string
 }
@@ -411,12 +412,12 @@ export function crudRoleToForm(row?: CrudRoleDto): CrudRoleForm {
 
 export function crudRoleToCreate(values: CrudRoleForm): CrudRoleCreateDto {
   return {
-    tenantId: values.tenantId ?? null,
-    appsId: values.appsId ?? null,
+    tenantId: nullableNumber(values.tenantId, '租户'),
+    appsId: nullableNumber(values.appsId, '所属应用'),
     parentId: requiredNumber(values.parentId, '上级'),
     roleCode: values.roleCode,
     roleName: values.roleName,
-    sortIndex: values.sortIndex ?? null,
+    sortIndex: nullableNumber(values.sortIndex, '排序', 'int32'),
     isSystem: values.isSystem,
     remark: values.remark
   }
@@ -424,12 +425,12 @@ export function crudRoleToCreate(values: CrudRoleForm): CrudRoleCreateDto {
 
 export function crudRoleToUpdate(values: CrudRoleForm): CrudRoleUpdateDto {
   return {
-    tenantId: values.tenantId ?? null,
-    appsId: values.appsId ?? null,
+    tenantId: nullableNumber(values.tenantId, '租户'),
+    appsId: nullableNumber(values.appsId, '所属应用'),
     parentId: requiredNumber(values.parentId, '上级'),
     roleCode: values.roleCode,
     roleName: values.roleName,
-    sortIndex: values.sortIndex ?? null,
+    sortIndex: nullableNumber(values.sortIndex, '排序', 'int32'),
     isSystem: values.isSystem,
     remark: values.remark
   }
@@ -494,7 +495,7 @@ export interface DataRoleForm {
   parentId: number | null | undefined
   roleCode: string
   roleName: string
-  sortIndex: number | null
+  sortIndex: IntegerInputValue
   isSystem: boolean
   remark: string
 }
@@ -514,12 +515,12 @@ export function dataRoleToForm(row?: DataRoleDto): DataRoleForm {
 
 export function dataRoleToCreate(values: DataRoleForm): DataRoleCreateDto {
   return {
-    tenantId: values.tenantId ?? null,
-    appsId: values.appsId ?? null,
+    tenantId: nullableNumber(values.tenantId, '租户'),
+    appsId: nullableNumber(values.appsId, '所属应用'),
     parentId: requiredNumber(values.parentId, '上级'),
     roleCode: values.roleCode,
     roleName: values.roleName,
-    sortIndex: values.sortIndex ?? null,
+    sortIndex: nullableNumber(values.sortIndex, '排序', 'int32'),
     isSystem: values.isSystem,
     remark: values.remark
   }
@@ -527,12 +528,12 @@ export function dataRoleToCreate(values: DataRoleForm): DataRoleCreateDto {
 
 export function dataRoleToUpdate(values: DataRoleForm): DataRoleUpdateDto {
   return {
-    tenantId: values.tenantId ?? null,
-    appsId: values.appsId ?? null,
+    tenantId: nullableNumber(values.tenantId, '租户'),
+    appsId: nullableNumber(values.appsId, '所属应用'),
     parentId: requiredNumber(values.parentId, '上级'),
     roleCode: values.roleCode,
     roleName: values.roleName,
-    sortIndex: values.sortIndex ?? null,
+    sortIndex: nullableNumber(values.sortIndex, '排序', 'int32'),
     isSystem: values.isSystem,
     remark: values.remark
   }

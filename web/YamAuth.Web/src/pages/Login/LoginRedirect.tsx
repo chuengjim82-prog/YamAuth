@@ -4,6 +4,7 @@ import { Button, Result, Spin, message } from 'antd'
 import { loginRecovery, type LoginDestination } from '@/auth/recovery'
 import { notifyRecoveryStorage } from '@/auth/loginRedirect'
 import { prepareLoginDestination } from './redirect'
+import { useApp } from '@/store/AppContext'
 
 export default function LoginRedirect({
   userName,
@@ -13,6 +14,7 @@ export default function LoginRedirect({
   destination: LoginDestination | null
 }) {
   const navigate = useNavigate()
+  const { isCurrentSession } = useApp()
   const resolution = useRef<Promise<LoginDestination> | null>(null)
   const consumed = useRef(false)
   const [failed, setFailed] = useState(false)
@@ -23,10 +25,10 @@ export default function LoginRedirect({
     // StrictMode 重放 effect 时复用同一次决策，不再读取已经消费的记录。
     resolution.current ??= destination
       ? Promise.resolve(destination)
-      : prepareLoginDestination(userName)
+      : prepareLoginDestination(userName, isCurrentSession)
     void resolution.current
       .then((result) => {
-        if (cancelled) return
+        if (cancelled || !isCurrentSession()) return
         if (!consumed.current) {
           consumed.current = true
           notifyRecoveryStorage(loginRecovery.clear())
@@ -40,12 +42,12 @@ export default function LoginRedirect({
         void navigate(result.target, { replace: true })
       })
       .catch(() => {
-        if (!cancelled) setFailed(true)
+        if (!cancelled && isCurrentSession()) setFailed(true)
       })
     return () => {
       cancelled = true
     }
-  }, [destination, userName, navigate, attempt])
+  }, [destination, userName, navigate, attempt, isCurrentSession])
 
   if (failed) {
     return (

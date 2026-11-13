@@ -1,3 +1,4 @@
+import IntegerInput from './IntegerInput'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type Key } from 'react'
 import {
   Button,
@@ -5,7 +6,6 @@ import {
   Empty,
   Form,
   Input,
-  InputNumber,
   Modal,
   Pagination,
   Popconfirm,
@@ -31,7 +31,7 @@ import AppSelect from './AppSelect'
 import { useAppsUserLabels } from './useAppsUserLabels'
 import IconGlyph from '@/components/icons/IconGlyph'
 import type { Entity, FieldDef, ResourceDef, ResourcePageProps } from '@/resources/types'
-import { FormValueError } from '@/resources/formValues'
+import { FormValueError, integerError } from '@/resources/formValues'
 import { useApp } from '@/store/AppContext'
 import {
   ancestors,
@@ -65,7 +65,7 @@ export default function ResourceCrudPage<E extends Entity, F extends object, C, 
 }: {
   resource: ResourceDef<E, F, C, U>
 } & ResourcePageProps) {
-  const { refreshMenus } = useApp()
+  const { refreshMenus, isCurrentSession } = useApp()
   const [searchKeyword, setSearchKeyword] = useState('')
   const [query, setQuery] = useState({ page: 1, keyword: '' })
   const [reloadVersion, setReloadVersion] = useState(0)
@@ -187,10 +187,15 @@ export default function ResourceCrudPage<E extends Entity, F extends object, C, 
     const pending = request.load(request.page, request.size, request.keyword)
     pending
       .then((result) => {
-        if (cancelled) return
+        if (cancelled || !isCurrentSession()) return
         if (request.tree) validateTreeResult(result)
+        const lastPage = Math.max(1, Math.ceil(result.total / request.size))
+        if (!request.tree && request.page > lastPage) {
+          setQuery((current) => ({ ...current, page: lastPage }))
+          return
+        }
         setTotal(result.total)
-        const rows = result.items ?? []
+        const rows = result.items
         setItems(rows)
         if (request.tree) {
           const model = buildTree(rows, request.tree)
@@ -215,13 +220,13 @@ export default function ResourceCrudPage<E extends Entity, F extends object, C, 
       })
       .catch(() => {
         // 网络错误由拦截器提示；全量结果校验失败同样显示失败状态，不能误报为暂无数据。
-        if (!cancelled) setLoadResult({ request, failed: true })
+        if (!cancelled && isCurrentSession()) setLoadResult({ request, failed: true })
       })
     return () => {
       // 后发查询、重置或翻页会清理前次请求，旧结果不能覆盖当前筛选。
       cancelled = true
     }
-  }, [request, viewportRef])
+  }, [request, viewportRef, isCurrentSession])
 
   useEffect(() => {
     if (locatedId === null || loading || !view?.visible.has(locatedId)) return
@@ -384,7 +389,7 @@ export default function ResourceCrudPage<E extends Entity, F extends object, C, 
   ]
 
   function openCreate(parent?: E) {
-    if (actionStateRef.current.blocked) return
+    if (actionStateRef.current.blocked || !isCurrentSession()) return
     setEditingId(null)
     const initial = resource.toForm()
     const values = resource.tree && parent ? resource.tree.form.child(initial, parent) : initial
@@ -394,7 +399,7 @@ export default function ResourceCrudPage<E extends Entity, F extends object, C, 
   }
 
   function openEdit(row: E) {
-    if (actionStateRef.current.blocked) return
+    if (actionStateRef.current.blocked || !isCurrentSession()) return
     setEditingId(Number(row.id))
     setFormValues(resource.toForm(row))
     setFormSession((current) => current + 1)
@@ -405,6 +410,8 @@ export default function ResourceCrudPage<E extends Entity, F extends object, C, 
     const actionState = actionStateRef.current
     if (
       submittingRef.current ||
+      !isCurrentSession() ||
+      !mountedRef.current ||
       actionState.blocked ||
       !actionState.open ||
       actionState.formSession !== formSession
@@ -416,6 +423,7 @@ export default function ResourceCrudPage<E extends Entity, F extends object, C, 
       let savedId = editingId
       if (editingId !== null) await api.update(editingId, resource.toUpdate(values))
       else savedId = await api.create(resource.toCreate(values))
+      if (!isCurrentSession()) return
       // 全局刷新与本页生命周期分开；刷新请求失败不改变已成功的保存结果。
       if (resource.path === '/auth/crud-menus') refreshMenus()
       if (!mountedRef.current) return
@@ -433,11 +441,19 @@ export default function ResourceCrudPage<E extends Entity, F extends object, C, 
   }
 
   async function remove(id: number) {
-    if (actionStateRef.current.blocked || deletingRef.current) return
+    if (
+      actionStateRef.current.blocked ||
+      deletingRef.current ||
+      !mountedRef.current ||
+      !isCurrentSession()
+    )
+      return
     deletingRef.current = true
     setDeleting(true)
     try {
       await api.remove(id)
+      if (!isCurrentSession()) return
+      if (resource.path === '/auth/crud-menus') refreshMenus()
       if (!mountedRef.current) return
       message.success('删除成功')
       setReloadVersion((current) => current + 1)
@@ -761,6 +777,7 @@ function ResourceEditForm<E extends Entity, F extends object, C, U>({
           const lockedApp = Boolean(resource.tree?.appId && field.name === 'appsId' && hasChildren)
           const required =
             isParent ||
+            (field.kind === 'number' && !field.nullable) ||
             (field.required &&
               !(field.kind === 'password' && field.name === 'password' && editingId))
           return (
@@ -796,12 +813,12 @@ function ResourceEditForm<E extends Entity, F extends object, C, U>({
                     ? '原菜单类型无效，请重新选择'
                     : undefined
               }
-              rules={
-                isParent
+              rules={[
+                ...(isParent
                   ? [
                       { required: !field.nullable, message: '请选择上级或顶级' },
                       {
-                        validator: (_rule, value: unknown): Promise<void> =>
+                        validator: (_rule: unknown, value: unknown): Promise<void> =>
                           value === 0 ||
                           (field.nullable && value === null) ||
                           candidates.some((option) => option.value === value)
@@ -816,8 +833,23 @@ function ResourceEditForm<E extends Entity, F extends object, C, U>({
                           message: `请${field.kind === 'icon' || field.formControl ? '选择' : '输入'}${field.label}`
                         }
                       ]
-                    : []
-              }
+                    : []),
+                ...(field.kind === 'number'
+                  ? [
+                      {
+                        validator: (_rule: unknown, value: unknown): Promise<void> => {
+                          const error = integerError(
+                            value,
+                            field.label,
+                            field.numberKind,
+                            isParent ? !field.nullable : Boolean(required)
+                          )
+                          return error ? Promise.reject(new Error(error)) : Promise.resolve()
+                        }
+                      }
+                    ]
+                  : [])
+              ]}
             >
               {isParent ? (
                 <TreeSelect
@@ -896,7 +928,7 @@ function renderControl<E, F>(
     return <DepartmentSelect active={active} disabled={saving} />
   if (field.kind === 'icon') return <IconPicker active={active} disabled={saving} />
   if (field.kind === 'bool') return <Switch />
-  if (field.kind === 'number') return <InputNumber style={{ width: '100%' }} controls={false} />
+  if (field.kind === 'number') return <IntegerInput style={{ width: '100%' }} controls={false} />
   if (field.kind === 'date') return <DatePicker showTime style={{ width: '100%' }} />
   if (field.kind === 'password') {
     return <Input.Password placeholder={editing ? '留空则不修改' : undefined} />

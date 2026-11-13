@@ -4,7 +4,7 @@ import { Breadcrumb, Button, Layout, Menu, Spin, Tooltip } from 'antd'
 import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 import { fetchMenuTree } from '@/api/auth'
-import { TOKEN_KEY } from '@/api/request'
+import PageErrorBoundary from '@/components/PageErrorBoundary'
 import { useApp } from '@/store/AppContext'
 import { menuIcon } from './menuIcons'
 import HeaderBar from './HeaderBar'
@@ -46,7 +46,21 @@ function findChain(nodes: MenuNode[], pathname: string, trail: MenuNode[] = []):
 }
 
 export default function BasicLayout() {
-  const { isLoggedIn, menus, setMenus, menuRefreshVersion, refreshMenus } = useApp()
+  const { session } = useApp()
+  // 会话变更重建整个业务区域，丢弃旧账号的表单、分页及关联选项。
+  return <SessionLayout key={session.revision} />
+}
+
+function SessionLayout() {
+  const {
+    isLoggedIn,
+    menus,
+    setMenus,
+    menuRefreshVersion,
+    refreshMenus,
+    isCurrentSession,
+    session
+  } = useApp()
   const navigate = useNavigate()
   const location = useLocation()
   const [collapsed, setCollapsed] = useState(false)
@@ -62,10 +76,9 @@ export default function BasicLayout() {
   useEffect(() => {
     if (!isLoggedIn) return
     let cancelled = false
-    const sessionToken = localStorage.getItem(TOKEN_KEY)
     fetchMenuTree()
       .then((tree) => {
-        if (!cancelled && sessionToken === localStorage.getItem(TOKEN_KEY)) setMenus(tree ?? [])
+        if (!cancelled && isCurrentSession()) setMenus(tree)
       })
       .catch(() => {
         // 刷新失败保留当前导航；错误提示沿用请求拦截器，不能误报菜单保存失败。
@@ -74,7 +87,7 @@ export default function BasicLayout() {
       cancelled = true
     }
     // refreshMenus 随会话变化，更换会话时也必须使旧请求失效。
-  }, [isLoggedIn, setMenus, menuRefreshVersion, refreshMenus])
+  }, [isLoggedIn, setMenus, menuRefreshVersion, refreshMenus, isCurrentSession])
 
   const chain = useMemo(() => findChain(menus, location.pathname), [menus, location.pathname])
 
@@ -130,11 +143,13 @@ export default function BasicLayout() {
               items={chain.map((node) => ({ title: node.menuName }))}
             />
           )}
-          <Suspense
-            fallback={<Spin size="large" style={{ display: 'block', margin: '100px auto' }} />}
-          >
-            <Outlet />
-          </Suspense>
+          <PageErrorBoundary resetKey={`${session.revision}:${location.key}`}>
+            <Suspense
+              fallback={<Spin size="large" style={{ display: 'block', margin: '100px auto' }} />}
+            >
+              <Outlet />
+            </Suspense>
+          </PageErrorBoundary>
         </Content>
       </Layout>
     </Layout>
