@@ -135,7 +135,7 @@ export const resources: ResourceDef[] = [
     },
     fields: [
       id,
-      f('appsId', '应用', 'number', { nullable: true }),
+      f('appsId', '应用', 'number', { nullable: true, formControl: 'app' }),
       f('parentId', '上级', 'number'),
       f('crudName', '功能名称'),
       f('crudCode', '功能编码', 'string', { required: true }),

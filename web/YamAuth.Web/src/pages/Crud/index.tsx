@@ -139,7 +139,13 @@ function ResourceCrudPage({
   const pendingLocate = useRef<number | null>(null)
   const [total, setTotal] = useState(0)
   const [items, setItems] = useState<Row[]>([])
-  const appsUserLabel = useAppsUserLabels(items, resource.path === '/auth/apps-users')
+  const appsUserLabel = useAppsUserLabels(
+    items,
+    resource.fields.some(
+      (field) =>
+        (field.formControl === 'app' || field.formControl === 'user') && field.table !== false
+    )
+  )
   const departmentLabel = useDepartmentLabels(items, resource.path === '/unit/employees')
   const tenantLabel = useTenantLabels(
     items,
@@ -823,7 +829,7 @@ function ResourceEditForm({
                   placeholder="请选择上级或顶级"
                 />
               ) : lockedApp ? (
-                <InputNumber style={{ width: '100%' }} disabled />
+                <AppSelect active={active} disabled />
               ) : (
                 renderControl(field, Boolean(editingId), active, saving, initialValues[field.name])
               )}
