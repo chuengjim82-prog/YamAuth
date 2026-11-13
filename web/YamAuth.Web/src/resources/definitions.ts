@@ -465,7 +465,7 @@ export const crudRoleResource = {
   path: '/auth/crud-roles',
   title: '功能角色',
   api: api.crudRoleApi,
-  relations: { tenantId: (row) => row.tenantId },
+  relations: { tenantId: (row) => row.tenantId, appsId: (row) => row.appsId },
   load: () => api.crudRoleApi.all(),
   toForm: authForms.crudRoleToForm,
   toCreate: authForms.crudRoleToCreate,
@@ -493,7 +493,7 @@ export const crudRoleResource = {
     crudRoleFields.form(
       'appsId',
       '应用',
-      { kind: 'number', table: true, nullable: true },
+      { kind: 'number', table: true, nullable: true, formControl: 'app' },
       (row) => row.appsId
     ),
     crudRoleFields.form('parentId', '上级', { kind: 'number', table: true }, (row) => row.parentId),
@@ -594,7 +594,7 @@ export const dataRoleResource = {
   path: '/auth/data-roles',
   title: '数据角色',
   api: api.dataRoleApi,
-  relations: { tenantId: (row) => row.tenantId },
+  relations: { tenantId: (row) => row.tenantId, appsId: (row) => row.appsId },
   load: () => api.dataRoleApi.all(),
   toForm: authForms.dataRoleToForm,
   toCreate: authForms.dataRoleToCreate,
@@ -622,7 +622,7 @@ export const dataRoleResource = {
     dataRoleFields.form(
       'appsId',
       '应用',
-      { kind: 'number', table: true, nullable: true },
+      { kind: 'number', table: true, nullable: true, formControl: 'app' },
       (row) => row.appsId
     ),
     dataRoleFields.form('parentId', '上级', { kind: 'number', table: true }, (row) => row.parentId),
