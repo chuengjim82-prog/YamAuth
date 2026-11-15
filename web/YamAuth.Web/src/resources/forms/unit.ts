@@ -29,7 +29,6 @@ export function departmentToForm(row?: DepartmentDto): DepartmentForm {
 
 export function departmentToCreate(values: DepartmentForm): DepartmentCreateDto {
   return {
-    tenantId: nullableNumber(values.tenantId, '租户'),
     deptName: values.deptName,
     empCount: nullableNumber(values.empCount, '员工数', 'int32'),
     directorId: nullableNumber(values.directorId, '负责人'),
@@ -39,7 +38,6 @@ export function departmentToCreate(values: DepartmentForm): DepartmentCreateDto 
 
 export function departmentToUpdate(values: DepartmentForm): DepartmentUpdateDto {
   return {
-    tenantId: nullableNumber(values.tenantId, '租户'),
     deptName: values.deptName,
     empCount: nullableNumber(values.empCount, '员工数', 'int32'),
     directorId: nullableNumber(values.directorId, '负责人'),
@@ -71,8 +69,6 @@ export function employeeToCreate(values: EmployeeForm): EmployeeCreateDto {
 
 export function employeeToUpdate(values: EmployeeForm): EmployeeUpdateDto {
   return {
-    departmentId: nullableNumber(values.departmentId, '部门'),
-    userId: nullableNumber(values.userId, '用户'),
     remark: values.remark
   }
 }

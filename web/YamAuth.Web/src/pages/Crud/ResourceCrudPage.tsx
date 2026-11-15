@@ -28,7 +28,6 @@ import TenantSelect from '@/components/TenantSelect'
 import DepartmentSelect from '@/components/DepartmentSelect'
 import UserSelect from '@/components/UserSelect'
 import AppSelect from './AppSelect'
-import { useAppsUserLabels } from './useAppsUserLabels'
 import IconGlyph from '@/components/icons/IconGlyph'
 import type { Entity, FieldDef, ResourceDef, ResourcePageProps } from '@/resources/types'
 import { FormValueError, integerError } from '@/resources/formValues'
@@ -45,15 +44,16 @@ import {
   type TreeModel
 } from './tree'
 import { useTableViewport } from './useTableViewport'
-import { useDepartmentLabels } from './useDepartmentLabels'
-import { useTenantLabels } from './useTenantLabels'
-import { useCrudInfoLabels } from './useCrudInfoLabels'
 import { fieldText } from './fieldText'
 import emptyImage from './assets/list-empty.png'
 import styles from './Crud.module.css'
 import CrudInfoSelect from './CrudInfoSelect'
 import CrudRelationSelect from './CrudRelationSelect'
-import { useCrudRelationOptions } from './useCrudRelationOptions'
+import { CandidateContext } from '@/components/RelationCandidateSelect'
+import { editableField } from '@/resources/accessFields'
+import { permissionKey } from '@/auth/access'
+import type { RelationLabels } from '@/types/access'
+import ResourceActions from './ResourceActions'
 import { crudMenuTypeLabel, crudMenuTypeOptions } from './menuType'
 
 const HTTP_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS']
@@ -65,7 +65,8 @@ export default function ResourceCrudPage<E extends Entity, F extends object, C, 
 }: {
   resource: ResourceDef<E, F, C, U>
 } & ResourcePageProps) {
-  const { refreshMenus, isCurrentSession } = useApp()
+  const { refreshMenus, isCurrentSession, can } = useApp()
+  const canCreate = can(permissionKey(resource.path, 'create'))
   const [searchKeyword, setSearchKeyword] = useState('')
   const [query, setQuery] = useState({ page: 1, keyword: '' })
   const [reloadVersion, setReloadVersion] = useState(0)
@@ -79,29 +80,6 @@ export default function ResourceCrudPage<E extends Entity, F extends object, C, 
   const pendingLocate = useRef<number | null>(null)
   const [total, setTotal] = useState(0)
   const [items, setItems] = useState<E[]>([])
-  const appsUserLabel = useAppsUserLabels(
-    items,
-    resource.relations?.appsId,
-    resource.relations?.userId
-  )
-  const departmentLabel = useDepartmentLabels(items, resource.relations?.departmentId)
-  const tenantLabel = useTenantLabels(items, resource.relations?.tenantId)
-  const crudInfoLabel = useCrudInfoLabels(items, resource.relations?.crudId)
-  const roleOptions = useCrudRelationOptions(
-    'crudRole',
-    Boolean(resource.relations?.crudRoleId),
-    items
-  )
-  const dataRoleOptions = useCrudRelationOptions(
-    'dataRole',
-    Boolean(resource.relations?.dataRoleId),
-    items
-  )
-  const infoOptions = useCrudRelationOptions(
-    'crudInfoId',
-    Boolean(resource.relations?.crudInfoId),
-    items
-  )
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
@@ -138,7 +116,7 @@ export default function ResourceCrudPage<E extends Entity, F extends object, C, 
     )
   const columnWidth = (field: FieldDef<E, F>) =>
     field.name === resource.tree?.nameField ? 300 : field.name === 'id' ? 90 : 160
-  const actionWidth = resource.tree ? 150 : 112
+  const actionWidth = 180
   const tableWidth = tableFields.reduce((width, field) => width + columnWidth(field), actionWidth)
   const requestPage = resource.tree ? 1 : query.page
   const requestSize = resource.tree ? 0 : size
@@ -286,27 +264,34 @@ export default function ResourceCrudPage<E extends Entity, F extends object, C, 
           const label = `${parent ? treeLabel(parent, treeModel.config) : '上级不存在'}（${fieldText(value)}）`
           return <span title={label}>{highlight(label)}</span>
         }
-        if (field.formControl === 'crudRole')
-          return roleOptions.label(resource.relations?.crudRoleId?.(row))
-        if (field.formControl === 'dataRole')
-          return dataRoleOptions.label(resource.relations?.dataRoleId?.(row))
-        if (field.formControl === 'crudInfoId')
-          return infoOptions.label(resource.relations?.crudInfoId?.(row))
+        const relation: keyof RelationLabels | undefined =
+          field.name === 'ownerUserId'
+            ? 'ownerUser'
+            : field.name === 'ownerDepartmentId'
+              ? 'ownerDepartment'
+              : field.formControl === 'app'
+                ? 'app'
+                : field.formControl === 'user'
+                  ? 'user'
+                  : field.formControl === 'department'
+                    ? 'department'
+                    : field.formControl === 'tenant'
+                      ? 'tenant'
+                      : field.formControl === 'crudRole'
+                        ? 'crudRole'
+                        : field.formControl === 'dataRole'
+                          ? 'dataRole'
+                          : field.formControl === 'crudInfo' || field.formControl === 'crudInfoId'
+                            ? 'crudInfo'
+                            : undefined
+        if (relation && value != null)
+          return `${row.relatedLabels?.[relation] ?? '关联不可用'}（${fieldText(value)}）`
         if (field.formControl === 'menuType') return crudMenuTypeLabel(value)
         if (field.kind === 'bool') return value ? '是' : '否'
         if (field.kind === 'icon')
           return <IconGlyph name={value == null ? undefined : fieldText(value)} />
         if (field.kind === 'date' && value)
           return dayjs(fieldText(value)).format('YYYY-MM-DD HH:mm')
-        if (field.formControl === 'app')
-          return appsUserLabel('appsId', resource.relations?.appsId?.(row))
-        if (field.formControl === 'user')
-          return appsUserLabel('userId', resource.relations?.userId?.(row))
-        if (field.formControl === 'department')
-          return departmentLabel(resource.relations?.departmentId?.(row))
-        if (field.formControl === 'tenant') return tenantLabel(resource.relations?.tenantId?.(row))
-        if (field.formControl === 'crudInfo' && resource.relations?.crudId)
-          return crudInfoLabel(resource.relations.crudId(row))
         if (value === null || value === undefined || value === '') return ''
         return highlight(fieldText(value))
       }
@@ -321,75 +306,90 @@ export default function ResourceCrudPage<E extends Entity, F extends object, C, 
       render: (_value: unknown, node: TreeRow<E>) =>
         node.kind === 'group' ? null : (
           <Space size={4}>
-            {resource.tree && (
+            {resource.tree && canCreate && (
               <Tooltip title={node.treeIssue ? '请先修复层级异常' : '新增子级'}>
                 <Button
                   type="text"
                   size="small"
                   icon={<PlusOutlined />}
                   aria-label="新增子级"
-                  disabled={interactionBlocked || Boolean(node.treeIssue)}
+                  disabled={
+                    interactionBlocked ||
+                    Boolean(node.treeIssue) ||
+                    resource.tree?.canParent?.(node.record) === false
+                  }
                   onClick={() => openCreate(node.record)}
                 />
               </Tooltip>
             )}
-            <Tooltip title="编辑">
-              <Button
-                type="text"
-                size="small"
-                className={styles.editButton ?? ''}
-                icon={<EditOutlined />}
-                aria-label="编辑"
-                disabled={interactionBlocked}
-                onClick={() => openEdit(node.record)}
-              />
-            </Tooltip>
-            <Popconfirm
-              title="确认删除？"
-              open={!interactionBlocked && deleteId === Number(node.id)}
-              onOpenChange={(nextOpen) => {
-                if (!deletingRef.current)
-                  setDeleteId(
-                    nextOpen &&
-                      !actionStateRef.current.blocked &&
-                      !treeModel?.children.get(Number(node.id))?.length
-                      ? Number(node.id)
-                      : null
-                  )
-              }}
-              okButtonProps={{ loading: deleting }}
-              cancelButtonProps={{ disabled: deleting }}
-              onConfirm={() => {
-                void remove(Number(node.id))
-              }}
-            >
-              <Tooltip
-                title={
-                  treeModel?.children.get(Number(node.id))?.length
-                    ? '存在子节点，请先移动或删除子节点'
-                    : '删除'
-                }
-              >
+            {node.record.allowedActions?.includes('update') && (
+              <Tooltip title="编辑">
                 <Button
                   type="text"
                   size="small"
-                  className={styles.deleteButton ?? ''}
-                  icon={<DeleteOutlined />}
-                  aria-label="删除"
-                  disabled={
-                    interactionBlocked || Boolean(treeModel?.children.get(Number(node.id))?.length)
-                  }
-                  danger
+                  className={styles.editButton ?? ''}
+                  icon={<EditOutlined />}
+                  aria-label="编辑"
+                  disabled={interactionBlocked}
+                  onClick={() => openEdit(node.record)}
                 />
               </Tooltip>
-            </Popconfirm>
+            )}
+            {node.record.allowedActions?.includes('delete') && (
+              <Popconfirm
+                title="确认删除？"
+                open={!interactionBlocked && deleteId === Number(node.id)}
+                onOpenChange={(nextOpen) => {
+                  if (!deletingRef.current)
+                    setDeleteId(
+                      nextOpen &&
+                        !actionStateRef.current.blocked &&
+                        !treeModel?.children.get(Number(node.id))?.length
+                        ? Number(node.id)
+                        : null
+                    )
+                }}
+                okButtonProps={{ loading: deleting }}
+                cancelButtonProps={{ disabled: deleting }}
+                onConfirm={() => {
+                  void remove(Number(node.id))
+                }}
+              >
+                <Tooltip
+                  title={
+                    treeModel?.children.get(Number(node.id))?.length
+                      ? '存在子节点，请先移动或删除子节点'
+                      : '删除'
+                  }
+                >
+                  <Button
+                    type="text"
+                    size="small"
+                    className={styles.deleteButton ?? ''}
+                    icon={<DeleteOutlined />}
+                    aria-label="删除"
+                    disabled={
+                      interactionBlocked ||
+                      Boolean(treeModel?.children.get(Number(node.id))?.length)
+                    }
+                    danger
+                  />
+                </Tooltip>
+              </Popconfirm>
+            )}
+            <ResourceActions
+              path={resource.path}
+              row={node.record}
+              disabled={interactionBlocked}
+              onChanged={() => setReloadVersion((current) => current + 1)}
+            />
           </Space>
         )
     }
   ]
 
   function openCreate(parent?: E) {
-    if (actionStateRef.current.blocked || !isCurrentSession()) return
+    if (!canCreate || actionStateRef.current.blocked || !isCurrentSession()) return
     setEditingId(null)
     const initial = resource.toForm()
     const values = resource.tree && parent ? resource.tree.form.child(initial, parent) : initial
@@ -399,7 +399,12 @@ export default function ResourceCrudPage<E extends Entity, F extends object, C, 
   }
 
   function openEdit(row: E) {
-    if (actionStateRef.current.blocked || !isCurrentSession()) return
+    if (
+      !row.allowedActions?.includes('update') ||
+      actionStateRef.current.blocked ||
+      !isCurrentSession()
+    )
+      return
     setEditingId(Number(row.id))
     setFormValues(resource.toForm(row))
     setFormSession((current) => current + 1)
@@ -421,8 +426,14 @@ export default function ResourceCrudPage<E extends Entity, F extends object, C, 
     setSaving(true)
     try {
       let savedId = editingId
-      if (editingId !== null) await api.update(editingId, resource.toUpdate(values))
-      else savedId = await api.create(resource.toCreate(values))
+      if (editingId !== null) {
+        const row = items.find((item) => item.id === editingId)
+        if (!row?.allowedActions?.includes('update')) return
+        await api.update(editingId, resource.toUpdate(values), row.rowVersion)
+      } else {
+        if (!canCreate) return
+        savedId = await api.create(resource.toCreate(values))
+      }
       if (!isCurrentSession()) return
       // 全局刷新与本页生命周期分开；刷新请求失败不改变已成功的保存结果。
       if (resource.path === '/auth/crud-menus') refreshMenus()
@@ -451,7 +462,9 @@ export default function ResourceCrudPage<E extends Entity, F extends object, C, 
     deletingRef.current = true
     setDeleting(true)
     try {
-      await api.remove(id)
+      const row = items.find((item) => item.id === id)
+      if (!row?.allowedActions?.includes('delete')) return
+      await api.remove(id, row.rowVersion)
       if (!isCurrentSession()) return
       if (resource.path === '/auth/crud-menus') refreshMenus()
       if (!mountedRef.current) return
@@ -547,14 +560,16 @@ export default function ResourceCrudPage<E extends Entity, F extends object, C, 
                 </Button>
               </>
             )}
-            <Button
-              className={styles.createButton ?? ''}
-              icon={<PlusOutlined />}
-              disabled={interactionBlocked}
-              onClick={() => openCreate()}
-            >
-              {resource.tree ? '新增顶级' : '新增'}
-            </Button>
+            {canCreate && (
+              <Button
+                className={styles.createButton ?? ''}
+                icon={<PlusOutlined />}
+                disabled={interactionBlocked}
+                onClick={() => openCreate()}
+              >
+                {resource.tree ? '新增顶级' : '新增'}
+              </Button>
+            )}
           </Space>
         }
         tableViewportRef={viewportRef}
@@ -701,14 +716,22 @@ function ResourceEditForm<E extends Entity, F extends object, C, U>({
 }) {
   const [form] = Form.useForm<F>()
   const [manuallySelected, setManuallySelected] = useState<ReadonlySet<keyof F>>(new Set())
-  const watchedApp = Form.useWatch((values: F) => resource.tree?.form.appId?.(values), {
+  const readApp = (values: F) =>
+    'appsId' in values && typeof values.appsId === 'number' ? values.appsId : undefined
+  const watchedApp = Form.useWatch((values: F) => readApp(values), {
     form,
     preserve: true
   })
-  const appsId = watchedApp === undefined ? resource.tree?.form.appId?.(initialValues) : watchedApp
+  const appsId = watchedApp === undefined ? readApp(initialValues) : watchedApp
+  const watchedScope = Form.useWatch((values: F) => resource.tree?.form.scopeId?.(values), {
+    form,
+    preserve: true
+  })
+  const scopeId =
+    watchedScope === undefined ? resource.tree?.form.scopeId?.(initialValues) : watchedScope
   const candidates = useMemo(
-    () => (treeModel ? parentOptions(treeModel, editingId, appsId) : []),
-    [treeModel, editingId, appsId]
+    () => (treeModel ? parentOptions(treeModel, editingId, scopeId) : []),
+    [treeModel, editingId, scopeId]
   )
   const hasChildren = editingId !== null && Boolean(treeModel?.children.get(editingId)?.length)
   const rootTitle = `顶级${resource.title}`
@@ -723,160 +746,172 @@ function ResourceEditForm<E extends Entity, F extends object, C, U>({
   }, [form])
 
   return (
-    <Form<F>
-      id={formId}
-      form={form}
-      initialValues={initialValues}
-      clearOnDestroy
-      layout="vertical"
-      onFinish={(values) => {
-        // 提交函数内部处理失败并释放锁，表单回调只负责触发。
-        void onSubmit(values)
+    <CandidateContext.Provider
+      value={{
+        purpose: permissionKey(resource.path, editingId === null ? 'create' : 'update'),
+        ...(editingId === null ? {} : { targetId: editingId }),
+        ...(typeof appsId === 'number' ? { appsId } : {})
       }}
-      onValuesChange={(changed: Partial<F>, values: F) => {
-        const binding = resource.tree?.form
-        const defaultBinding = binding?.defaultFromParent
-        if (
-          editingId === null &&
-          binding &&
-          defaultBinding &&
-          Object.hasOwn(changed, binding.parentField) &&
-          !manuallySelected.has(defaultBinding.field)
-        ) {
-          const parentId = binding.parentId(values)
-          // 清空或非法上级交给原校验处理，不把它误当成顶级。
-          if (parentId === 0 || candidates.some((option) => option.value === parentId)) {
-            if (typeof parentId === 'number')
-              form.setFieldValue(defaultBinding.field, defaultBinding.value(parentId))
-          }
-        }
-        if (
-          treeModel &&
-          binding?.appField &&
-          binding.appId &&
-          Object.hasOwn(changed, binding.appField)
-        ) {
-          const parentId = binding.parentId(values)
-          if (
-            parentId !== 0 &&
-            !parentOptions(treeModel, editingId, binding.appId(values)).some(
-              (option) => option.value === parentId
-            )
-          ) {
-            form.setFieldValue(binding.parentField, undefined)
-          }
-        }
-      }}
-      scrollToFirstError={{ focus: true }}
     >
-      {resource.fields
-        .filter((field) => field.form !== false)
-        .map((field) => {
-          if (field.formName === undefined) return null
-          const isParent = Boolean(treeModel && field.name === 'parentId')
-          const lockedApp = Boolean(resource.tree?.appId && field.name === 'appsId' && hasChildren)
-          const required =
-            isParent ||
-            (field.kind === 'number' && !field.nullable) ||
-            (field.required &&
-              !(field.kind === 'password' && field.name === 'password' && editingId))
-          return (
-            <Form.Item<F>
-              key={field.name}
-              name={field.formName}
-              label={field.label}
-              valuePropName={field.kind === 'bool' ? 'checked' : 'value'}
-              {...(isParent && field.nullable
-                ? { getValueProps: (value: unknown) => ({ value: value === null ? 0 : value }) }
-                : field.formControl === 'httpMethod'
+      <Form<F>
+        id={formId}
+        form={form}
+        initialValues={initialValues}
+        clearOnDestroy
+        layout="vertical"
+        onFinish={(values) => {
+          // 提交函数内部处理失败并释放锁，表单回调只负责触发。
+          void onSubmit(values)
+        }}
+        onValuesChange={(changed: Partial<F>, values: F) => {
+          const binding = resource.tree?.form
+          const defaultBinding = binding?.defaultFromParent
+          if (
+            editingId === null &&
+            binding &&
+            defaultBinding &&
+            Object.hasOwn(changed, binding.parentField) &&
+            !manuallySelected.has(defaultBinding.field)
+          ) {
+            const parentId = binding.parentId(values)
+            // 清空或非法上级交给原校验处理，不把它误当成顶级。
+            if (parentId === 0 || candidates.some((option) => option.value === parentId)) {
+              if (typeof parentId === 'number')
+                form.setFieldValue(defaultBinding.field, defaultBinding.value(parentId))
+            }
+          }
+          if (
+            treeModel &&
+            binding?.scopeField &&
+            binding.scopeId &&
+            Object.hasOwn(changed, binding.scopeField)
+          ) {
+            const parentId = binding.parentId(values)
+            if (
+              parentId !== 0 &&
+              !parentOptions(treeModel, editingId, binding.scopeId(values)).some(
+                (option) => option.value === parentId
+              )
+            ) {
+              form.setFieldValue(binding.parentField, undefined)
+            }
+          }
+        }}
+        scrollToFirstError={{ focus: true }}
+      >
+        {resource.fields
+          .filter((field) => field.form !== false)
+          .filter((field) => editableField(resource.path, field.name, editingId !== null))
+          .map((field) => {
+            if (field.formName === undefined) return null
+            const isParent = Boolean(treeModel && field.name === 'parentId')
+            const lockedScope = Boolean(
+              resource.tree?.scopeId && field.name === resource.tree.form.scopeField && hasChildren
+            )
+            const lockedMenuType = field.formControl === 'menuType' && hasChildren
+            const required =
+              isParent ||
+              (field.kind === 'number' && !field.nullable) ||
+              (field.required &&
+                !(field.kind === 'password' && field.name === 'password' && editingId))
+            return (
+              <Form.Item<F>
+                key={field.name}
+                name={field.formName}
+                label={field.label}
+                valuePropName={field.kind === 'bool' ? 'checked' : 'value'}
+                {...(isParent && field.nullable
+                  ? { getValueProps: (value: unknown) => ({ value: value === null ? 0 : value }) }
+                  : field.formControl === 'httpMethod'
+                    ? {
+                        getValueProps: (value: unknown) => ({
+                          value: value === '' ? undefined : value
+                        })
+                      }
+                    : {})}
+                {...(isParent && field.nullable
                   ? {
-                      getValueProps: (value: unknown) => ({
-                        value: value === '' ? undefined : value
-                      })
+                      normalize: (value: unknown, previous: unknown) => {
+                        // null 与 0 均显示为顶级；保留未改动的旧 0，移回顶级则使用 null。
+                        return value === 0 && previous !== 0 ? null : value
+                      }
                     }
                   : {})}
-              {...(isParent && field.nullable
-                ? {
-                    normalize: (value: unknown, previous: unknown) => {
-                      // null 与 0 均显示为顶级；保留未改动的旧 0，移回顶级则使用 null。
-                      return value === 0 && previous !== 0 ? null : value
-                    }
-                  }
-                : {})}
-              {...(isParent ? { required: true } : {})}
-              extra={
-                lockedApp
-                  ? '存在子功能，请先调整子功能后再修改所属应用'
-                  : editingId !== null &&
-                      field.formControl === 'menuType' &&
-                      field.initialValue(initialValues) === undefined
-                    ? '原菜单类型无效，请重新选择'
-                    : undefined
-              }
-              rules={[
-                ...(isParent
-                  ? [
-                      { required: !field.nullable, message: '请选择上级或顶级' },
-                      {
-                        validator: (_rule: unknown, value: unknown): Promise<void> =>
-                          value === 0 ||
-                          (field.nullable && value === null) ||
-                          candidates.some((option) => option.value === value)
-                            ? Promise.resolve()
-                            : Promise.reject(new Error('上级不合法，请重新选择'))
-                      }
-                    ]
-                  : required
+                {...(isParent ? { required: true } : {})}
+                extra={
+                  lockedScope
+                    ? `存在子节点，请先调整子节点后再修改${field.label}`
+                    : lockedMenuType
+                      ? '存在子菜单时必须保持目录类型'
+                      : editingId !== null &&
+                          field.formControl === 'menuType' &&
+                          field.initialValue(initialValues) === undefined
+                        ? '原菜单类型无效，请重新选择'
+                        : undefined
+                }
+                rules={[
+                  ...(isParent
                     ? [
+                        { required: !field.nullable, message: '请选择上级或顶级' },
                         {
-                          required: true,
-                          message: `请${field.kind === 'icon' || field.formControl ? '选择' : '输入'}${field.label}`
+                          validator: (_rule: unknown, value: unknown): Promise<void> =>
+                            value === 0 ||
+                            (field.nullable && value === null) ||
+                            candidates.some((option) => option.value === value)
+                              ? Promise.resolve()
+                              : Promise.reject(new Error('上级不合法，请重新选择'))
                         }
                       ]
-                    : []),
-                ...(field.kind === 'number'
-                  ? [
-                      {
-                        validator: (_rule: unknown, value: unknown): Promise<void> => {
-                          const error = integerError(
-                            value,
-                            field.label,
-                            field.numberKind,
-                            isParent ? !field.nullable : Boolean(required)
-                          )
-                          return error ? Promise.reject(new Error(error)) : Promise.resolve()
+                    : required
+                      ? [
+                          {
+                            required: true,
+                            message: `请${field.kind === 'icon' || field.formControl ? '选择' : '输入'}${field.label}`
+                          }
+                        ]
+                      : []),
+                  ...(field.kind === 'number'
+                    ? [
+                        {
+                          validator: (_rule: unknown, value: unknown): Promise<void> => {
+                            const error = integerError(
+                              value,
+                              field.label,
+                              field.numberKind,
+                              isParent ? !field.nullable : Boolean(required)
+                            )
+                            return error ? Promise.reject(new Error(error)) : Promise.resolve()
+                          }
                         }
-                      }
-                    ]
-                  : [])
-              ]}
-            >
-              {isParent ? (
-                <TreeSelect
-                  style={{ width: '100%' }}
-                  showSearch={{ treeNodeFilterProp: 'searchText' }}
-                  allowClear
-                  treeDefaultExpandAll
-                  treeDataSimpleMode={{ id: 'id', pId: 'pId', rootPId: -1 }}
-                  treeData={options}
-                  placeholder="请选择上级或顶级"
-                />
-              ) : lockedApp ? (
-                <AppSelect active={active} disabled />
-              ) : (
-                renderControl(
-                  field,
-                  Boolean(editingId),
-                  active,
-                  saving,
-                  field.initialValue(initialValues),
-                  () => setManuallySelected((current) => new Set(current).add(field.name))
-                )
-              )}
-            </Form.Item>
-          )
-        })}
-    </Form>
+                      ]
+                    : [])
+                ]}
+              >
+                {isParent ? (
+                  <TreeSelect
+                    style={{ width: '100%' }}
+                    showSearch={{ treeNodeFilterProp: 'searchText' }}
+                    allowClear
+                    treeDefaultExpandAll
+                    treeDataSimpleMode={{ id: 'id', pId: 'pId', rootPId: -1 }}
+                    treeData={options}
+                    placeholder="请选择上级或顶级"
+                  />
+                ) : (
+                  renderControl(
+                    field,
+                    Boolean(editingId),
+                    active,
+                    saving || lockedScope || lockedMenuType,
+                    field.initialValue(initialValues),
+                    () => setManuallySelected((current) => new Set(current).add(field.name))
+                  )
+                )}
+              </Form.Item>
+            )
+          })}
+      </Form>
+    </CandidateContext.Provider>
   )
 }
 
@@ -897,6 +932,16 @@ function renderControl<E, F>(
   if (field.formControl === 'app') return <AppSelect active={active} disabled={saving} />
   if (field.formControl === 'user') return <UserSelect active={active} disabled={saving} />
   if (field.formControl === 'crudInfo') return <CrudInfoSelect active={active} disabled={saving} />
+  if (field.formControl === 'permissionNode')
+    return (
+      <Select
+        options={[
+          { value: 'Directory', label: '目录' },
+          { value: 'Operation', label: '操作权限' }
+        ]}
+        disabled={!active || saving}
+      />
+    )
   if (field.formControl === 'menuType') {
     return (
       <Select

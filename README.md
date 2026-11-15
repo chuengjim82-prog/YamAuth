@@ -4,7 +4,7 @@
 
 ## 项目边界
 
-当前提供登录、菜单导航与资源 CRUD。角色、功能、数据角色等表尚未接入操作授权或数据范围控制，不能仅凭这些管理页面认定已实现 RBAC 或租户隔离。
+提供服务端会话、平台与租户管理员、按操作授权和数据范围隔离，覆盖现有 16 类资源；前端按服务端身份、菜单、操作与逐行权限展示。部署前须完成显式数据映射和隔离环境验收，参见 [权限切换手册](docs/authorization-rollout.md)。
 
 当前配置使用一个物理库 `YamAuth`。`Base` / `Bzss` 是逻辑连接键，`YamBase` / `YamBzss` 是代码分区；Bzss 模块使用 Bzss 连接。
 
@@ -24,9 +24,9 @@ Web 登录信息使用单条 `yamauth-session:v1` 记录，避免账号与 token
 
 ## 数据库准备
 
-**不要对现有 YamAuth 库运行 `scripts/init-db.ps1`。** 旧 SQL 不对应当前表模型，初始化还可能修改已有管理员凭据；当前仓库没有经过验证的完整空库初始化基线，新环境需另行准备匹配的表结构、初始数据和账号。
+**不要对现有 YamAuth 库运行 `scripts/init-db.ps1`。** 旧 SQL 不对应当前表模型，初始化还可能修改已有管理员凭据；生产空库基线仍需团队核对；专用迁移工具提供增量升级和仅用于隔离测试的空库基线，使用方式见 [权限切换手册](docs/authorization-rollout.md)。
 
-API 不自动建表。Development 启动时会分别向空用户表、空菜单表写入种子，不会给已有菜单表补录新增菜单；初始账号及写入条件见 [DevDataSeeder](src/YamAuth.Api/Infrastructure/DevDataSeeder.cs)。连接现有数据库前先确认运行环境和写入影响。
+API 不自动建表或写入 Development 种子。初始管理员必须在迁移清单中明确确认；不得从历史管理员标记直接授予最高权限。
 
 ## 本地运行
 
@@ -50,7 +50,7 @@ PowerShell 可在仓库根目录分别使用 `scripts/run-api.ps1` 与 `scripts/
 
 ## 验证与旧工具
 
-- 检查命令见 [AGENTS](AGENTS.md#验证)。前端检查包含编译期契约反例、表单转换、树算法、会话同步与接口异常测试；当前没有后端测试项目、持久化的前端自动化交互测试或 CI 工作流，构建和离线测试不能替代真实接口及页面验收。
+- 检查命令见 [AGENTS](AGENTS.md#验证)。前端检查包含编译期契约反例、表单转换、树算法、会话同步与接口异常测试；后端测试位于 `tests/YamAuth.Tests`，未显式配置测试实例时跳过 SQL Server 用例。模拟浏览器服务与集成测试的运行方式见 [切换手册](docs/authorization-rollout.md#测试执行)；构建和离线测试不能替代真实接口及页面验收。
 - `scripts/test-backend.ps1` 仍查找不存在的根目录解决方案；`scripts/gen-crud-views.ps1` 仍生成 Vue 页面，均不作为当前开发入口。
 - Docker 与 OpenAPI 工具存在适配缺口，使用前查看 [部署说明](deploy/README.md) 和 [契约说明](openapi/README.md)。
 

@@ -10,8 +10,8 @@ export interface CrudApi<TEntity, TCreate, TUpdate, TQuery extends PagedQuery> {
   page: (query: TQuery) => Promise<PagedResult<TEntity>>
   detail: (id: number) => Promise<TEntity | null>
   create: (data: TCreate) => Promise<number>
-  update: (id: number, data: TUpdate) => Promise<void>
-  remove: (id: number) => Promise<void>
+  update: (id: number, data: TUpdate, rowVersion?: string) => Promise<void>
+  remove: (id: number, rowVersion?: string) => Promise<void>
 }
 
 function isEntity(value: unknown) {
@@ -59,12 +59,12 @@ export function createCrudApi<TEntity, TCreate, TUpdate, TQuery extends PagedQue
       if (!Number.isSafeInteger(result) || result <= 0) return invalidApiResponse()
       return result
     },
-    update: async (id, data) => {
-      const result = await apiPut<null, TUpdate>(`${basePath}/${id}`, data)
+    update: async (id, data, rowVersion) => {
+      const result = await apiPut<null, TUpdate>(`${basePath}/${id}`, data, rowVersion)
       if (result !== null) invalidApiResponse()
     },
-    remove: async (id) => {
-      const result = await apiDelete<null>(`${basePath}/${id}`)
+    remove: async (id, rowVersion) => {
+      const result = await apiDelete<null>(`${basePath}/${id}`, rowVersion)
       if (result !== null) invalidApiResponse()
     }
   }

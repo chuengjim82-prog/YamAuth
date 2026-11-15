@@ -17,4 +17,7 @@ public class TenantDto
     public long? DeleterId { get; set; }
     public string? DeleterNic { get; set; }
     public DateTime? DeleteTime { get; set; }
+    public long AuthorizationVersion { get; set; } = 1;
+    public string[] AllowedActions { get; set; } = Array.Empty<string>();
+    public YamAuth.Authorization.RelationLabels RelatedLabels { get; set; } = new();
 }

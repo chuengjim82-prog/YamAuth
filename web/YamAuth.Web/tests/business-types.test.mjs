@@ -28,7 +28,7 @@ const treeConfig = {
   searchFields: ['name'],
   parentId: (row) => row.parentId,
   sortIndex: (row) => row.sortIndex,
-  appId: (row) => row.appsId
+  scopeId: (row) => row.appsId
 }
 const row = (id, parentId, name, appsId = 1, sortIndex = 0) => ({
   id,
@@ -38,13 +38,13 @@ const row = (id, parentId, name, appsId = 1, sortIndex = 0) => ({
   sortIndex
 })
 
-test('用户编辑空密码省略；输入新密码按原文提交', () => {
+test('用户编辑始终剔除密码与身份字段；创建保留初始密码', () => {
   const form = authForms.userToForm({ userName: 'tester', nickName: '测试', tenantId: null })
   assert.equal(form.password, '')
   assert.equal(Object.hasOwn(authForms.userToUpdate(form), 'password'), false)
   assert.equal(
     authForms.userToUpdate({ ...form, password: '  new-password  ' }).password,
-    '  new-password  '
+    undefined
   )
   assert.equal(
     authForms.userToCreate({ ...form, password: 'new-password' }).password,
@@ -200,11 +200,15 @@ test('菜单类型不参与列表关键词搜索，名称搜索保留祖先后�
 
 test('角色关联新增必须选择，编辑保留历史编号且清空不能提交', () => {
   const empty = authForms.crudRoleCrudToForm()
-  assert.deepEqual(empty, { crudRoleId: null, crudInfoId: null })
+  assert.deepEqual(empty, { crudRoleId: null, crudInfoId: null, scopeType: '' })
   assert.throws(() => authForms.crudRoleCrudToCreate(empty), /功能角色/)
   assert.throws(() => authForms.crudRoleCrudToCreate({ crudRoleId: 12, crudInfoId: null }), /功能/)
   const historical = authForms.crudRoleCrudToForm({ crudRoleId: 0, crudInfoId: 999 })
-  assert.deepEqual(authForms.crudRoleCrudToUpdate(historical), { crudRoleId: 0, crudInfoId: 999 })
+  assert.deepEqual(authForms.crudRoleCrudToUpdate(historical), {
+    crudRoleId: 0,
+    crudInfoId: 999,
+    scopeType: ''
+  })
   assert.throws(
     () => authForms.crudRoleCrudToUpdate({ ...historical, crudRoleId: null }),
     /功能角色/
@@ -261,7 +265,7 @@ test('角色功能选择器保留真实父子关系、失效父链及空名称�
   }
 })
 
-test('角色选择器保留跨应用父子层级，功能选择器仍检查同应用约束', async () => {
+test('角色和功能选择器均将跨应用历史父链列为异常', async () => {
   const { loadCrudRelationOptions } = await server.ssrLoadModule('/src/pages/Crud/crudRelation.ts')
   const { crudRoleApi, dataRoleApi, crudInfoApi } =
     await server.ssrLoadModule('/src/api/entities.ts')
@@ -272,7 +276,7 @@ test('角色选择器保留跨应用父子层级，功能选择器仍检查同�
   ]) {
     const original = api.all
     try {
-      // 父节点未关联应用或关联不同应用，都不应破坏合法的角色层级。
+      // 跨应用历史关联仍可显示，但不能继续伪装为合法的父子链。
       for (const parentAppsId of [null, 1]) {
         api.all = async () => ({
           total: 3,
@@ -285,22 +289,47 @@ test('角色选择器保留跨应用父子层级，功能选择器仍检查同�
         const options = await loadCrudRelationOptions(kind)
         assert.deepEqual(
           options.map(({ value, pId }) => [value, pId]),
-          kind !== 'crudInfoId'
-            ? [
-                [1, 0],
-                [2, 1],
-                [3, 2]
-              ]
-            : [
-                [1, 0],
-                [2, 0],
-                [3, 0]
-              ]
+          [
+            [1, 0],
+            [2, 0],
+            [3, 0]
+          ]
         )
       }
     } finally {
       api.all = original
     }
+  }
+})
+
+test('树表单继承并过滤所属范围，菜单只允许目录作为父级', () => {
+  for (const [resource, field] of [
+    [definitions.crudInfoResource, 'appsId'],
+    [definitions.crudItemResource, 'crudId'],
+    [definitions.crudMenuResource, 'appsId'],
+    [definitions.crudRoleResource, 'appsId'],
+    [definitions.dataRoleResource, 'appsId']
+  ]) {
+    const parent = { ...row(1, 0, 'A', 10), [field]: 10, menuType: 'dir' }
+    const other = { ...row(2, 0, 'B', 20), [field]: 20, menuType: 'dir' }
+    const leaf = { ...row(3, 1, '菜单', 10), [field]: 10, menuType: 'menu' }
+    const child = resource.tree.form.child(resource.toForm(), parent)
+    assert.equal(child[field], 10)
+    const model = trees.buildTree([parent, other, leaf], resource.tree)
+    const candidates = trees.parentOptions(model, null, resource.tree.form.scopeId(child))
+    assert.equal(
+      candidates.some((option) => option.value === 1),
+      true
+    )
+    assert.equal(
+      candidates.some((option) => option.value === 2),
+      false
+    )
+    if (resource === definitions.crudMenuResource)
+      assert.equal(
+        candidates.some((option) => option.value === 3),
+        false
+      )
   }
 })
 
@@ -313,7 +342,21 @@ for (const resource of Object.values(definitions).filter((value) => value?.field
     for (const field of numbers) {
       const max = field.numberKind === 'int32' ? 2147483647 : Number.MAX_SAFE_INTEGER
       const min = field.numberKind === 'int32' ? -2147483648 : Number.MIN_SAFE_INTEGER
-      for (const convert of [resource.toCreate, resource.toUpdate]) {
+      for (const [convert, editing] of [
+        [resource.toCreate, false],
+        [resource.toUpdate, true]
+      ]) {
+        const serverOwned =
+          field.name === 'tenantId' ||
+          (editing &&
+            ((resource.path === '/unit/employees' &&
+              ['userId', 'departmentId'].includes(field.name)) ||
+              (resource.path.startsWith('/bzss/') &&
+                ['ownerUserId', 'ownerDepartmentId'].includes(field.name))))
+        if (serverOwned) {
+          assert.equal(Object.hasOwn(convert({ ...initial, [field.name]: 999 }), field.name), false)
+          continue
+        }
         for (const value of [0, -1, min, max]) {
           assert.equal(integerError(value, field.label, field.numberKind), null)
           assert.equal(convert({ ...initial, [field.name]: value })[field.name], value)
@@ -341,7 +384,21 @@ test('手工数字输入在转成 number 前校验原文，创建和编辑不会
     for (const field of inputs) {
       const max = field.numberKind === 'int32' ? '2147483647' : '9007199254740991'
       const min = field.numberKind === 'int32' ? '-2147483648' : '-9007199254740991'
-      for (const convert of [resource.toCreate, resource.toUpdate]) {
+      for (const [convert, editing] of [
+        [resource.toCreate, false],
+        [resource.toUpdate, true]
+      ]) {
+        const serverOwned =
+          field.name === 'tenantId' ||
+          (editing &&
+            ((resource.path === '/unit/employees' &&
+              ['userId', 'departmentId'].includes(field.name)) ||
+              (resource.path.startsWith('/bzss/') &&
+                ['ownerUserId', 'ownerDepartmentId'].includes(field.name))))
+        if (serverOwned) {
+          assert.equal(Object.hasOwn(convert({ ...initial, [field.name]: 999 }), field.name), false)
+          continue
+        }
         for (const value of ['0', '-1', min, max]) {
           assert.equal(integerError(value, field.label, field.numberKind), null)
           assert.equal(convert({ ...initial, [field.name]: value })[field.name], Number(value))

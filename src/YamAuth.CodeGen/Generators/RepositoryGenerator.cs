@@ -9,6 +9,7 @@ public class RepositoryGenerator
 
     public void Generate(TableInfo t)
     {
+        ResourceSecurityRules.Get(t);
         var dir = Path.Combine(RepositoryProjectPath, t.DatabaseName, t.Module, t.EntityName);
         Directory.CreateDirectory(dir);
 
@@ -40,6 +41,7 @@ public class RepositoryGenerator
         var dbKey = t.DatabaseName == "YamBase" ? "DbKeys.Base" : "DbKeys.Bzss";
         var sb = new StringBuilder();
         sb.AppendLine("using FreeSql;");
+        sb.AppendLine("using YamAuth.Repository.Authorization;");
         sb.AppendLine("using Microsoft.Extensions.DependencyInjection;");
         sb.AppendLine($"using YamAuth.Entity.{t.DatabaseName}.{t.Module};");
         sb.AppendLine("using YamAuth.Repository.Abstractions;");
@@ -51,8 +53,8 @@ public class RepositoryGenerator
         sb.AppendLine("{");
         sb.AppendLine($"    public {t.EntityName}Repository(");
         sb.AppendLine($"        [FromKeyedServices({dbKey})] IFreeSql fsql,");
-        sb.AppendLine("        ICurrentUser currentUser)");
-        sb.AppendLine("        : base(fsql, currentUser) { }");
+        sb.AppendLine("        ICurrentUser currentUser, DataAccessGuard guard, SecurityStore store)");
+        sb.AppendLine("        : base(fsql, currentUser, guard, store) { }");
         sb.AppendLine();
         sb.AppendLine($"    public Task<{t.EntityName}?> GetAsync(long id) => GetByIdAsync(id);");
         sb.AppendLine($"    public Task<long> InsertAsync({t.EntityName} entity) => InsertEntityAsync(entity);");
@@ -69,7 +71,7 @@ public class RepositoryGenerator
         sb.AppendLine();
         sb.AppendLine($"    public async Task<(long total, List<{t.EntityName}> items)> PageAsync(int page, int size, string? keyword{(QueryResourceRules.SupportsAll(t) ? ", bool all = false" : "")})");
         sb.AppendLine("    {");
-        sb.AppendLine("        var select = Repo.Select.Where(x => !x.IsDeleted);");
+        sb.AppendLine("        var select = Select;");
         sb.AppendLine("        var kw = KeywordQueryExtensions.Normalize(keyword);");
         var searchable = t.Columns
             .Where(c => TypeMapper.ToCSharp(c).StartsWith("string", StringComparison.Ordinal)
@@ -91,12 +93,14 @@ public class RepositoryGenerator
             sb.AppendLine("        if (all)");
             sb.AppendLine("        {");
             sb.AppendLine($"            var allItems = await select{sort}.OrderBy(x => x.Id).ToListAsync();");
+            sb.AppendLine("            await Guard.DecorateAsync(Fsql, allItems);");
             sb.AppendLine("            return (allItems.Count, allItems);");
             sb.AppendLine("        }");
         }
         sb.AppendLine("        var total = await select.CountAsync();");
         var stableOrder = QueryResourceRules.UsesStablePaging(t) ? ".OrderByDescending(x => x.Id)" : "";
         sb.AppendLine($"        var items = await select.Page(page, size).OrderByDescending(x => x.CreateTime){stableOrder}.ToListAsync();");
+        sb.AppendLine("        await Guard.DecorateAsync(Fsql, items);");
         sb.AppendLine("        return (total, items);");
         sb.AppendLine("    }");
         return sb.ToString();

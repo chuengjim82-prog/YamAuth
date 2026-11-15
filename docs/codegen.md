@@ -3,10 +3,10 @@
 ## 运行前
 
 - 配置位于 `src/YamAuth.CodeGen/appsettings.json`，从程序输出目录加载；独立于 API 配置，不读取 `scripts/database.local.json` 或环境变量配置源。先确认连接和 Output 路径，入口见 [Program.cs](../src/YamAuth.CodeGen/Program.cs)。
-- 当前读取 YamBase 配置连接中的全部 `tb_*` 表；没有单表过滤、差异预览或 dry-run 参数。数据库迁移需单独处理。
+- 当前读取 YamBase 配置连接中的全部 `tb_*` 表；会排除安全内部表，并在写入任何输出前逐表核对 `ResourceSecurityCatalog`。未知资源必须先登记操作、数据范围和写入规则，否则拒绝生成。没有单表过滤、差异预览或 dry-run 参数。数据库迁移需单独处理。
 - **会直接覆盖 Entity、Repository、DTO、Service、Controller 等标准文件，即使没有 `.g.cs` 后缀。** 生成校验器前会删除 `Validators/Generated/` 内全部 `*.g.cs`；中途失败不自动回滚。
 - 运行前识别已有改动和手工补丁。生成规则改在 Generator / Schema；现有 `*.Extensions.cs`、`*.Hierarchy.cs` 扩展需保持签名兼容。部分生成方法依赖手写扩展，不能假定任意新表生成后即可运行。
-- `User`、`CrudMenu` 的新增和编辑校验由手写校验器维护，`ValidatorGenerator.ManualValidatorEntities` 排除对应生成；菜单枚举及字符串映射位于 [CrudMenuType.cs](../src/YamAuth.Dtos/Auth/CrudMenuType.cs)。调整规则时保留每个 DTO 仅一个校验器。
+- `User`、`CrudMenu`、`CrudInfo` 的新增和编辑校验由手写校验器维护，`ValidatorGenerator.ManualValidatorEntities` 排除对应生成；目录节点允许空资源或操作字段，不能按数据库非空列生成必填规则。菜单枚举及字符串映射位于 [CrudMenuType.cs](../src/YamAuth.Dtos/Auth/CrudMenuType.cs)。调整规则时保留每个 DTO 仅一个校验器。
 - React 资源、菜单和业务校验仍需按需求维护；旧 `gen-crud-views.ps1` 不适用于当前前端。
 
 ## 执行与检查
@@ -26,3 +26,9 @@ dotnet build src/YamAuth.sln -c Release
 ```
 
 如涉及前端资源，按 [前端约定](../web/YamAuth.Web/AGENTS.md) 检查，并验收对应接口与页面。
+
+## 权限生成约束
+
+生成的 Controller 必须带唯一操作权限声明；Repository 必须通过 `DataAccessGuard` 查询，并通过 `RepositoryBase` 完成受约束的写入。DTO 过滤由 `DtoColumnRules` 维护，租户、管理员身份、会话版本及所有权字段不能通过再生成恢复到通用写入入口。新增资源还需扩充运行时资源规则、关联校验和测试，不能仅补一个表名。会话、上下文、审计、迁移状态和登录标识等内部表不得生成通用 CRUD。
+
+`dotnet test tests/YamAuth.Tests -c Release` 包含不连接数据库的生成器安全回归，用临时目录检查未知表拒绝、全部资源端点声明及敏感字段过滤，并在临时源码副本中重新生成全部标准后端代码、编译 API；此编译使用已还原的包缓存。数据库全量生成不是验证命令。

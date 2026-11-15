@@ -1,3 +1,4 @@
+using YamAuth.Repository.Authorization;
 using FreeSql;
 using Microsoft.Extensions.DependencyInjection;
 using YamAuth.Entity.YamBase.Auth;
@@ -9,8 +10,8 @@ public partial class CrudRoleCrudRepository : RepositoryBase<CrudRoleCrud>, ICru
 {
     public CrudRoleCrudRepository(
         [FromKeyedServices(DbKeys.Base)] IFreeSql fsql,
-        ICurrentUser currentUser)
-        : base(fsql, currentUser) { }
+        ICurrentUser currentUser, DataAccessGuard guard, SecurityStore store)
+        : base(fsql, currentUser, guard, store) { }
 
     public Task<CrudRoleCrud?> GetAsync(long id) => GetByIdAsync(id);
     public Task<long> InsertAsync(CrudRoleCrud entity) => InsertEntityAsync(entity);
@@ -19,7 +20,7 @@ public partial class CrudRoleCrudRepository : RepositoryBase<CrudRoleCrud>, ICru
 
     public async Task<(long total, List<CrudRoleCrud> items)> PageAsync(int page, int size, string? keyword)
     {
-        var select = Repo.Select.Where(x => !x.IsDeleted);
+        var select = Select;
         var kw = KeywordQueryExtensions.Normalize(keyword);
         if (kw != null)
         {
@@ -27,6 +28,7 @@ public partial class CrudRoleCrudRepository : RepositoryBase<CrudRoleCrud>, ICru
         }
         var total = await select.CountAsync();
         var items = await select.Page(page, size).OrderByDescending(x => x.CreateTime).ToListAsync();
+        await Guard.DecorateAsync(Fsql, items);
         return (total, items);
     }
 

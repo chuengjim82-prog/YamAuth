@@ -294,17 +294,30 @@ export const crudInfoResource = {
     searchFields: ['crudName', 'crudCode', 'remark', 'creatorNic', 'updaterNic', 'deleterNic'],
     parentId: (row) => row.parentId,
     sortIndex: (row) => row.sortIndex,
-    appId: (row) => row.appsId,
+    scopeId: (row) => row.appsId,
     form: {
       parentField: 'parentId',
       parentId: (values) => values.parentId,
-      appField: 'appsId',
-      appId: (values) => values.appsId,
+      scopeField: 'appsId',
+      scopeId: (values) => values.appsId,
       child: (values, parent) => ({ ...values, parentId: parent.id, appsId: parent.appsId })
     }
   },
   fields: [
     crudInfoFields.id,
+    crudInfoFields.form(
+      'nodeType',
+      '节点类型',
+      { kind: 'string', required: true, formControl: 'permissionNode' },
+      (row) => row.nodeType
+    ),
+    crudInfoFields.form('resourceKey', '资源代码', { kind: 'string' }, (row) => row.resourceKey),
+    crudInfoFields.form(
+      'operationCode',
+      '操作代码',
+      { kind: 'string' },
+      (row) => row.operationCode
+    ),
     crudInfoFields.form(
       'appsId',
       '应用',
@@ -366,10 +379,13 @@ export const crudItemResource = {
     searchFields: ['method', 'apiPath', 'remark', 'creatorNic', 'updaterNic', 'deleterNic'],
     parentSearchFields: ['method', 'apiPath', 'id'],
     parentId: (row) => row.parentId,
+    scopeId: (row) => row.crudId,
     form: {
       parentField: 'parentId',
       parentId: (values) => values.parentId,
-      child: (values, parent) => ({ ...values, parentId: parent.id })
+      scopeField: 'crudId',
+      scopeId: (values) => values.crudId,
+      child: (values, parent) => ({ ...values, parentId: parent.id, crudId: parent.crudId })
     }
   },
   fields: [
@@ -433,12 +449,17 @@ export const crudMenuResource = {
     ],
     parentId: (row) => row.parentId,
     sortIndex: (row) => row.sortIndex,
+    scopeId: (row) => row.appsId,
+    canParent: (row) => row.menuType === 'dir',
     form: {
       parentField: 'parentId',
       parentId: (values) => values.parentId,
+      scopeField: 'appsId',
+      scopeId: (values) => values.appsId,
       child: (values, parent) => ({
         ...values,
         parentId: parent.id,
+        appsId: parent.appsId,
         menuType: authForms.crudMenuDefaultForParent(parent.id)
       }),
       defaultFromParent: { field: 'menuType', value: authForms.crudMenuDefaultForParent }
@@ -446,6 +467,18 @@ export const crudMenuResource = {
   },
   fields: [
     crudMenuFields.id,
+    crudMenuFields.form(
+      'appsId',
+      '所属应用',
+      {
+        kind: 'number',
+        numberKind: 'safeInteger',
+        nullable: true,
+        required: true,
+        formControl: 'app'
+      },
+      (row) => row.appsId
+    ),
     crudMenuFields.form(
       'crudId',
       '功能',
@@ -539,10 +572,13 @@ export const crudRoleResource = {
     parentSearchFields: ['roleName', 'roleCode', 'id'],
     parentId: (row) => row.parentId,
     sortIndex: (row) => row.sortIndex,
+    scopeId: (row) => row.appsId,
     form: {
       parentField: 'parentId',
       parentId: (values) => values.parentId,
-      child: (values, parent) => ({ ...values, parentId: parent.id })
+      scopeField: 'appsId',
+      scopeId: (values) => values.appsId,
+      child: (values, parent) => ({ ...values, parentId: parent.id, appsId: parent.appsId })
     }
   },
   fields: [
@@ -717,10 +753,13 @@ export const dataRoleResource = {
     parentSearchFields: ['roleName', 'roleCode', 'id'],
     parentId: (row) => row.parentId,
     sortIndex: (row) => row.sortIndex,
+    scopeId: (row) => row.appsId,
     form: {
       parentField: 'parentId',
       parentId: (values) => values.parentId,
-      child: (values, parent) => ({ ...values, parentId: parent.id })
+      scopeField: 'appsId',
+      scopeId: (values) => values.appsId,
+      child: (values, parent) => ({ ...values, parentId: parent.id, appsId: parent.appsId })
     }
   },
   fields: [
@@ -845,6 +884,24 @@ export const companyResource = {
   fields: [
     companyFields.id,
     companyFields.form(
+      'ownerUserId',
+      '负责人',
+      {
+        kind: 'number',
+        numberKind: 'safeInteger',
+        nullable: true,
+        required: true,
+        formControl: 'user'
+      },
+      (row) => row.ownerUserId
+    ),
+    companyFields.form(
+      'ownerDepartmentId',
+      '归属部门',
+      { kind: 'number', numberKind: 'safeInteger', nullable: true, formControl: 'department' },
+      (row) => row.ownerDepartmentId
+    ),
+    companyFields.form(
       'tenantId',
       '租户',
       {
@@ -901,6 +958,24 @@ export const projectResource = {
   toUpdate: bzssForms.projectToUpdate,
   fields: [
     projectFields.id,
+    projectFields.form(
+      'ownerUserId',
+      '负责人',
+      {
+        kind: 'number',
+        numberKind: 'safeInteger',
+        nullable: true,
+        required: true,
+        formControl: 'user'
+      },
+      (row) => row.ownerUserId
+    ),
+    projectFields.form(
+      'ownerDepartmentId',
+      '归属部门',
+      { kind: 'number', numberKind: 'safeInteger', nullable: true, formControl: 'department' },
+      (row) => row.ownerDepartmentId
+    ),
     projectFields.form(
       'tenantId',
       '租户',

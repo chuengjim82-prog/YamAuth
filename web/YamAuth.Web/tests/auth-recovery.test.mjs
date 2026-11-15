@@ -55,6 +55,7 @@ const pending = []
 axios.defaults.adapter = (config) =>
   new Promise((resolve, reject) => pending.push({ config, resolve, reject }))
 const api = await server.ssrLoadModule('/src/api/request.ts')
+const { accessStore, StaleAccessError } = await server.ssrLoadModule('/src/auth/access.ts')
 axios.defaults.adapter = originalAdapter
 const redirects = await server.ssrLoadModule('/src/auth/loginRedirect.ts')
 
@@ -360,6 +361,83 @@ test('HashRouter 省略路径前导斜线及空 hash 时仍可进入登录恢复
 function respond(request, data) {
   request.resolve({ config: request.config, status: 200, statusText: 'OK', headers: {}, data })
 }
+
+for (const action of ['logout', 'change-password']) {
+  test(`租户内 ${action} 成功不受平台版本或期间授权刷新影响，仍拒绝旧会话响应`, async () => {
+    await beginSession()
+    accessStore.syncSession(sessions.captureRequestSession().record.sessionId)
+    accessStore.changeContext('tenant-A')
+    const epoch = accessStore.getSnapshot().epoch
+    accessStore.resolve(epoch, {
+      me: { identity: 'PlatformAdministrator', tenantId: 1 },
+      appsId: 100,
+      authorizationVersion: 7,
+      catalogVersion: 1,
+      permissions: [],
+      menus: []
+    })
+    const current = await issueRequest(() => api.apiPost(`/v1/auth/${action}`, {}))
+    assert.equal(current.request.config.headers['X-YamAuth-Context'], undefined)
+    accessStore.refresh()
+    accessStore.resolve(accessStore.getSnapshot().epoch, {
+      me: { identity: 'PlatformAdministrator', tenantId: 1 },
+      appsId: 100,
+      authorizationVersion: 8,
+      catalogVersion: 1,
+      permissions: [],
+      menus: []
+    })
+    current.request.resolve({
+      config: current.request.config,
+      status: 200,
+      statusText: 'OK',
+      headers: { 'x-yamauth-authorization-version': '0', 'x-yamauth-catalog-version': '1' },
+      data: { code: 0, data: null }
+    })
+    assert.equal((await current.result).failed, false)
+    const old = await issueRequest(() => api.apiPost(`/v1/auth/${action}`, {}))
+    await sessions.saveSession(
+      { userName: 'bob', nickName: '新账号' },
+      'new-token',
+      sessions.captureRequestSession()
+    )
+    respond(old.request, { code: 0, data: null })
+    assert.equal((await old.result).failed, true)
+    accessStore.syncSession(null)
+  })
+}
+
+test('普通业务回包仍检查租户版本，授权查询可返回新版本供后台检查', async () => {
+  await beginSession()
+  accessStore.syncSession(sessions.captureRequestSession().record.sessionId)
+  accessStore.changeContext('tenant-A')
+  const epoch = accessStore.getSnapshot().epoch
+  accessStore.resolve(epoch, {
+    me: { tenantId: 1 },
+    appsId: 100,
+    authorizationVersion: 7,
+    catalogVersion: 1,
+    permissions: [],
+    menus: []
+  })
+  const probe = await issueRequest(() => api.apiGet('/v1/auth/access'))
+  const business = await issueRequest(() => api.apiGet('/v1/bzss/projects'))
+  assert.equal(probe.request.config.headers['X-YamAuth-Context'], 'tenant-A')
+  const versioned = (request) =>
+    request.resolve({
+      config: request.config,
+      status: 200,
+      statusText: 'OK',
+      headers: { 'x-yamauth-authorization-version': '8' },
+      data: { code: 0, data: null }
+    })
+  versioned(probe.request)
+  assert.equal((await probe.result).failed, false)
+  versioned(business.request)
+  assert.equal((await business.result).failed, true)
+  assert.throws(() => accessStore.assert(epoch), StaleAccessError)
+  accessStore.syncSession(null)
+})
 
 test('HTTP 200 的 HTML、缺失封装及错误字段均失败；兼容 0/200 与 null，traceId 可缺省', async () => {
   await beginSession()

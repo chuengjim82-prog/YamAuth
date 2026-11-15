@@ -38,7 +38,7 @@ function isMenuNode(value: unknown): value is MenuNode {
   )
 }
 
-function isMenuTree(value: unknown): value is MenuNode[] {
+export function isMenuTree(value: unknown): value is MenuNode[] {
   return Array.isArray(value) && value.every(isMenuNode)
 }
 

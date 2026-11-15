@@ -17,6 +17,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YamAuth.Service", "YamAuth.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YamAuth.Api", "YamAuth.Api\YamAuth.Api.csproj", "{B6A58DFD-251F-02B3-7D4C-DA713020F433}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YamAuth.Authorization", "YamAuth.Authorization\YamAuth.Authorization.csproj", "{7C52B1F2-3D06-4427-827D-998C41CE4988}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YamAuth.Migrations", "YamAuth.Migrations\YamAuth.Migrations.csproj", "{39E78E2B-020D-4439-9095-5183B9C8E8D9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YamAuth.Tests", "..\tests\YamAuth.Tests\YamAuth.Tests.csproj", "{03707735-A20A-405C-BA6E-42873EDD8616}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +57,18 @@ Global
 		{B6A58DFD-251F-02B3-7D4C-DA713020F433}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B6A58DFD-251F-02B3-7D4C-DA713020F433}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B6A58DFD-251F-02B3-7D4C-DA713020F433}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7C52B1F2-3D06-4427-827D-998C41CE4988}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C52B1F2-3D06-4427-827D-998C41CE4988}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C52B1F2-3D06-4427-827D-998C41CE4988}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C52B1F2-3D06-4427-827D-998C41CE4988}.Release|Any CPU.Build.0 = Release|Any CPU
+		{39E78E2B-020D-4439-9095-5183B9C8E8D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{39E78E2B-020D-4439-9095-5183B9C8E8D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{39E78E2B-020D-4439-9095-5183B9C8E8D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{39E78E2B-020D-4439-9095-5183B9C8E8D9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{03707735-A20A-405C-BA6E-42873EDD8616}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{03707735-A20A-405C-BA6E-42873EDD8616}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{03707735-A20A-405C-BA6E-42873EDD8616}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{03707735-A20A-405C-BA6E-42873EDD8616}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

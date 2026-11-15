@@ -18,7 +18,7 @@ public static class TypeMapper
             "datetimeoffset" => "DateTimeOffset",
             "time" => "TimeSpan",
             "uniqueidentifier" => "Guid",
-            "varbinary" or "binary" or "image" => "byte[]",
+            "varbinary" or "binary" or "image" or "timestamp" or "rowversion" => "byte[]",
             "varchar" or "nvarchar" or "char" or "nchar" or "text" or "ntext" or "xml" => "string",
             _ => "string"
         };

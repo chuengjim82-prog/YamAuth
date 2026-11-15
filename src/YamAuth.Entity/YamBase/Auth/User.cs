@@ -72,4 +72,17 @@ public class User : IAuditEntity
     [Column(Name = "DeleteTime")]
     public DateTime? DeleteTime { get; set; }
 
+    [Column(Name = "SecurityVersion")]
+    public long SecurityVersion { get; set; } = 1;
+
+    [Column(Name = "MustChangePassword")]
+    public bool MustChangePassword { get; set; } = false;
+
+    [Column(Name = "SecurityReady")]
+    public bool SecurityReady { get; set; } = false;
+
+    [Column(IsIgnore = true)]
+    public string[] AllowedActions { get; set; } = Array.Empty<string>();
+    [Column(IsIgnore = true)]
+    public YamAuth.Authorization.RelationLabels RelatedLabels { get; set; } = new();
 }

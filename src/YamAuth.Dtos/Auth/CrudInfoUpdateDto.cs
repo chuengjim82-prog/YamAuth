@@ -9,4 +9,7 @@ public class CrudInfoUpdateDto
     public int CrudType { get; set; }
     public int SortIndex { get; set; }
     public string? Remark { get; set; }
+    public string NodeType { get; set; } = "Directory";
+    public string ResourceKey { get; set; } = "";
+    public string OperationCode { get; set; } = "";
 }

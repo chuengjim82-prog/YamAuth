@@ -99,8 +99,12 @@ export function buildTree<E extends Entity>(items: E[], config: TreeConfig<E>) {
           issue = '自身或上级的父节点不存在或已删除'
           break
         }
-        if (config.appId && config.appId(node) !== config.appId(parent)) {
-          issue = '自身或上级存在跨应用父子关系'
+        if (config.scopeId && config.scopeId(node) !== config.scopeId(parent)) {
+          issue = '自身或上级存在跨应用或功能的父子关系'
+          break
+        }
+        if (config.canParent && !config.canParent(parent)) {
+          issue = '自身或上级的父节点不能包含子节点'
           break
         }
       }
@@ -207,7 +211,7 @@ export function treeView<E extends Entity>(model: TreeModel<E>, keyword: string)
 export function parentOptions<E extends Entity>(
   model: TreeModel<E>,
   editingId: number | null,
-  appsId: number | null | undefined
+  scopeId: number | null | undefined
 ) {
   const excluded =
     editingId === null ? new Set<number>() : descendants(model, editingId).add(editingId)
@@ -216,7 +220,8 @@ export function parentOptions<E extends Entity>(
       (row) =>
         !excluded.has(Number(row.id)) &&
         !model.issues.get(Number(row.id)) &&
-        (!model.config.appId || model.config.appId(row) === (appsId ?? null))
+        (!model.config.scopeId || model.config.scopeId(row) === (scopeId ?? null)) &&
+        (!model.config.canParent || model.config.canParent(row))
     )
     .map((row) => {
       const title = `${treeLabel(row, model.config)}（${fieldText(row.id)}）`

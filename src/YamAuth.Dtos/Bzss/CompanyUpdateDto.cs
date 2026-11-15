@@ -2,7 +2,6 @@ namespace YamAuth.Dtos.Bzss;
 
 public class CompanyUpdateDto
 {
-    public long? TenantId { get; set; }
     public string? NameCn { get; set; }
     public string? NameEn { get; set; }
     public string? RegistratioNo { get; set; }

@@ -1,18 +1,13 @@
-using System.Security.Claims;
+using YamAuth.Authorization;
 using YamAuth.Repository.Abstractions;
 
 namespace YamAuth.Api.Services;
 
-public class CurrentUserAccessor : ICurrentUser
+public class CurrentUserAccessor(AccessContext access) : ICurrentUser
 {
-    private readonly IHttpContextAccessor _accessor;
-
-    public CurrentUserAccessor(IHttpContextAccessor accessor) => _accessor = accessor;
-
-    public long UserId => long.TryParse(_accessor.HttpContext?.User.FindFirst("sub")?.Value, out var v) ? v : 0;
-    public string UserNic => _accessor.HttpContext?.User.FindFirst("nic")?.Value ?? "";
-    public IReadOnlyList<string> Permissions =>
-        _accessor.HttpContext?.User.FindAll("perm").Select(c => c.Value).ToList()
-        ?? new List<string>();
-    public bool IsAuthenticated => _accessor.HttpContext?.User.Identity?.IsAuthenticated ?? false;
+    public long UserId => access.Snapshot?.UserId ?? 0;
+    public string UserNic => access.Snapshot?.NickName ?? "";
+    public IReadOnlyList<string> Permissions => access.Snapshot == null ? Array.Empty<string>()
+        : ResourceSecurityCatalog.Permissions.Where(x => access.Snapshot.Can(x.Code)).Select(x => x.Code).ToArray();
+    public bool IsAuthenticated => access.Snapshot != null;
 }

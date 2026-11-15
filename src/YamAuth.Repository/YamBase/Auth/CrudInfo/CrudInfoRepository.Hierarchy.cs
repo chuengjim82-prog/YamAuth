@@ -6,5 +6,5 @@ namespace YamAuth.Repository.YamBase.Auth;
 public partial class CrudInfoRepository
 {
     public Task<T> WithHierarchyAsync<T>(Func<HierarchySession<CrudInfo>, Task<T>> action)
-        => HierarchySession<CrudInfo>.RunAsync(Fsql, Current, action);
+        => HierarchySession<CrudInfo>.RunAsync(Fsql, Guard, Store, InsertEntityAsync, UpdateEntityAsync, SoftDeleteByIdAsync, action);
 }

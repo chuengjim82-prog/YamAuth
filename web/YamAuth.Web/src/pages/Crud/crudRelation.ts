@@ -28,8 +28,7 @@ export async function loadCrudRelationOptions(kind: CrudRelationKind) {
     searchFields: ['name', 'id'],
     parentId: (row) => row.parentId,
     sortIndex: (row) => row.sortIndex,
-    // 角色允许跨应用父子关系；仅功能树沿用同应用约束。
-    ...(kind === 'crudInfoId' ? { appId: (row: RelationNode) => row.appsId } : {})
+    scopeId: (row) => row.appsId
   })
   return model.sorted.map((row) => ({
     id: row.id,

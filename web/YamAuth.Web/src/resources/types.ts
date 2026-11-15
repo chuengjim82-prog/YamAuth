@@ -1,3 +1,4 @@
+import type { RelationLabels } from '@/types/access'
 import type { Dayjs } from 'dayjs'
 import type { FormItemProps } from 'antd'
 import type { NumberKind } from './formValues'
@@ -5,9 +6,12 @@ import type { CrudApi } from '@/api/crud'
 import type { PagedQuery, PagedResult } from '@/types/api'
 
 export interface Entity {
+  allowedActions?: string[]
+  rowVersion?: string
+  relatedLabels?: RelationLabels
   id: number
 }
-type StringControl = 'httpMethod' | 'menuType'
+type StringControl = 'httpMethod' | 'menuType' | 'permissionNode'
 type NumberControl =
   'tenant' | 'department' | 'crudInfo' | 'app' | 'user' | 'crudRole' | 'dataRole' | 'crudInfoId'
 interface FieldOptionsBase {
@@ -69,7 +73,8 @@ export interface TreeConfig<E> {
   parentSearchFields?: Extract<keyof E, string>[]
   parentId: (row: E) => number | null
   sortIndex?: (row: E) => number | null
-  appId?: (row: E) => number | null
+  scopeId?: (row: E) => number | null
+  canParent?: (row: E) => boolean
 }
 
 /** 保留联动字段名与值类型的对应关系，仅在新增且用户未手动选择时应用。 */
@@ -84,8 +89,8 @@ export interface TreeDef<E, F> extends TreeConfig<E> {
   form: {
     parentField: Extract<keyof F, string> & NonNullable<FormItemProps<F>['name']>
     parentId: (values: F) => number | null | undefined
-    appField?: Extract<keyof F, string>
-    appId?: (values: F) => number | null
+    scopeField?: Extract<keyof F, string>
+    scopeId?: (values: F) => number | null
     child: (values: F, parent: E) => F
     defaultFromParent?: ParentDefault<F>
   }

@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+using YamAuth.Api.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using YamAuth.Api.Filters;
 using YamAuth.Service.Abstractions;
@@ -10,24 +10,23 @@ namespace YamAuth.Api.Controllers.V1.Auth;
 
 [ApiController]
 [Route("api/v1/auth/crud-role-cruds")]
-[Authorize]
 public partial class CrudRoleCrudsController : ControllerBase
 {
     private readonly ICrudRoleCrudService _svc;
     public CrudRoleCrudsController(ICrudRoleCrudService svc) => _svc = svc;
 
-    [HttpGet]
+    [HttpGet, RequirePermission("auth.crud-role-cruds.read")]
     public Task<PagedResult<CrudRoleCrudDto>> Page([FromQuery] CrudRoleCrudQueryDto q) => _svc.PageAsync(q);
 
-    [HttpGet("{id:long}")]
+    [HttpGet("{id:long}"), RequirePermission("auth.crud-role-cruds.read")]
     public Task<CrudRoleCrudDto?> Get(long id) => _svc.GetAsync(id);
 
-    [HttpPost]
+    [HttpPost, RequirePermission("auth.crud-role-cruds.create")]
     public Task<long> Create([FromBody] CrudRoleCrudCreateDto dto) => _svc.CreateAsync(dto);
 
-    [HttpPut("{id:long}")]
+    [HttpPut("{id:long}"), RequirePermission("auth.crud-role-cruds.update")]
     public Task Update(long id, [FromBody] CrudRoleCrudUpdateDto dto) => _svc.UpdateAsync(id, dto);
 
-    [HttpDelete("{id:long}")]
+    [HttpDelete("{id:long}"), RequirePermission("auth.crud-role-cruds.delete")]
     public Task Delete(long id) => _svc.DeleteAsync(id);
 }

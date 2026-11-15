@@ -28,7 +28,10 @@ var validatorGen = new ValidatorGenerator
 
 // 物理库只有 YamAuth。YamBase / YamBzss 是两套 FreeSql 键，表按模块拆开。
 var baseConn = cfg.GetSection("Databases").GetChildren().First(d => d["Name"] == "YamBase")["ConnectionString"]!;
-var allTables = reader.Read("YamBase", baseConn);
+var scannedTables = reader.Read("YamBase", baseConn);
+// 全部预检先于任何输出，未知表不能在生成到一半时才导致失败。
+var allTables = scannedTables.Where(t => !YamAuth.Authorization.ResourceSecurityCatalog.InternalTables.Contains(t.TableName)).ToList();
+foreach (var table in allTables) ResourceSecurityRules.Get(table);
 foreach (var t in allTables)
 {
     if (t.Module == "Bzss")

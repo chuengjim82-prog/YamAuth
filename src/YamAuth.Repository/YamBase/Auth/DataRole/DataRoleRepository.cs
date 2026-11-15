@@ -1,3 +1,4 @@
+using YamAuth.Repository.Authorization;
 using FreeSql;
 using Microsoft.Extensions.DependencyInjection;
 using YamAuth.Entity.YamBase.Auth;
@@ -9,8 +10,8 @@ public partial class DataRoleRepository : RepositoryBase<DataRole>, IDataRoleRep
 {
     public DataRoleRepository(
         [FromKeyedServices(DbKeys.Base)] IFreeSql fsql,
-        ICurrentUser currentUser)
-        : base(fsql, currentUser) { }
+        ICurrentUser currentUser, DataAccessGuard guard, SecurityStore store)
+        : base(fsql, currentUser, guard, store) { }
 
     public Task<DataRole?> GetAsync(long id) => GetByIdAsync(id);
     public Task<long> InsertAsync(DataRole entity) => InsertEntityAsync(entity);
@@ -19,7 +20,7 @@ public partial class DataRoleRepository : RepositoryBase<DataRole>, IDataRoleRep
 
     public async Task<(long total, List<DataRole> items)> PageAsync(int page, int size, string? keyword, bool all = false)
     {
-        var select = Repo.Select.Where(x => !x.IsDeleted);
+        var select = Select;
         var kw = KeywordQueryExtensions.Normalize(keyword);
         if (kw != null)
         {
@@ -28,10 +29,12 @@ public partial class DataRoleRepository : RepositoryBase<DataRole>, IDataRoleRep
         if (all)
         {
             var allItems = await select.OrderBy(x => x.SortIndex ?? 0).OrderBy(x => x.Id).ToListAsync();
+            await Guard.DecorateAsync(Fsql, allItems);
             return (allItems.Count, allItems);
         }
         var total = await select.CountAsync();
         var items = await select.Page(page, size).OrderByDescending(x => x.CreateTime).OrderByDescending(x => x.Id).ToListAsync();
+        await Guard.DecorateAsync(Fsql, items);
         return (total, items);
     }
 

@@ -32,6 +32,7 @@ public partial class CrudMenuService
         {
             HierarchyRules.ValidateDelete(session.Items.Select(x => new HierarchyNode(x.Id, x.ParentId, null)), id);
             var current = session.Items.FirstOrDefault(x => x.Id == id);
-            return current == null ? 0 : await session.DeleteAsync(current);
+            if (current == null) throw new BusinessException("记录不存在或不可删除", 404);
+            return await session.DeleteAsync(current);
         });
 }

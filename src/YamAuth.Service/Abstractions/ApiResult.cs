@@ -5,6 +5,7 @@ public class ApiResult
     public int Code { get; set; }
     public string Message { get; set; } = "";
     public object? Data { get; set; }
+    public string? Reason { get; set; }
     public string TraceId { get; set; } = "";
 
     public static ApiResult Ok(object? data = null) => new() { Code = 0, Message = "OK", Data = data };

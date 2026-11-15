@@ -1,3 +1,4 @@
+using YamAuth.Repository.Authorization;
 using YamAuth.Entity.YamBase.Auth;
 using YamAuth.Repository.Abstractions;
 

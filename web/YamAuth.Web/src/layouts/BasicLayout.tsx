@@ -1,9 +1,9 @@
 import { Suspense, useEffect, useMemo, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { Breadcrumb, Button, Layout, Menu, Spin, Tooltip } from 'antd'
+import { Breadcrumb, Button, Layout, Menu, Spin, Tooltip, Result } from 'antd'
+import ProfilePage from '@/pages/Account/ProfilePage'
 import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
-import { fetchMenuTree } from '@/api/auth'
 import PageErrorBoundary from '@/components/PageErrorBoundary'
 import { useApp } from '@/store/AppContext'
 import { menuIcon } from './menuIcons'
@@ -46,21 +46,13 @@ function findChain(nodes: MenuNode[], pathname: string, trail: MenuNode[] = []):
 }
 
 export default function BasicLayout() {
-  const { session } = useApp()
+  const { session, access } = useApp()
   // 会话变更重建整个业务区域，丢弃旧账号的表单、分页及关联选项。
-  return <SessionLayout key={session.revision} />
+  return <SessionLayout key={`${session.revision}:${access.epoch}`} />
 }
 
 function SessionLayout() {
-  const {
-    isLoggedIn,
-    menus,
-    setMenus,
-    menuRefreshVersion,
-    refreshMenus,
-    isCurrentSession,
-    session
-  } = useApp()
+  const { isLoggedIn, menus, session, access, refreshAccess } = useApp()
   const navigate = useNavigate()
   const location = useLocation()
   const [collapsed, setCollapsed] = useState(false)
@@ -72,22 +64,6 @@ function SessionLayout() {
       redirectUnauthenticated(location.pathname + location.search + location.hash)
     }
   }, [isLoggedIn, location.pathname, location.search, location.hash])
-
-  useEffect(() => {
-    if (!isLoggedIn) return
-    let cancelled = false
-    fetchMenuTree()
-      .then((tree) => {
-        if (!cancelled && isCurrentSession()) setMenus(tree)
-      })
-      .catch(() => {
-        // 刷新失败保留当前导航；错误提示沿用请求拦截器，不能误报菜单保存失败。
-      })
-    return () => {
-      cancelled = true
-    }
-    // refreshMenus 随会话变化，更换会话时也必须使旧请求失效。
-  }, [isLoggedIn, setMenus, menuRefreshVersion, refreshMenus, isCurrentSession])
 
   const chain = useMemo(() => findChain(menus, location.pathname), [menus, location.pathname])
 
@@ -101,6 +77,30 @@ function SessionLayout() {
   if (!isLoggedIn) {
     return null
   }
+
+  if (session.record?.status === 'authenticated' && access.sessionId !== session.record.sessionId)
+    return <Spin fullscreen description="正在切换账号" />
+
+  if (access.status === 'password')
+    return (
+      <>
+        <HeaderBar />
+        <ProfilePage forcePassword />
+      </>
+    )
+  if (access.status === 'failed')
+    return (
+      <>
+        <HeaderBar />
+        <Result
+          status="error"
+          title="权限加载失败"
+          subTitle={access.error}
+          extra={<Button onClick={refreshAccess}>重新加载</Button>}
+        />
+      </>
+    )
+  if (access.status !== 'ready') return <Spin fullscreen description="正在加载访问权限" />
 
   return (
     <Layout className={styles.layout}>

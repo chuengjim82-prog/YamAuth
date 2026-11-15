@@ -21,4 +21,7 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\YamAuth.Authorization\YamAuth.Authorization.csproj" />
+  </ItemGroup>
 </Project>
