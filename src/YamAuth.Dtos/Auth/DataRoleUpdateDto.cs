@@ -2,7 +2,6 @@ namespace YamAuth.Dtos.Auth;
 
 public class DataRoleUpdateDto
 {
-    public long? TenantId { get; set; }
     public long? AppsId { get; set; }
     public long ParentId { get; set; }
     public string? RoleCode { get; set; }

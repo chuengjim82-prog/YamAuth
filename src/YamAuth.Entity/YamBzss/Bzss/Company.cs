@@ -69,4 +69,20 @@ public class Company : IAuditEntity
     [Column(Name = "DeleteTime")]
     public DateTime? DeleteTime { get; set; }
 
+    [Column(Name = "OwnerUserId")]
+    public long? OwnerUserId { get; set; }
+
+    [Column(Name = "OwnerDepartmentId")]
+    public long? OwnerDepartmentId { get; set; }
+
+    [Column(Name = "OwnershipConfirmed")]
+    public bool OwnershipConfirmed { get; set; } = false;
+
+    [Column(Name = "RowVersion", DbType = "rowversion", CanInsert = false, CanUpdate = false)]
+    public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+
+    [Column(IsIgnore = true)]
+    public string[] AllowedActions { get; set; } = Array.Empty<string>();
+    [Column(IsIgnore = true)]
+    public YamAuth.Authorization.RelationLabels RelatedLabels { get; set; } = new();
 }

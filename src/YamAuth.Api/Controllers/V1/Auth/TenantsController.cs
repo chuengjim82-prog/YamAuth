@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+using YamAuth.Api.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using YamAuth.Api.Filters;
 using YamAuth.Service.Abstractions;
@@ -10,24 +10,23 @@ namespace YamAuth.Api.Controllers.V1.Auth;
 
 [ApiController]
 [Route("api/v1/auth/tenants")]
-[Authorize]
 public partial class TenantsController : ControllerBase
 {
     private readonly ITenantService _svc;
     public TenantsController(ITenantService svc) => _svc = svc;
 
-    [HttpGet]
+    [HttpGet, RequirePermission("auth.tenants.read")]
     public Task<PagedResult<TenantDto>> Page([FromQuery] TenantQueryDto q) => _svc.PageAsync(q);
 
-    [HttpGet("{id:long}")]
+    [HttpGet("{id:long}"), RequirePermission("auth.tenants.read")]
     public Task<TenantDto?> Get(long id) => _svc.GetAsync(id);
 
-    [HttpPost]
+    [HttpPost, RequirePermission("auth.tenants.create")]
     public Task<long> Create([FromBody] TenantCreateDto dto) => _svc.CreateAsync(dto);
 
-    [HttpPut("{id:long}")]
+    [HttpPut("{id:long}"), RequirePermission("auth.tenants.update")]
     public Task Update(long id, [FromBody] TenantUpdateDto dto) => _svc.UpdateAsync(id, dto);
 
-    [HttpDelete("{id:long}")]
+    [HttpDelete("{id:long}"), RequirePermission("auth.tenants.delete")]
     public Task Delete(long id) => _svc.DeleteAsync(id);
 }

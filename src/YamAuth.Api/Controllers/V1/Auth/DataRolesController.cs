@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+using YamAuth.Api.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using YamAuth.Api.Filters;
 using YamAuth.Service.Abstractions;
@@ -10,24 +10,23 @@ namespace YamAuth.Api.Controllers.V1.Auth;
 
 [ApiController]
 [Route("api/v1/auth/data-roles")]
-[Authorize]
 public partial class DataRolesController : ControllerBase
 {
     private readonly IDataRoleService _svc;
     public DataRolesController(IDataRoleService svc) => _svc = svc;
 
-    [HttpGet]
+    [HttpGet, RequirePermission("auth.data-roles.read")]
     public Task<PagedResult<DataRoleDto>> Page([FromQuery] DataRoleQueryDto q) => _svc.PageAsync(q);
 
-    [HttpGet("{id:long}")]
+    [HttpGet("{id:long}"), RequirePermission("auth.data-roles.read")]
     public Task<DataRoleDto?> Get(long id) => _svc.GetAsync(id);
 
-    [HttpPost]
+    [HttpPost, RequirePermission("auth.data-roles.create")]
     public Task<long> Create([FromBody] DataRoleCreateDto dto) => _svc.CreateAsync(dto);
 
-    [HttpPut("{id:long}")]
+    [HttpPut("{id:long}"), RequirePermission("auth.data-roles.update")]
     public Task Update(long id, [FromBody] DataRoleUpdateDto dto) => _svc.UpdateAsync(id, dto);
 
-    [HttpDelete("{id:long}")]
+    [HttpDelete("{id:long}"), RequirePermission("auth.data-roles.delete")]
     public Task Delete(long id) => _svc.DeleteAsync(id);
 }

@@ -1,3 +1,4 @@
+import { accessStore, StaleAccessError } from '@/auth/access'
 import axios, { type AxiosResponse, type InternalAxiosRequestConfig } from 'axios'
 import { message } from 'antd'
 import type { ApiResponse } from '@/types/api'
@@ -25,11 +26,13 @@ function resolveApiBaseURL() {
 
 const request = axios.create({
   baseURL: resolveApiBaseURL(),
-  timeout: 30000
+  timeout: 30000,
+  paramsSerializer: { indexes: null }
 })
 
 const ERROR_MESSAGE_KEY = 'api-request-error'
 const requestSessions = new WeakMap<object, RequestSession>()
+const requestAccessEpochs = new WeakMap<object, number>()
 
 export class ApiProtocolError extends Error {}
 
@@ -72,6 +75,12 @@ request.interceptors.request.use(
     const session = captureRequestSession()
     assertCurrentRequestSession(session)
     requestSessions.set(config, session)
+    const access = accessStore.getSnapshot()
+    // 退出和改密绑定登录会话，完成结果不受租户切换或授权刷新影响。
+    if (!/\/auth\/(logout|change-password)$/.test(config.url ?? '')) {
+      requestAccessEpochs.set(config, access.epoch)
+      if (access.contextId) config.headers['X-YamAuth-Context'] = access.contextId
+    }
     if (session.record?.status === 'authenticated') {
       config.headers.Authorization = `Bearer ${session.record.token}`
     }
@@ -86,11 +95,29 @@ request.interceptors.request.use(
 function assertResponseSession(config: object | undefined) {
   const session = config && requestSessions.get(config)
   if (session) assertCurrentRequestSession(session)
+  const epoch = config && requestAccessEpochs.get(config)
+  if (epoch !== undefined) accessStore.assert(epoch)
 }
 
 request.interceptors.response.use(
   async (response: AxiosResponse<unknown, unknown, object, unknown>) => {
     assertResponseSession(response.config)
+    const currentAccess = accessStore.getSnapshot()
+    const authorizationVersion: unknown = response.headers['x-yamauth-authorization-version']
+    const catalogVersion: unknown = response.headers['x-yamauth-catalog-version']
+    if (
+      currentAccess.status === 'ready' &&
+      currentAccess.data &&
+      requestAccessEpochs.has(response.config) &&
+      !/\/auth\/(me|access)$/.test(response.config.url ?? '') &&
+      ((typeof authorizationVersion === 'string' &&
+        Number(authorizationVersion) !== currentAccess.data.authorizationVersion) ||
+        (typeof catalogVersion === 'string' &&
+          Number(catalogVersion) !== currentAccess.data.catalogVersion))
+    ) {
+      accessStore.refresh()
+      throw new StaleAccessError()
+    }
     const data = response.data
     if (
       !data ||
@@ -101,6 +128,7 @@ request.interceptors.response.use(
       ('message' in data && typeof data.message !== 'string')
     )
       return invalidApiResponse()
+    if (data.code === 403) accessStore.refresh()
     if (data.code !== 0 && data.code !== 200) {
       const errorMessage = 'message' in data && typeof data.message === 'string' ? data.message : ''
       if (!(data.code === 401 && (await handleUnauthorized(response.config)))) {
@@ -112,11 +140,26 @@ request.interceptors.response.use(
     return response
   },
   async (error: unknown) => {
-    if (error instanceof StaleSessionError) return Promise.reject(error)
+    if (error instanceof StaleSessionError || error instanceof StaleAccessError)
+      return Promise.reject(error)
     const axiosError = axios.isAxiosError<unknown, unknown, unknown>(error) ? error : undefined
     assertResponseSession(axiosError?.config)
     const response = axiosError?.response
     const body = response?.data
+    if (response?.status === 403) {
+      if (
+        body &&
+        typeof body === 'object' &&
+        'reason' in body &&
+        body.reason === 'ContextInvalidated'
+      ) {
+        try {
+          accessStore.changeContext(null)
+        } catch (storageError: unknown) {
+          message.error(storageError instanceof Error ? storageError.message : '无法清理租户上下文')
+        }
+      } else accessStore.refresh()
+    }
     const errorMessage =
       body && typeof body === 'object' && 'message' in body && typeof body.message === 'string'
         ? body.message
@@ -147,12 +190,19 @@ export async function apiPost<T, D>(url: string, data: D): Promise<T> {
   return res.data.data
 }
 
-export async function apiPut<T, D>(url: string, data: D): Promise<T> {
-  const res = await request.put<ApiResponse<T>, Response<T, D, never>, D, never>(url, data)
+export async function apiPut<T, D>(url: string, data: D, rowVersion?: string): Promise<T> {
+  const res = await request.put<ApiResponse<T>, Response<T, D, never>, D, never>(
+    url,
+    data,
+    rowVersion ? { headers: { 'If-Match': `"${rowVersion}"` } } : undefined
+  )
   return res.data.data
 }
 
-export async function apiDelete<T>(url: string): Promise<T> {
-  const res = await request.delete<ApiResponse<T>, Response<T, never, never>, never, never>(url)
+export async function apiDelete<T>(url: string, rowVersion?: string): Promise<T> {
+  const res = await request.delete<ApiResponse<T>, Response<T, never, never>, never, never>(
+    url,
+    rowVersion ? { headers: { 'If-Match': `"${rowVersion}"` } } : undefined
+  )
   return res.data.data
 }

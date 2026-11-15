@@ -60,4 +60,17 @@ public class CrudInfo : IAuditEntity
     [Column(Name = "DeleteTime")]
     public DateTime? DeleteTime { get; set; }
 
+    [Column(Name = "NodeType")]
+    public string NodeType { get; set; } = "Directory";
+
+    [Column(Name = "ResourceKey")]
+    public string ResourceKey { get; set; } = "";
+
+    [Column(Name = "OperationCode")]
+    public string OperationCode { get; set; } = "";
+
+    [Column(IsIgnore = true)]
+    public string[] AllowedActions { get; set; } = Array.Empty<string>();
+    [Column(IsIgnore = true)]
+    public YamAuth.Authorization.RelationLabels RelatedLabels { get; set; } = new();
 }

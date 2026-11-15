@@ -9,6 +9,7 @@ public class ServiceGenerator
 
     public void Generate(TableInfo t)
     {
+        ResourceSecurityRules.Get(t);
         var dir = Path.Combine(ServiceProjectPath, t.DatabaseName, t.Module);
         Directory.CreateDirectory(dir);
 

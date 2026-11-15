@@ -12,6 +12,8 @@ import type {
 
 /** 日期使用 Dayjs 编辑，由转换函数生成接口约定的字符串或 null。 */
 export interface CompanyForm {
+  ownerUserId: number | null
+  ownerDepartmentId: number | null
   tenantId: number | null
   nameCn: string
   nameEn: string
@@ -26,6 +28,8 @@ export interface CompanyForm {
 
 export function companyToForm(row?: CompanyDto): CompanyForm {
   return {
+    ownerUserId: row?.ownerUserId ?? null,
+    ownerDepartmentId: row?.ownerDepartmentId ?? null,
     tenantId: row?.tenantId ?? null,
     nameCn: row?.nameCn ?? '',
     nameEn: row?.nameEn ?? '',
@@ -42,7 +46,8 @@ export function companyToForm(row?: CompanyDto): CompanyForm {
 export function companyToCreate(values: CompanyForm): CompanyCreateDto {
   if (values.regDate && !values.regDate.isValid()) throw new FormValueError('注册日期无效')
   return {
-    tenantId: nullableNumber(values.tenantId, '租户'),
+    ownerUserId: nullableNumber(values.ownerUserId, '负责人'),
+    ownerDepartmentId: nullableNumber(values.ownerDepartmentId, '归属部门'),
     nameCn: values.nameCn,
     nameEn: values.nameEn,
     registratioNo: values.registratioNo,
@@ -58,7 +63,6 @@ export function companyToCreate(values: CompanyForm): CompanyCreateDto {
 export function companyToUpdate(values: CompanyForm): CompanyUpdateDto {
   if (values.regDate && !values.regDate.isValid()) throw new FormValueError('注册日期无效')
   return {
-    tenantId: nullableNumber(values.tenantId, '租户'),
     nameCn: values.nameCn,
     nameEn: values.nameEn,
     registratioNo: values.registratioNo,
@@ -72,6 +76,8 @@ export function companyToUpdate(values: CompanyForm): CompanyUpdateDto {
 }
 
 export interface ProjectForm {
+  ownerUserId: number | null
+  ownerDepartmentId: number | null
   tenantId: number | null
   projCode: string
   projName: string
@@ -80,6 +86,8 @@ export interface ProjectForm {
 
 export function projectToForm(row?: ProjectDto): ProjectForm {
   return {
+    ownerUserId: row?.ownerUserId ?? null,
+    ownerDepartmentId: row?.ownerDepartmentId ?? null,
     tenantId: row?.tenantId ?? null,
     projCode: row?.projCode ?? '',
     projName: row?.projName ?? '',
@@ -89,7 +97,8 @@ export function projectToForm(row?: ProjectDto): ProjectForm {
 
 export function projectToCreate(values: ProjectForm): ProjectCreateDto {
   return {
-    tenantId: nullableNumber(values.tenantId, '租户'),
+    ownerUserId: nullableNumber(values.ownerUserId, '负责人'),
+    ownerDepartmentId: nullableNumber(values.ownerDepartmentId, '归属部门'),
     projCode: values.projCode,
     projName: values.projName,
     remark: values.remark
@@ -98,7 +107,6 @@ export function projectToCreate(values: ProjectForm): ProjectCreateDto {
 
 export function projectToUpdate(values: ProjectForm): ProjectUpdateDto {
   return {
-    tenantId: nullableNumber(values.tenantId, '租户'),
     projCode: values.projCode,
     projName: values.projName,
     remark: values.remark

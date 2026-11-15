@@ -1,3 +1,4 @@
+import type { RelationLabels } from './access'
 import type { PagedQuery } from './api'
 
 /** Bzss 传输契约：与后端 DTO 对齐；日期为 JSON 字符串，可空属性仍会出现在响应中。 */
@@ -23,10 +24,14 @@ export interface CompanyDto {
   deleterId: number | null
   deleterNic: string | null
   deleteTime: string | null
+  ownerUserId: number | null
+  ownerDepartmentId: number | null
+  rowVersion: string
+  allowedActions: string[]
+  relatedLabels: RelationLabels
 }
 
 export interface CompanyCreateDto {
-  tenantId: number | null
   nameCn: string | null
   nameEn: string | null
   registratioNo: string | null
@@ -36,10 +41,11 @@ export interface CompanyCreateDto {
   classify: number | null
   currency: string | null
   remark: string | null
+  ownerUserId: number | null
+  ownerDepartmentId: number | null
 }
 
 export interface CompanyUpdateDto {
-  tenantId: number | null
   nameCn: string | null
   nameEn: string | null
   registratioNo: string | null
@@ -69,17 +75,22 @@ export interface ProjectDto {
   deleterId: number | null
   deleterNic: string | null
   deleteTime: string | null
+  ownerUserId: number | null
+  ownerDepartmentId: number | null
+  rowVersion: string
+  allowedActions: string[]
+  relatedLabels: RelationLabels
 }
 
 export interface ProjectCreateDto {
-  tenantId: number | null
   projCode: string | null
   projName: string | null
   remark: string | null
+  ownerUserId: number | null
+  ownerDepartmentId: number | null
 }
 
 export interface ProjectUpdateDto {
-  tenantId: number | null
   projCode: string | null
   projName: string | null
   remark: string | null

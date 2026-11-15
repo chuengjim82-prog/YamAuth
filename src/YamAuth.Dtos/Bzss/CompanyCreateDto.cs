@@ -2,7 +2,6 @@ namespace YamAuth.Dtos.Bzss;
 
 public class CompanyCreateDto
 {
-    public long? TenantId { get; set; }
     public string? NameCn { get; set; }
     public string? NameEn { get; set; }
     public string? RegistratioNo { get; set; }
@@ -12,4 +11,6 @@ public class CompanyCreateDto
     public int? Classify { get; set; }
     public string? Currency { get; set; }
     public string? Remark { get; set; }
+    public long? OwnerUserId { get; set; }
+    public long? OwnerDepartmentId { get; set; }
 }

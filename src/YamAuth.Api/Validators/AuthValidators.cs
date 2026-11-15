@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using YamAuth.Dtos.Auth;
 
 namespace YamAuth.Api.Validators;
@@ -35,11 +35,7 @@ public class UserUpdateDtoValidator : AbstractValidator<UserUpdateDto>
     {
         RuleFor(x => x.UserName).NotEmpty().MaximumLength(64);
         RuleFor(x => x.NickName).NotEmpty().MaximumLength(64);
-        RuleFor(x => x.Password).MinimumLength(6).MaximumLength(128).When(x => !string.IsNullOrWhiteSpace(x.Password));
-        RuleFor(x => x.Email)
-            .NotEmpty().WithMessage("请输入邮箱")
-            .EmailAddress().WithMessage("邮箱格式不正确")
-            .MaximumLength(128);
+
     }
 }
 

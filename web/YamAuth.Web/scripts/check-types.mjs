@@ -9,6 +9,12 @@ assert.equal(loaded.error, undefined)
 const config = ts.parseJsonConfigFileContent(loaded.config, ts.sys, process.cwd())
 const probePath = path.resolve('src/__type_contract_probe__.ts')
 const cases = [
+  { name: '普通编辑不能传入密码', code: "userApi.update(1, { ...userCreate, password: 'x' })" },
+  {
+    name: '普通编辑不能改变管理员身份',
+    code: 'userApi.update(1, { ...userCreate, isAdmin: true })'
+  },
+  { name: '客户端不能改变用户租户', code: 'userApi.create({ ...userCreate, tenantId: 2 })' },
   {
     name: '原文数字输入不能绑定只接受 number 的关联选择器',
     code: "fieldsFor<CompanyDto, CompanyForm>().form('countryId', '国家', { kind: 'number', numberKind: 'safeInteger', formControl: 'tenant' }, row => row.countryId)"
@@ -128,7 +134,7 @@ fieldsFor<CompanyDto, CompanyForm>().form('regDate', '注册日期', { kind: 'da
 field.form('tenantId', '租户', { kind: 'number', numberKind: 'safeInteger', formControl: 'tenant' }, row => row.tenantId)
 const allQuery = { all: true } as const
 withAll(appsInfoApi, allQuery).all()
-userApi.update(1, { ...userCreate, password: null })
+userApi.update(1, userCreate)
 appsInfoApi.all()
 companyApi.create(companyToCreate(companyForm))
 companyApi.create(companyToCreate({ ...companyForm, countryId: '9007199254740991', classify: '-1' }))

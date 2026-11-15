@@ -1,4 +1,4 @@
-﻿using Mapster;
+using Mapster;
 using YamAuth.Entity.YamBase.Auth;
 using YamAuth.Service.Abstractions;
 using YamAuth.Dtos.Auth;
@@ -26,28 +26,8 @@ public partial class UserService
     public async Task UpdateAsync(long id, UserUpdateDto dto)
     {
         var entity = await _repo.GetAsync(id) ?? throw new BusinessException("记录不存在", 404);
-        var savedPassword = entity.Password;
-        var savedPwdSalt = entity.PwdSalt;
-
-        dto.Email = UserEmailHelper.Normalize(dto.Email);
-        await EnsureEmailAvailableAsync(dto.Email, id);
-
         dto.Adapt(entity);
         entity.Id = id;
-        entity.Email = dto.Email;
-
-        if (!string.IsNullOrWhiteSpace(dto.Password))
-        {
-            var (hash, salt) = PasswordHelper.Hash(dto.Password);
-            entity.Password = hash;
-            entity.PwdSalt = salt;
-        }
-        else
-        {
-            entity.Password = savedPassword;
-            entity.PwdSalt = savedPwdSalt;
-        }
-
         await _repo.UpdateAsync(entity);
     }
 

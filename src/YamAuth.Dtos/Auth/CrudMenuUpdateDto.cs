@@ -15,4 +15,5 @@ public class CrudMenuUpdateDto
     public bool IsHided { get; set; }
     public bool AllowAny { get; set; }
     public string? Remark { get; set; }
+    public long? AppsId { get; set; }
 }

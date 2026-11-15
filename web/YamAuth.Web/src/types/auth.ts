@@ -1,3 +1,4 @@
+import type { RelationLabels } from './access'
 import type { PagedQuery } from './api'
 
 export interface LoginRequest {
@@ -43,31 +44,26 @@ export interface UserDto {
   deleterId: number | null
   deleterNic: string | null
   deleteTime: string | null
+  mustChangePassword: boolean
+  allowedActions: string[]
+  relatedLabels: RelationLabels
 }
 
 export interface UserCreateDto {
-  tenantId: number | null
   userName: string
   nickName: string
   password: string
   avatar: string
   phone: string
   email: string
-  isAdmin: boolean
-  isActived: boolean
   remark: string | null
 }
 
 export interface UserUpdateDto {
-  tenantId: number | null
   userName: string
   nickName: string
-  password?: string | null
   avatar: string
   phone: string
-  email: string
-  isAdmin: boolean
-  isActived: boolean
   remark: string | null
 }
 
@@ -89,6 +85,9 @@ export interface TenantDto {
   deleterId: number | null
   deleterNic: string | null
   deleteTime: string | null
+  authorizationVersion: number
+  allowedActions: string[]
+  relatedLabels: RelationLabels
 }
 
 export interface TenantCreateDto {
@@ -126,10 +125,13 @@ export interface AppsInfoDto {
   deleterId: number | null
   deleterNic: string | null
   deleteTime: string | null
+  appKind: string
+  catalogVersion: number
+  allowedActions: string[]
+  relatedLabels: RelationLabels
 }
 
 export interface AppsInfoCreateDto {
-  tenantId: number | null
   parentId: number | null
   appsCode: string | null
   appsName: string | null
@@ -139,7 +141,6 @@ export interface AppsInfoCreateDto {
 }
 
 export interface AppsInfoUpdateDto {
-  tenantId: number | null
   parentId: number | null
   appsCode: string | null
   appsName: string | null
@@ -169,10 +170,11 @@ export interface AppsUserDto {
   deleterId: number | null
   deleterNic: string | null
   deleteTime: string | null
+  allowedActions: string[]
+  relatedLabels: RelationLabels
 }
 
 export interface AppsUserCreateDto {
-  tenantId: number | null
   appsId: number | null
   userId: number | null
   isAdmin: boolean
@@ -180,7 +182,6 @@ export interface AppsUserCreateDto {
 }
 
 export interface AppsUserUpdateDto {
-  tenantId: number | null
   appsId: number | null
   userId: number | null
   isAdmin: boolean
@@ -208,6 +209,11 @@ export interface CrudInfoDto {
   deleterId: number | null
   deleterNic: string | null
   deleteTime: string | null
+  nodeType: string
+  resourceKey: string
+  operationCode: string
+  allowedActions: string[]
+  relatedLabels: RelationLabels
 }
 
 export interface CrudInfoCreateDto {
@@ -218,6 +224,9 @@ export interface CrudInfoCreateDto {
   crudType: number
   sortIndex: number
   remark: string | null
+  nodeType: string
+  resourceKey: string
+  operationCode: string
 }
 
 export interface CrudInfoUpdateDto {
@@ -228,6 +237,9 @@ export interface CrudInfoUpdateDto {
   crudType: number
   sortIndex: number
   remark: string | null
+  nodeType: string
+  resourceKey: string
+  operationCode: string
 }
 
 export interface CrudInfoQueryDto extends PagedQuery {
@@ -251,6 +263,8 @@ export interface CrudItemDto {
   deleterId: number | null
   deleterNic: string | null
   deleteTime: string | null
+  allowedActions: string[]
+  relatedLabels: RelationLabels
 }
 
 export interface CrudItemCreateDto {
@@ -308,6 +322,9 @@ export interface CrudMenuDto {
   deleterId: number | null
   deleterNic: string | null
   deleteTime: string | null
+  appsId: number | null
+  allowedActions: string[]
+  relatedLabels: RelationLabels
 }
 
 export interface CrudMenuCreateDto {
@@ -324,6 +341,7 @@ export interface CrudMenuCreateDto {
   isHided: boolean
   allowAny: boolean
   remark: string | null
+  appsId: number | null
 }
 
 export interface CrudMenuUpdateDto {
@@ -340,6 +358,7 @@ export interface CrudMenuUpdateDto {
   isHided: boolean
   allowAny: boolean
   remark: string | null
+  appsId: number | null
 }
 
 export interface CrudMenuQueryDto extends PagedQuery {
@@ -366,27 +385,26 @@ export interface CrudRoleDto {
   deleterId: number | null
   deleterNic: string | null
   deleteTime: string | null
+  roleKind: string
+  allowedActions: string[]
+  relatedLabels: RelationLabels
 }
 
 export interface CrudRoleCreateDto {
-  tenantId: number | null
   appsId: number | null
   parentId: number
   roleCode: string | null
   roleName: string
   sortIndex: number | null
-  isSystem: boolean
   remark: string | null
 }
 
 export interface CrudRoleUpdateDto {
-  tenantId: number | null
   appsId: number | null
   parentId: number
   roleCode: string | null
   roleName: string
   sortIndex: number | null
-  isSystem: boolean
   remark: string | null
 }
 
@@ -405,16 +423,23 @@ export interface CrudRoleCrudDto {
   deleterId: number | null
   deleterNic: string | null
   deleteTime: string | null
+  tenantId: number | null
+  appsId: number | null
+  scopeType: string
+  allowedActions: string[]
+  relatedLabels: RelationLabels
 }
 
 export interface CrudRoleCrudCreateDto {
   crudRoleId: number
   crudInfoId: number
+  scopeType: string
 }
 
 export interface CrudRoleCrudUpdateDto {
   crudRoleId: number
   crudInfoId: number
+  scopeType: string
 }
 
 export type CrudRoleCrudQueryDto = PagedQuery
@@ -430,6 +455,10 @@ export interface CrudRoleUserDto {
   deleterId: number | null
   deleterNic: string | null
   deleteTime: string | null
+  tenantId: number | null
+  appsId: number | null
+  allowedActions: string[]
+  relatedLabels: RelationLabels
 }
 
 export interface CrudRoleUserCreateDto {
@@ -464,10 +493,11 @@ export interface DataRoleDto {
   deleterId: number | null
   deleterNic: string | null
   deleteTime: string | null
+  allowedActions: string[]
+  relatedLabels: RelationLabels
 }
 
 export interface DataRoleCreateDto {
-  tenantId: number | null
   appsId: number | null
   parentId: number
   roleCode: string | null
@@ -478,7 +508,6 @@ export interface DataRoleCreateDto {
 }
 
 export interface DataRoleUpdateDto {
-  tenantId: number | null
   appsId: number | null
   parentId: number
   roleCode: string | null
@@ -503,6 +532,8 @@ export interface DataRoleUserDto {
   deleterId: number | null
   deleterNic: string | null
   deleteTime: string | null
+  allowedActions: string[]
+  relatedLabels: RelationLabels
 }
 
 export interface DataRoleUserCreateDto {

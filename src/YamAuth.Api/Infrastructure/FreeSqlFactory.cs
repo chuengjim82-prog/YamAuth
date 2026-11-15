@@ -15,7 +15,7 @@ public static class FreeSqlFactory
         if (configuration.GetValue<bool>("Db:LogSql"))
         {
             fsql.Aop.CurdAfter += (_, e) =>
-                Log.Debug("[{Db}] ({Elapsed}ms) {Sql}", logLabel, e.ElapsedMilliseconds, e.Sql);
+                Log.Debug("[{Db}] 数据库操作完成 ({Elapsed}ms)", logLabel, e.ElapsedMilliseconds);
         }
 
         return fsql;

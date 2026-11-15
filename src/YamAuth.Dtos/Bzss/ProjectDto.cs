@@ -17,4 +17,9 @@ public class ProjectDto
     public long? DeleterId { get; set; }
     public string? DeleterNic { get; set; }
     public DateTime? DeleteTime { get; set; }
+    public long? OwnerUserId { get; set; }
+    public long? OwnerDepartmentId { get; set; }
+    public byte[] RowVersion { get; set; } = Array.Empty<byte>();
+    public string[] AllowedActions { get; set; } = Array.Empty<string>();
+    public YamAuth.Authorization.RelationLabels RelatedLabels { get; set; } = new();
 }

@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+using YamAuth.Api.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using YamAuth.Api.Filters;
 using YamAuth.Service.Abstractions;
@@ -10,24 +10,23 @@ namespace YamAuth.Api.Controllers.V1.Auth;
 
 [ApiController]
 [Route("api/v1/auth/apps-users")]
-[Authorize]
 public partial class AppsUsersController : ControllerBase
 {
     private readonly IAppsUserService _svc;
     public AppsUsersController(IAppsUserService svc) => _svc = svc;
 
-    [HttpGet]
+    [HttpGet, RequirePermission("auth.apps-users.read")]
     public Task<PagedResult<AppsUserDto>> Page([FromQuery] AppsUserQueryDto q) => _svc.PageAsync(q);
 
-    [HttpGet("{id:long}")]
+    [HttpGet("{id:long}"), RequirePermission("auth.apps-users.read")]
     public Task<AppsUserDto?> Get(long id) => _svc.GetAsync(id);
 
-    [HttpPost]
+    [HttpPost, RequirePermission("auth.apps-users.create")]
     public Task<long> Create([FromBody] AppsUserCreateDto dto) => _svc.CreateAsync(dto);
 
-    [HttpPut("{id:long}")]
+    [HttpPut("{id:long}"), RequirePermission("auth.apps-users.update")]
     public Task Update(long id, [FromBody] AppsUserUpdateDto dto) => _svc.UpdateAsync(id, dto);
 
-    [HttpDelete("{id:long}")]
+    [HttpDelete("{id:long}"), RequirePermission("auth.apps-users.delete")]
     public Task Delete(long id) => _svc.DeleteAsync(id);
 }

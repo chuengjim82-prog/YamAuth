@@ -45,26 +45,6 @@ public sealed class AppsUserUpdateDtoValidator : AbstractValidator<AppsUserUpdat
     }
 }
 
-public sealed class CrudInfoCreateDtoValidator : AbstractValidator<CrudInfoCreateDto>
-{
-    public CrudInfoCreateDtoValidator()
-    {
-        RuleFor(x => x.CrudName).MaximumLength(50);
-        RuleFor(x => x.CrudCode).NotEmpty().MaximumLength(200);
-        RuleFor(x => x.Remark).MaximumLength(255);
-    }
-}
-
-public sealed class CrudInfoUpdateDtoValidator : AbstractValidator<CrudInfoUpdateDto>
-{
-    public CrudInfoUpdateDtoValidator()
-    {
-        RuleFor(x => x.CrudName).MaximumLength(50);
-        RuleFor(x => x.CrudCode).NotEmpty().MaximumLength(200);
-        RuleFor(x => x.Remark).MaximumLength(255);
-    }
-}
-
 public sealed class CrudItemCreateDtoValidator : AbstractValidator<CrudItemCreateDto>
 {
     public CrudItemCreateDtoValidator()

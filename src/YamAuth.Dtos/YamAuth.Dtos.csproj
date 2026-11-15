@@ -7,4 +7,7 @@
     <RootNamespace>YamAuth.Dtos</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\YamAuth.Authorization\YamAuth.Authorization.csproj" />
+  </ItemGroup>
 </Project>

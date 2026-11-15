@@ -48,4 +48,14 @@ public class Employee : IAuditEntity
     [Column(Name = "DeleteTime")]
     public DateTime? DeleteTime { get; set; }
 
+    [Column(Name = "TenantId")]
+    public long? TenantId { get; set; }
+
+    [Column(Name = "OwnershipConfirmed")]
+    public bool OwnershipConfirmed { get; set; } = false;
+
+    [Column(IsIgnore = true)]
+    public string[] AllowedActions { get; set; } = Array.Empty<string>();
+    [Column(IsIgnore = true)]
+    public YamAuth.Authorization.RelationLabels RelatedLabels { get; set; } = new();
 }

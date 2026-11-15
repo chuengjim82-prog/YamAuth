@@ -45,4 +45,14 @@ public class CrudRoleUser : IAuditEntity
     [Column(IsIgnore = true)]
     public DateTime? UpdateTime { get; set; }
 
+    [Column(Name = "TenantId")]
+    public long? TenantId { get; set; }
+
+    [Column(Name = "AppsId")]
+    public long? AppsId { get; set; }
+
+    [Column(IsIgnore = true)]
+    public string[] AllowedActions { get; set; } = Array.Empty<string>();
+    [Column(IsIgnore = true)]
+    public YamAuth.Authorization.RelationLabels RelatedLabels { get; set; } = new();
 }

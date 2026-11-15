@@ -24,6 +24,7 @@ public class EntityGenerator
 
     public void Generate(TableInfo t)
     {
+        ResourceSecurityRules.Get(t);
         var dir = Path.Combine(EntityProjectPath, t.DatabaseName, t.Module);
         Directory.CreateDirectory(dir);
         var file = Path.Combine(dir, $"{t.EntityName}.cs");
@@ -44,11 +45,12 @@ public class EntityGenerator
             var parts = new List<string>();
             if (c.IsPrimaryKey) parts.Add("IsPrimary = true");
             if (c.IsIdentity) parts.Add("IsIdentity = true");
+            if (c.Name == "RowVersion") parts.Add("DbType = \"rowversion\", CanInsert = false, CanUpdate = false");
             parts.Add($"Name = \"{c.Name}\"");
             sb.Append(string.Join(", ", parts));
             sb.AppendLine(")]");
             var type = TypeMapper.ToCSharp(c);
-            var defaultInit = type == "string" ? " = \"\";" : "";
+            var defaultInit = type == "string" ? " = \"\";" : type == "byte[]" ? " = Array.Empty<byte>();" : "";
             sb.AppendLine($"    public {type} {c.Name} {{ get; set; }}{defaultInit}");
             sb.AppendLine();
         }
@@ -56,11 +58,15 @@ public class EntityGenerator
         foreach (var (name, type) in RequiredAuditFields)
         {
             if (existingColumns.Contains(name)) continue;
-            var defaultInit = type == "string" ? " = \"\";" : "";
+            var defaultInit = type == "string" ? " = \"\";" : type == "byte[]" ? " = Array.Empty<byte>();" : "";
             sb.AppendLine("    [Column(IsIgnore = true)]");
             sb.AppendLine($"    public {type} {name} {{ get; set; }}{defaultInit}");
             sb.AppendLine();
         }
+        sb.AppendLine("    [Column(IsIgnore = true)]");
+        sb.AppendLine("    public string[] AllowedActions { get; set; } = Array.Empty<string>();");
+        sb.AppendLine("    [Column(IsIgnore = true)]");
+        sb.AppendLine("    public YamAuth.Authorization.RelationLabels RelatedLabels { get; set; } = new();");
         sb.AppendLine("}");
 
         File.WriteAllText(file, sb.ToString());

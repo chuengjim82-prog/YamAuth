@@ -1,3 +1,4 @@
+using YamAuth.Api.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -16,6 +17,6 @@ public class LoginController : ControllerBase
     [HttpPost("login"), AllowAnonymous, EnableRateLimiting("login")]
     public Task<LoginResultDto> Login([FromBody] LoginDto dto) => _svc.LoginAsync(dto);
 
-    [HttpPost("change-password"), Authorize]
+    [HttpPost("change-password"), AccessPolicy("self:password")]
     public Task ChangePassword([FromBody] ChangePasswordDto dto) => _svc.ChangePasswordAsync(dto);
 }

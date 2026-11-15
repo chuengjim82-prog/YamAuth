@@ -20,4 +20,8 @@ public class AppsInfoDto
     public long? DeleterId { get; set; }
     public string? DeleterNic { get; set; }
     public DateTime? DeleteTime { get; set; }
+    public string AppKind { get; set; } = "Tenant";
+    public long CatalogVersion { get; set; } = 1;
+    public string[] AllowedActions { get; set; } = Array.Empty<string>();
+    public YamAuth.Authorization.RelationLabels RelatedLabels { get; set; } = new();
 }

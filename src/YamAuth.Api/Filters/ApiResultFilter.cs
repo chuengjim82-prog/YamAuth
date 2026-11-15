@@ -8,7 +8,7 @@ namespace YamAuth.Api.Filters;
 /// 统一响应包装：把 Controller 的返回值套进 ApiResult { code, message, data, traceId }。
 /// - 普通对象返回值 → code:0
 /// - 无返回值 action（void/Task）→ code:0 + data:null
-/// - ProblemDetails / 验证失败 → 按其状态码作为业务 code（HTTP 仍 200，与 BusinessException 一致）
+/// - ProblemDetails / 验证失败 → 按其状态码作为业务 code（同时保留实际 HTTP 状态）
 /// - 已是 ApiResult 的不再二次包装
 /// </summary>
 public class ApiResultFilter : IAsyncResultFilter
@@ -31,7 +31,7 @@ public class ApiResultFilter : IAsyncResultFilter
                     Message = FirstValidationMessage(vpd),
                     Data = vpd.Errors,
                     TraceId = traceId
-                });
+                }) { StatusCode = vpd.Status ?? 400 };
                 break;
 
             case ObjectResult { Value: ProblemDetails pd }:
@@ -41,7 +41,7 @@ public class ApiResultFilter : IAsyncResultFilter
                     Message = pd.Title ?? "请求无效",
                     Data = (pd as ValidationProblemDetails)?.Errors,
                     TraceId = traceId
-                });
+                }) { StatusCode = pd.Status ?? 400 };
                 break;
 
             // 普通对象返回值：包成 code:0

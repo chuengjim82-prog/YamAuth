@@ -60,4 +60,14 @@ public class AppsInfo : IAuditEntity
     [Column(Name = "DeleteTime")]
     public DateTime? DeleteTime { get; set; }
 
+    [Column(Name = "AppKind")]
+    public string AppKind { get; set; } = "Tenant";
+
+    [Column(Name = "CatalogVersion")]
+    public long CatalogVersion { get; set; } = 1;
+
+    [Column(IsIgnore = true)]
+    public string[] AllowedActions { get; set; } = Array.Empty<string>();
+    [Column(IsIgnore = true)]
+    public YamAuth.Authorization.RelationLabels RelatedLabels { get; set; } = new();
 }

@@ -1,60 +1,29 @@
-using System.Data;
-using System.Data.Common;
-using FreeSql;
+using YamAuth.Authorization;
 using YamAuth.Entity.Abstractions;
+using YamAuth.Repository.Authorization;
 
 namespace YamAuth.Repository.Abstractions;
 
-/// <summary>仅供菜单和功能的层级写操作使用，校验快照与写入共享同一数据库事务。</summary>
+/// <summary>层级检查与受约束写入共用事务；快照只包含当前租户和应用允许管理的节点。</summary>
 public sealed class HierarchySession<TEntity> where TEntity : class, IAuditEntity, new()
 {
-    private readonly IFreeSql _orm;
-    private readonly DbTransaction _transaction;
-    private readonly ICurrentUser _current;
+    readonly Func<TEntity, Task<long>> _insert;
+    readonly Func<TEntity, Task<int>> _update;
+    readonly Func<long, Task<int>> _delete;
     public IReadOnlyList<TEntity> Items { get; }
+    HierarchySession(List<TEntity> items, Func<TEntity, Task<long>> insert, Func<TEntity, Task<int>> update, Func<long, Task<int>> delete)
+        => (Items, _insert, _update, _delete) = (items, insert, update, delete);
 
-    private HierarchySession(IFreeSql orm, DbTransaction transaction, ICurrentUser current, List<TEntity> items)
-        => (_orm, _transaction, _current, Items) = (orm, transaction, current, items);
-
-    public static async Task<T> RunAsync<T>(IFreeSql orm, ICurrentUser current, Func<HierarchySession<TEntity>, Task<T>> action)
+    public static Task<T> RunAsync<T>(IFreeSql orm, DataAccessGuard guard, SecurityStore store,
+        Func<TEntity, Task<long>> insert, Func<TEntity, Task<int>> update, Func<long, Task<int>> delete,
+        Func<HierarchySession<TEntity>, Task<T>> action) => store.WriteAsync(async () =>
     {
-        using var unit = orm.CreateUnitOfWork();
-        unit.IsolationLevel = IsolationLevel.Serializable;
-        var transaction = unit.GetOrBeginTransaction();
-        // Serializable 的范围锁覆盖空结果和新插入；更新锁避免两个写请求同时持有共享快照。
-        var items = await orm.Select<TEntity>().WithTransaction(transaction)
-            .Where(x => !x.IsDeleted).OrderBy(x => x.Id).ForUpdate().ToListAsync();
-        var result = await action(new HierarchySession<TEntity>(orm, transaction, current, items));
-        unit.Commit();
-        return result;
-    }
+        var rule = ResourceSecurityCatalog.Entity(typeof(TEntity).Name);
+        var items = await guard.Select<TEntity>(orm, rule.Key + ".read").OrderBy(x => x.Id).ForUpdate().ToListAsync();
+        return await action(new(items, insert, update, delete));
+    });
 
-    public async Task<long> InsertAsync(TEntity entity)
-    {
-        entity.CreatorId = _current.UserId;
-        entity.CreatorNic = _current.UserNic;
-        entity.CreateTime = DateTime.UtcNow;
-        entity.IsDeleted = false;
-        return await _orm.Insert(entity).WithTransaction(_transaction).ExecuteIdentityAsync();
-    }
-
-    public Task<int> UpdateAsync(TEntity entity)
-    {
-        entity.UpdaterId = _current.UserId;
-        entity.UpdaterNic = _current.UserNic;
-        entity.UpdateTime = DateTime.UtcNow;
-        return SaveAsync(entity);
-    }
-
-    public Task<int> DeleteAsync(TEntity entity)
-    {
-        entity.IsDeleted = true;
-        entity.DeleterId = _current.UserId;
-        entity.DeleterNic = _current.UserNic;
-        entity.DeleteTime = DateTime.UtcNow;
-        return SaveAsync(entity);
-    }
-
-    private Task<int> SaveAsync(TEntity entity)
-        => _orm.Update<TEntity>().WithTransaction(_transaction).SetSource(entity).ExecuteAffrowsAsync();
+    public Task<long> InsertAsync(TEntity entity) => _insert(entity);
+    public Task<int> UpdateAsync(TEntity entity) => _update(entity);
+    public Task<int> DeleteAsync(TEntity entity) => _delete(entity.Id);
 }

@@ -9,6 +9,7 @@ public class DtoGenerator
 
     public void Generate(TableInfo t)
     {
+        ResourceSecurityRules.Get(t);
         var dir = Path.Combine(DtosProjectPath, t.Module);
         Directory.CreateDirectory(dir);
 
@@ -27,11 +28,13 @@ public class DtoGenerator
         sb.AppendLine("{");
         foreach (var c in t.Columns)
         {
-            if (IsSensitive(c)) continue;
+            if (IsSensitive(c) || c.Name is "SecurityVersion" or "SecurityReady" or "OwnershipConfirmed") continue;
             var type = TypeMapper.ToCSharp(c);
-            var defaultInit = type == "string" ? " = \"\";" : "";
+            var defaultInit = type == "string" ? " = \"\";" : type == "byte[]" ? " = Array.Empty<byte>();" : "";
             sb.AppendLine($"    public {type} {c.Name} {{ get; set; }}{defaultInit}");
         }
+        sb.AppendLine("    public string[] AllowedActions { get; set; } = Array.Empty<string>();");
+        sb.AppendLine("    public YamAuth.Authorization.RelationLabels RelatedLabels { get; set; } = new();");
         sb.AppendLine("}");
         return sb.ToString();
     }
@@ -45,9 +48,9 @@ public class DtoGenerator
         sb.AppendLine("{");
         foreach (var c in t.Columns)
         {
-            if (IsAuditOrPk(c) || IsServerOnly(c)) continue;
+            if (!DtoColumnRules.IncludeInWriteDto(t, c, false)) continue;
             var type = TypeMapper.ToCSharp(c);
-            var defaultInit = type == "string" ? " = \"\";" : "";
+            var defaultInit = type == "string" ? " = \"\";" : type == "byte[]" ? " = Array.Empty<byte>();" : "";
             sb.AppendLine($"    public {type} {c.Name} {{ get; set; }}{defaultInit}");
         }
         sb.AppendLine("}");
@@ -63,15 +66,9 @@ public class DtoGenerator
         sb.AppendLine("{");
         foreach (var c in t.Columns)
         {
-            if (IsAuditOrPk(c) || IsServerOnly(c)) continue;
-            if (c.Name == "Password")
-            {
-                sb.AppendLine("    /// <summary>留空表示不修改密码</summary>");
-                sb.AppendLine("    public string? Password { get; set; }");
-                continue;
-            }
+            if (!DtoColumnRules.IncludeInWriteDto(t, c, true)) continue;
             var type = TypeMapper.ToCSharp(c);
-            var defaultInit = type == "string" ? " = \"\";" : "";
+            var defaultInit = type == "string" ? " = \"\";" : type == "byte[]" ? " = Array.Empty<byte>();" : "";
             sb.AppendLine($"    public {type} {c.Name} {{ get; set; }}{defaultInit}");
         }
         sb.AppendLine("}");

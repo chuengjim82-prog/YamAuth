@@ -80,7 +80,7 @@ export default function Login() {
               void onFinish(values)
             }}
             size="large"
-            initialValues={{ userName: 'admin', password: 'Admin@123' }}
+            initialValues={{ userName: '', password: '' }}
           >
             <Form.Item name="userName" rules={[{ required: true, message: '请输入用户名' }]}>
               <Input

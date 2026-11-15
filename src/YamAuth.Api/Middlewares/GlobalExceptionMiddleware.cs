@@ -1,3 +1,6 @@
+using YamAuth.Authorization;
+using YamAuth.Repository.Authorization;
+using Microsoft.Data.SqlClient;
 using System.Text.Json;
 using YamAuth.Service.Abstractions;
 
@@ -23,6 +26,25 @@ public class GlobalExceptionMiddleware
     public async Task InvokeAsync(HttpContext ctx)
     {
         try { await _next(ctx); }
+        catch (AccessException ex)
+        {
+            var access = ctx.RequestServices.GetRequiredService<AccessContext>();
+            if (ex.Status is 403 or 404)
+            {
+                try
+                {
+                    var store = ctx.RequestServices.GetRequiredService<SecurityStore>();
+                    await store.WriteAsync(() => store.AuditAsync(access.Operation ?? "auth.request", "Request",
+                        ctx.Request.RouteValues.GetValueOrDefault("id"), "Denied", new { status = ex.Status, reason = ex.Reason }));
+                }
+                catch (Exception auditError) { _logger.LogError(auditError, "拒绝事件持久化失败"); }
+            }
+            await Write(ctx, ex.Status, ex.Message, ex.Reason);
+        }
+        catch (SqlException ex) when (ex.Number is 2601 or 2627 or 547 or 1205)
+        {
+            await Write(ctx, 409, "数据关系或并发状态发生冲突，请重新读取后重试");
+        }
         catch (BusinessException ex)
         {
             _logger.LogWarning(ex, "BusinessException: {Msg}", ex.Message);
@@ -39,13 +61,13 @@ public class GlobalExceptionMiddleware
         }
     }
 
-    static async Task Write(HttpContext ctx, int code, string message)
+    static async Task Write(HttpContext ctx, int code, string message, string? reason = null)
     {
         ctx.Response.ContentType = "application/json";
-        ctx.Response.StatusCode = code switch { 401 => 401, 403 => 403, 4011 => 401, _ => 200 };
+        ctx.Response.StatusCode = code switch { 4011 => 401, >= 400 and <= 599 => code, _ => 500 };
         var body = JsonSerializer.Serialize(new ApiResult
         {
-            Code = code, Message = message, TraceId = ctx.TraceIdentifier
+            Code = code, Message = message, TraceId = ctx.TraceIdentifier, Reason = reason
         }, JsonOptions);
         await ctx.Response.WriteAsync(body);
     }

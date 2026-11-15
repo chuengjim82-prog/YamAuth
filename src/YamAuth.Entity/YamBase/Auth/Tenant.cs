@@ -51,4 +51,11 @@ public class Tenant : IAuditEntity
     [Column(Name = "DeleteTime")]
     public DateTime? DeleteTime { get; set; }
 
+    [Column(Name = "AuthorizationVersion")]
+    public long AuthorizationVersion { get; set; } = 1;
+
+    [Column(IsIgnore = true)]
+    public string[] AllowedActions { get; set; } = Array.Empty<string>();
+    [Column(IsIgnore = true)]
+    public YamAuth.Authorization.RelationLabels RelatedLabels { get; set; } = new();
 }
