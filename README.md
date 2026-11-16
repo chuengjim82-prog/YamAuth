@@ -50,7 +50,9 @@ PowerShell 可在仓库根目录分别使用 `scripts/run-api.ps1` 与 `scripts/
 
 ## 验证与旧工具
 
-- 检查命令见 [AGENTS](AGENTS.md#验证)。前端检查包含编译期契约反例、表单转换、树算法、会话同步与接口异常测试；当前没有后端测试项目、持久化的前端自动化交互测试或 CI 工作流，构建和离线测试不能替代真实接口及页面验收。
+- 检查命令见 [AGENTS](AGENTS.md#验证)。前端检查包含编译期契约反例、表单转换、树算法、会话同步与接口异常测试；当前没有后端测试项目或 CI 工作流，构建和离线测试不能替代真实接口及页面验收。
+- 登录页另有可重复的浏览器回归检查。在 `web/YamAuth.Web` 执行 `npx playwright install chromium` 安装测试浏览器，再执行 `npm run test:login`。已有 Google Chrome 时也可设置环境变量 `PLAYWRIGHT_CHANNEL=chrome` 使用本机浏览器。检查覆盖桌面、390px 和 320px 视口下的主题切换、校验、键盘操作、防重复提交、失败重试，以及登录和退出时的标题、图标恢复。
+- `test:login` 自动在 `127.0.0.1:6517` 启动独立开发服务，端口需空闲；测试使用独立浏览器上下文并拦截 API，未模拟请求会被阻断并导致用例失败，不连接真实后端。失败截图和 trace 保存到系统临时目录的 `yamauth-login-e2e/`。该命令需要浏览器环境，因此不并入默认 `npm run check`。
 - `scripts/test-backend.ps1` 仍查找不存在的根目录解决方案；`scripts/gen-crud-views.ps1` 仍生成 Vue 页面，均不作为当前开发入口。
 - Docker 与 OpenAPI 工具存在适配缺口，使用前查看 [部署说明](deploy/README.md) 和 [契约说明](openapi/README.md)。
 
