@@ -121,7 +121,13 @@ request.interceptors.response.use(
       body && typeof body === 'object' && 'message' in body && typeof body.message === 'string'
         ? body.message
         : ''
-    if (!(response?.status === 401 && (await handleUnauthorized(axiosError?.config)))) {
+    if (response?.status === 401) {
+      const handled = await handleUnauthorized(axiosError?.config)
+      // 未登录时的空 401 不当成网络错误；服务端给出的说明仍要显示。
+      if (!handled && errorMessage) {
+        message.error({ content: errorMessage, key: ERROR_MESSAGE_KEY })
+      }
+    } else {
       message.error({
         content: errorMessage || '网络错误',
         key: ERROR_MESSAGE_KEY

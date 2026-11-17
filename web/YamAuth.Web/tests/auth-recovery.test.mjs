@@ -328,6 +328,23 @@ test('未登录请求的 401 按请求失败提示，不清理会话也不覆盖
   assert.equal(recovery.loginRecovery.read().state.record.target, '/unit/employees')
 })
 
+test('未登录请求的空 HTTP 401 不提示网络错误', async () => {
+  await beginSession()
+  await sessions.clearSession(sessions.captureRequestSession())
+  const login = await issueRequest()
+  login.request.reject(
+    new axios.AxiosError('unauthorized', 'ERR_BAD_REQUEST', login.request.config, null, {
+      config: login.request.config,
+      status: 401,
+      statusText: '',
+      headers: {},
+      data: ''
+    })
+  )
+  await login.result
+  assert.equal(notices.length, 0)
+})
+
 test('守卫记录直接访问；过期记录优先；主动退出后的旧 effect 不得重建记录', async () => {
   await beginSession()
   redirects.redirectUnauthenticated('/auth/users?keyword=a%20b&page=3#row-7')
