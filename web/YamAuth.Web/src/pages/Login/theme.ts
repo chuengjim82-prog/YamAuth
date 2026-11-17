@@ -1,37 +1,27 @@
 import type { CSSProperties } from 'react'
 import type { ConfigProviderProps, ThemeConfig } from 'antd'
+import { palettes, type AppPalette } from '@/theme/palette'
 
 export const loginInputConfig: NonNullable<ConfigProviderProps['input']> = {
   styles: { prefix: { marginInlineEnd: 12, color: 'var(--login-secondary)' } }
 }
 
-const lightPalette = {
-  '--login-bg': '#fafbf8',
-  '--login-heading': '#243c33',
-  '--login-secondary': '#606e63',
-  '--login-accent': '#315b49',
-  '--login-field': '#f2f4ee',
-  '--login-border': '#e2e7dd',
-  '--login-focus': 'rgb(49 91 73 / 10%)',
-  '--login-button': '#244b40',
-  '--login-button-hover': '#193e33',
-  '--login-on-button': '#fff'
+function loginPalette(palette: AppPalette) {
+  return {
+    '--login-bg': palette.background,
+    '--login-heading': palette.text,
+    '--login-secondary': palette.secondary,
+    '--login-accent': palette.accent,
+    '--login-field': palette.field,
+    '--login-border': palette.border,
+    '--login-focus': palette.focus,
+    '--login-button': palette.button,
+    '--login-button-hover': palette.buttonHover,
+    '--login-on-button': palette.onButton
+  }
 }
 
-type LoginPalette = typeof lightPalette
-
-const darkPalette: LoginPalette = {
-  '--login-bg': '#151f1b',
-  '--login-heading': '#e8eee7',
-  '--login-secondary': '#a2afa4',
-  '--login-accent': '#b6cdb1',
-  '--login-field': '#1e2c25',
-  '--login-border': '#34463b',
-  '--login-focus': 'rgb(182 205 177 / 14%)',
-  '--login-button': '#b6cdb1',
-  '--login-button-hover': '#c9ddc4',
-  '--login-on-button': '#1b3528'
-}
+type LoginPalette = ReturnType<typeof loginPalette>
 
 function createAppearance(palette: LoginPalette) {
   // 页面 CSS 与组件主题共用色板；错误状态及深浅算法继续继承全站主题。
@@ -44,11 +34,14 @@ function createAppearance(palette: LoginPalette) {
       colorBgContainer: palette['--login-field'],
       colorBorder: palette['--login-border'],
       controlHeightLG: 54,
+      controlHeight: 32,
+      controlHeightSM: 24,
       borderRadius: 10,
       borderRadiusLG: 10
     },
     components: {
       Input: {
+        colorBgContainer: palette['--login-field'],
         inputFontSizeLG: 16,
         paddingInlineLG: 16,
         hoverBorderColor: palette['--login-accent'],
@@ -90,6 +83,6 @@ function createAppearance(palette: LoginPalette) {
 
 // 稳定的配置引用避免输入或提交状态更新时重复构造主题。
 export const loginAppearances = {
-  light: createAppearance(lightPalette),
-  dark: createAppearance(darkPalette)
+  light: createAppearance(loginPalette(palettes.light)),
+  dark: createAppearance(loginPalette(palettes.dark))
 }

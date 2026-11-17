@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Button, Tooltip } from 'antd'
+import { Button, Tooltip, theme } from 'antd'
 import LoadingOutlined from '@ant-design/icons/es/icons/LoadingOutlined'
 import QuestionCircleOutlined from '@ant-design/icons/es/icons/QuestionCircleOutlined'
 import WarningOutlined from '@ant-design/icons/es/icons/WarningOutlined'
@@ -7,10 +7,13 @@ import { cachedIcon, loadIcon, resolveIconName, type IconComponent } from './cat
 
 export default function IconGlyph({
   name,
-  className
+  className,
+  decorative = false
 }: {
   name?: string | undefined
   className?: string | undefined
+  /** 导航已有文字名称；图标加载失败时仍保留可访问的重试入口。 */
+  decorative?: boolean
 }) {
   const canonical = resolveIconName(name)
   if (!name) return null
@@ -20,6 +23,7 @@ export default function IconGlyph({
       name={name}
       canonical={canonical}
       className={className}
+      decorative={decorative}
     />
   )
 }
@@ -27,12 +31,15 @@ export default function IconGlyph({
 function ResolvedIconGlyph({
   name,
   canonical,
-  className
+  className,
+  decorative
 }: {
   name: string
   canonical?: string | undefined
   className?: string | undefined
+  decorative: boolean
 }) {
+  const { token } = theme.useToken()
   const [attempt, setAttempt] = useState(0)
   // 图标身份变化由 key 重建状态，已加载的组件仅在初始化或异步完成时读取。
   const [result, setResult] = useState<{ component?: IconComponent | undefined; failed?: boolean }>(
@@ -92,8 +99,8 @@ function ResolvedIconGlyph({
     >
       <span
         className={className}
-        role="img"
-        aria-label={label}
+        role={decorative && !failed ? undefined : 'img'}
+        aria-label={decorative && !failed ? undefined : label}
         tabIndex={failed ? 0 : undefined}
         data-icon-name={canonical ?? name}
         data-icon-state={
@@ -105,7 +112,7 @@ function ResolvedIconGlyph({
         ) : failed ? (
           <WarningOutlined aria-hidden />
         ) : Component ? (
-          <Component aria-hidden />
+          <Component twoToneColor={[token.colorPrimary, token.colorBgContainer]} aria-hidden />
         ) : (
           <LoadingOutlined spin aria-hidden />
         )}

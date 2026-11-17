@@ -6,13 +6,13 @@ const baseURL = 'http://127.0.0.1:6517'
 
 export default defineConfig({
   testDir: './e2e',
-  testMatch: 'login.spec.mjs',
+  testMatch: '*.spec.mjs',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   workers: 2,
   retries: 0,
   reporter: 'list',
-  outputDir: path.join(os.tmpdir(), 'yamauth-login-e2e'),
+  outputDir: path.join(os.tmpdir(), 'yamauth-ui-e2e'),
   use: {
     baseURL,
     browserName: 'chromium',
@@ -25,6 +25,11 @@ export default defineConfig({
   },
   projects: [
     { name: 'desktop', use: { viewport: { width: 1440, height: 900 } } },
+    {
+      name: 'notebook',
+      testMatch: 'workspace.spec.mjs',
+      use: { viewport: { width: 1280, height: 720 } }
+    },
     {
       name: 'mobile',
       use: { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }

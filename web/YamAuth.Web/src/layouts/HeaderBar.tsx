@@ -1,13 +1,22 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Dropdown, Modal } from 'antd'
-import { LogoutOutlined, UserOutlined } from '@ant-design/icons'
+import { Button, Dropdown, Modal } from 'antd'
+import { LogoutOutlined, MenuOutlined, UserOutlined } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 import { useApp } from '@/store/AppContext'
 import ThemeSwitch from '@/components/ThemeSwitch'
 import styles from './HeaderBar.module.css'
+import { appEmblem, appName } from '@/branding'
 
-export default function HeaderBar() {
+export default function HeaderBar({
+  mobile,
+  navigationOpen,
+  onOpenNavigation
+}: {
+  mobile: boolean
+  navigationOpen: boolean
+  onOpenNavigation: () => void
+}) {
   const { user, logout } = useApp()
   const [open, setOpen] = useState(false)
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -50,12 +59,26 @@ export default function HeaderBar() {
   ]
 
   return (
-    <div className={styles.header}>
-      <Link className={styles.brand} to="/home">
-        YamAuth
-      </Link>
+    <header className={styles.header}>
+      <div className={styles.identity}>
+        {mobile && (
+          <Button
+            type="text"
+            icon={<MenuOutlined />}
+            onClick={onOpenNavigation}
+            className={styles.menuButton ?? ''}
+            aria-label="打开导航菜单"
+            aria-haspopup="dialog"
+            aria-expanded={navigationOpen}
+          />
+        )}
+        <Link className={styles.brand} to="/home">
+          <img src={appEmblem} alt="" />
+          <span>{appName}</span>
+        </Link>
+      </div>
       <div className={styles.actions}>
-        <ThemeSwitch onBrand />
+        <ThemeSwitch compactOnNarrow />
         <Dropdown
           autoFocus
           trigger={['click']}
@@ -79,12 +102,13 @@ export default function HeaderBar() {
             aria-haspopup="menu"
             aria-expanded={open}
             aria-label="账号菜单"
+            title={user?.nickName || user?.userName || '用户'}
           >
-            <UserOutlined style={{ marginRight: 6 }} />
+            <UserOutlined aria-hidden />
             <span className={styles.userName}>{user?.nickName || user?.userName || '用户'}</span>
           </button>
         </Dropdown>
       </div>
-    </div>
+    </header>
   )
 }

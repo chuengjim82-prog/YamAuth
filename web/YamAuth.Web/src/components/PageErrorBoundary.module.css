@@ -1,10 +1,28 @@
 .error {
   padding: 48px 24px;
+  color: var(--app-text);
   text-align: center;
 }
-
+.error h1 {
+  margin-bottom: 12px;
+  font-size: 24px;
+  font-weight: 600;
+}
+.error p {
+  margin-bottom: 24px;
+  color: var(--app-text-secondary);
+}
+/* 错误边界使用原生按钮，在组件加载失败时仍可重新加载。 */
 .error button {
+  min-height: 40px;
   padding: 8px 20px;
+  border: 0;
+  border-radius: var(--app-radius);
+  background: var(--app-button);
+  color: var(--app-on-button);
   cursor: pointer;
   font: inherit;
+}
+.error button:hover {
+  background: var(--app-button-hover);
 }

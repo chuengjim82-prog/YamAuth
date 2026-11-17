@@ -18,7 +18,7 @@ import {
   TreeSelect,
   message
 } from 'antd'
-import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
+import { DeleteOutlined, EditOutlined, InboxOutlined, PlusOutlined } from '@ant-design/icons'
 import type { TableColumnsType } from 'antd'
 import dayjs from 'dayjs'
 import DataListLayout from '@/components/DataListLayout'
@@ -49,7 +49,6 @@ import { useDepartmentLabels } from './useDepartmentLabels'
 import { useTenantLabels } from './useTenantLabels'
 import { useCrudInfoLabels } from './useCrudInfoLabels'
 import { fieldText } from './fieldText'
-import emptyImage from './assets/list-empty.png'
 import styles from './Crud.module.css'
 import CrudInfoSelect from './CrudInfoSelect'
 import CrudRelationSelect from './CrudRelationSelect'
@@ -365,9 +364,11 @@ export default function ResourceCrudPage<E extends Entity, F extends object, C, 
             >
               <Tooltip
                 title={
-                  treeModel?.children.get(Number(node.id))?.length
-                    ? '存在子节点，请先移动或删除子节点'
-                    : '删除'
+                  deleteId === Number(node.id)
+                    ? null
+                    : treeModel?.children.get(Number(node.id))?.length
+                      ? '存在子节点，请先移动或删除子节点'
+                      : '删除'
                 }
               >
                 <Button
@@ -548,8 +549,8 @@ export default function ResourceCrudPage<E extends Entity, F extends object, C, 
               </>
             )}
             <Button
-              className={styles.createButton ?? ''}
-              icon={<PlusOutlined />}
+              type="primary"
+              icon={<PlusOutlined aria-hidden />}
               disabled={interactionBlocked}
               onClick={() => openCreate()}
             >
@@ -586,7 +587,7 @@ export default function ResourceCrudPage<E extends Entity, F extends object, C, 
             locale={{
               emptyText: loadFailed ? null : (
                 <Empty
-                  image={<img className={styles.emptyImage ?? ''} src={emptyImage} alt="" />}
+                  image={<InboxOutlined className={styles.emptyImage} aria-hidden />}
                   description="暂无数据"
                 />
               )
@@ -650,6 +651,7 @@ export default function ResourceCrudPage<E extends Entity, F extends object, C, 
 
       <Modal
         open={open}
+        width={560}
         className={styles.editDialog ?? ''}
         classNames={{ container: styles.dialogContainer ?? '', body: styles.dialogBody ?? '' }}
         title={editingId ? `编辑${resource.title}` : `新增${resource.title}`}
@@ -729,6 +731,8 @@ function ResourceEditForm<E extends Entity, F extends object, C, U>({
       initialValues={initialValues}
       clearOnDestroy
       layout="vertical"
+      size="large"
+      className={styles.editForm ?? ''}
       onFinish={(values) => {
         // 提交函数内部处理失败并释放锁，表单回调只负责触发。
         void onSubmit(values)
@@ -929,7 +933,20 @@ function renderControl<E, F>(
   if (field.kind === 'icon') return <IconPicker active={active} disabled={saving} />
   if (field.kind === 'bool') return <Switch />
   if (field.kind === 'number') return <IntegerInput style={{ width: '100%' }} controls={false} />
-  if (field.kind === 'date') return <DatePicker showTime style={{ width: '100%' }} />
+  if (field.kind === 'date') {
+    // 上下空间都不足时平移到可视区域；清除默认偏移，避免边缘仍被裁切 4px。
+    return (
+      <DatePicker
+        showTime
+        style={{ width: '100%' }}
+        classNames={{ popup: { root: styles.datePopup ?? '' } }}
+        popupAlign={{
+          offset: [0, 0],
+          overflow: { adjustX: true, adjustY: true, shiftX: true, shiftY: true }
+        }}
+      />
+    )
+  }
   if (field.kind === 'password') {
     return <Input.Password placeholder={editing ? '留空则不修改' : undefined} />
   }

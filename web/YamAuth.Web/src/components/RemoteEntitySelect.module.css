@@ -5,11 +5,12 @@
   min-height: 32px;
   padding: 4px 8px;
   color: var(--app-text-secondary);
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .feedback {
-  margin-top: 4px;
+  margin-top: 8px;
+  overflow-wrap: anywhere;
   color: var(--app-warning);
-  font-size: 12px;
+  font-size: 13px;
 }

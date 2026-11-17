@@ -1,6 +1,6 @@
 import { Suspense, useEffect, useMemo, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { Breadcrumb, Button, Layout, Menu, Spin, Tooltip } from 'antd'
+import { Breadcrumb, Button, Drawer, Layout, Menu, Spin, Tooltip } from 'antd'
 import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 import { fetchMenuTree } from '@/api/auth'
@@ -11,6 +11,8 @@ import HeaderBar from './HeaderBar'
 import styles from './BasicLayout.module.css'
 import type { MenuNode } from '@/types/auth'
 import { redirectUnauthenticated } from '@/auth/loginRedirect'
+import useMediaQuery from '@/components/useMediaQuery'
+import { appName } from '@/branding'
 
 const { Sider, Content } = Layout
 
@@ -65,7 +67,19 @@ function SessionLayout() {
   const location = useLocation()
   const [collapsed, setCollapsed] = useState(false)
   const [openKeys, setOpenKeys] = useState<string[]>([])
+  // 折叠后的浮层单独管理，关闭浮层时仍保留侧栏目录的展开状态。
+  const [popupOpenKeys, setPopupOpenKeys] = useState<string[]>([])
   const [expandedChain, setExpandedChain] = useState<MenuNode[]>([])
+  const isMobile = useMediaQuery('(max-width: 767px)')
+  const collapsedNavigation = !isMobile && collapsed
+  const [mobileNavigation, setMobileNavigation] = useState({ viewport: isMobile, open: false })
+
+  // 断点变化只切换导航呈现，Outlet 始终留在原位置，未提交表单不会被卸载。
+  if (mobileNavigation.viewport !== isMobile) {
+    setMobileNavigation({ viewport: isMobile, open: false })
+    setPopupOpenKeys([])
+  }
+  const closeNavigation = () => setMobileNavigation({ viewport: isMobile, open: false })
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -102,40 +116,64 @@ function SessionLayout() {
     return null
   }
 
+  // 两种导航呈现分别挂载，避免旧内联节点在浮层中继续执行退出动画并抢走键盘焦点。
+  const navigation = (
+    <Menu
+      key={collapsedNavigation ? 'collapsed' : 'inline'}
+      className={styles.menu}
+      mode="inline"
+      inlineCollapsed={collapsedNavigation}
+      selectedKeys={[location.pathname]}
+      openKeys={collapsedNavigation ? popupOpenKeys : openKeys}
+      onOpenChange={collapsedNavigation ? setPopupOpenKeys : setOpenKeys}
+      onClick={({ key, domEvent }) => {
+        if (key.startsWith('/')) {
+          // 叶子项 Enter 已完成选择，阻止冒泡后又被菜单当作展开操作。
+          if (domEvent.type === 'keydown') domEvent.stopPropagation()
+          setPopupOpenKeys([])
+          void navigate(key)
+          closeNavigation()
+        }
+      }}
+      items={menus.map(toMenuItem)}
+    />
+  )
+
   return (
     <Layout className={styles.layout}>
-      <HeaderBar />
+      <HeaderBar
+        mobile={isMobile}
+        navigationOpen={isMobile && mobileNavigation.open}
+        onOpenNavigation={() => setMobileNavigation({ viewport: isMobile, open: true })}
+      />
       <Layout className={styles.body}>
-        <Sider
-          className={styles.sider}
-          width={256}
-          collapsedWidth={56}
-          collapsed={collapsed}
-          trigger={null}
-        >
-          <Menu
-            className={styles.menu}
-            mode="inline"
-            selectedKeys={[location.pathname]}
-            openKeys={collapsed ? [] : openKeys}
-            onOpenChange={setOpenKeys}
-            onClick={({ key }) => {
-              if (key.startsWith('/')) navigate(key)
-            }}
-            items={menus.map(toMenuItem)}
-          />
-          <div className={`${styles.collapseBar} ${collapsed ? styles.collapseBarCollapsed : ''}`}>
-            <Tooltip title={collapsed ? '展开菜单' : '收起菜单'} placement="right">
-              <Button
-                type="text"
-                className={styles.collapseButton ?? ''}
-                icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-                onClick={() => setCollapsed((value) => !value)}
-                aria-label={collapsed ? '展开菜单' : '收起菜单'}
-              />
-            </Tooltip>
-          </div>
-        </Sider>
+        {!isMobile && (
+          <Sider
+            className={styles.sider}
+            width={256}
+            collapsedWidth={56}
+            collapsed={collapsed}
+            trigger={null}
+          >
+            {navigation}
+            <div
+              className={`${styles.collapseBar} ${collapsed ? styles.collapseBarCollapsed : ''}`}
+            >
+              <Tooltip title={collapsed ? '展开菜单' : '收起菜单'} placement="right">
+                <Button
+                  type="text"
+                  className={styles.collapseButton ?? ''}
+                  icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+                  onClick={() => {
+                    setPopupOpenKeys([])
+                    setCollapsed((value) => !value)
+                  }}
+                  aria-label={collapsed ? '展开菜单' : '收起菜单'}
+                />
+              </Tooltip>
+            </div>
+          </Sider>
+        )}
         <Content className={styles.content}>
           {chain.length > 1 && (
             <Breadcrumb
@@ -152,6 +190,17 @@ function SessionLayout() {
           </PageErrorBoundary>
         </Content>
       </Layout>
+      <Drawer
+        title={appName}
+        placement="left"
+        size="min(288px, calc(100vw - 32px))"
+        open={isMobile && mobileNavigation.open}
+        onClose={closeNavigation}
+        classNames={{ body: styles.drawerBody ?? '' }}
+        focusable={{ trap: true, focusTriggerAfterClose: true }}
+      >
+        {isMobile && navigation}
+      </Drawer>
     </Layout>
   )
 }

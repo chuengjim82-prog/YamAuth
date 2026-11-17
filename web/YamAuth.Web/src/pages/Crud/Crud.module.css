@@ -3,58 +3,34 @@
   flex: 1;
   flex-direction: column;
   min-height: min-content;
-  /* 极窄窗口中仍可横向访问内容，收起侧栏后恢复完整列表宽度。 */
-  min-width: 280px;
+  min-width: 0;
 }
-
 .searchBar {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 24px;
-  align-items: center;
-  padding: 8px 0 4px;
-  margin-bottom: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+  align-items: flex-end;
 }
-
 .combinedSearch {
   display: flex;
+  flex-direction: column;
+  gap: 8px;
   min-width: 0;
+  flex: 0 1 360px;
 }
-
 .keywordLabel {
-  display: flex;
-  flex: 0 0 130px;
-  align-items: center;
-  padding: 0 11px;
-  border: 1px solid var(--app-border);
-  border-right: 0;
-  font-size: 14px;
+  color: var(--app-text);
+  font-size: 13px;
+  font-weight: 500;
 }
-
 .keywordInput {
-  flex: 1;
+  width: 100%;
   min-width: 0;
-  border-radius: 0;
 }
-
 .searchActions {
   display: flex;
-  grid-column: 3;
   gap: 8px;
-  justify-self: end;
-}
-
-.createButton {
-  color: var(--app-text);
-  background: var(--app-accent-bg);
-  border: 0;
-  box-shadow: none;
-}
-
-.createButton:hover,
-.createButton:focus-visible {
-  color: var(--app-text-strong) !important;
-  background: var(--app-accent-hover) !important;
+  margin-inline-start: auto;
 }
 
 .editButton,
@@ -89,11 +65,12 @@
 }
 
 .resultTable :global(.ant-table-tbody > tr > td.ant-table-cell) {
-  padding: 7px 8px;
+  padding: 6px 12px;
+  height: 44px;
 }
 
 .resultTable :global(.ant-table-thead > tr > th.ant-table-cell) {
-  padding-inline: 8px;
+  padding: 12px;
   color: var(--app-table-heading);
   font-weight: 600;
   background: var(--app-table-header);
@@ -131,9 +108,13 @@
 }
 
 .emptyImage {
-  width: min(clamp(120px, 13vw, 180px), calc(100vw - 64px));
-  height: auto;
-  object-fit: contain;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  color: var(--app-accent);
+  font-size: 48px;
 }
 
 .horizontalScroll {
@@ -189,59 +170,93 @@
   font-weight: 500;
   background: var(--app-loading-mask);
   backdrop-filter: blur(1px);
+  border-radius: var(--app-panel-radius);
 }
 
 .failureMask {
   color: var(--app-text-secondary);
 }
 
-.editDialog {
-  top: min(100px, 12dvh);
+.editDialog:global(.ant-modal) {
+  top: min(80px, 10dvh);
   padding-bottom: 0;
 }
-
-.dialogContainer {
+.editDialog:global(.ant-modal) .dialogContainer {
   display: flex;
   flex-direction: column;
-  max-height: calc(100dvh - min(100px, 12dvh) - 24px);
+  max-height: calc(100dvh - min(80px, 10dvh) - 24px);
 }
-
-.dialogBody {
+.editDialog:global(.ant-modal) .dialogBody {
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 2px 8px 0 0;
+  padding: 4px 8px 0 0;
   margin-right: -8px;
   scrollbar-width: thin;
 }
-
-@media (max-width: 1200px) {
-  .searchBar {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-
-  .searchActions {
-    grid-column: 2;
-  }
+.editForm :global(.ant-form-item-extra),
+.editForm :global(.ant-form-item-explain),
+.editForm [role='alert'],
+.editForm [role='status'] {
+  font-size: 13px;
+  overflow-wrap: anywhere;
 }
-
-@media (max-width: 768px) {
-  .searchBar {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 12px;
+.editForm :global(.ant-form-item-control-input-content) > div > [role='alert'] {
+  color: var(--app-warning);
+}
+.editForm :global(.ant-form-item-control-input-content) > div > [role='status'] {
+  color: var(--app-text-secondary);
+}
+.resultTable mark {
+  border-radius: 3px;
+  background: var(--app-accent-bg);
+  color: var(--app-text-strong);
+  font-weight: 600;
+}
+.resultTable :global(.ant-table-container) {
+  border-radius: 0;
+}
+.resultTable :global(.ant-table-thead > tr:first-child > th) {
+  border-start-start-radius: 0;
+  border-start-end-radius: 0;
+}
+@media (max-width: 767px) {
+  .combinedSearch {
+    flex: 1 1 100%;
   }
-
   .searchActions {
-    grid-column: 1;
-    justify-self: stretch;
+    width: 100%;
+    margin: 0;
   }
-
   .searchActions :global(.ant-btn) {
     flex: 1;
   }
-
-  .keywordLabel {
-    flex-basis: 80px;
+  .editDialog:global(.ant-modal) {
+    top: 8px;
+    width: calc(100vw - 16px) !important;
+    max-width: none;
+    margin: 0 auto;
+  }
+  .editDialog:global(.ant-modal) .dialogContainer {
+    max-height: calc(100dvh - 16px);
+    padding: 16px;
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+  .editDialog :global(.ant-modal-footer) {
+    display: flex;
+    gap: 8px;
+  }
+  .editDialog :global(.ant-modal-footer .ant-btn) {
+    flex: 1;
+    margin: 0;
+  }
+  .resultTable :global(.ant-table-tbody > tr > td.ant-table-cell) {
+    padding: 8px;
+    height: 52px;
+  }
+  .editForm :global(.ant-input),
+  .editForm :global(.ant-select-selection-search-input) {
+    font-size: 16px;
   }
 }
 
@@ -266,4 +281,32 @@
 
 .resultTable .locatedRow > td {
   background: var(--app-accent-bg) !important;
+}
+
+/* 配合浮层边界平移，手机日期与时间纵向排列，长内容内部滚动且保留确认区。 */
+@media (max-width: 767px) {
+  .datePopup:global(.ant-picker-dropdown) {
+    max-width: calc(100vw - 16px);
+  }
+  .datePopup :global(.ant-picker-panel-container) {
+    width: 100%;
+    max-width: calc(100vw - 16px);
+    max-height: calc(100dvh - 16px - env(safe-area-inset-bottom));
+    overflow-y: auto;
+  }
+  .datePopup :global(.ant-picker-datetime-panel) {
+    flex-direction: column;
+  }
+  .datePopup :global(.ant-picker-time-panel) {
+    border-inline-start: 0;
+    border-top: 1px solid var(--app-border);
+  }
+  .datePopup :global(.ant-picker-time-panel .ant-picker-content) {
+    height: 120px;
+  }
+  .datePopup :global(.ant-picker-footer) {
+    position: sticky;
+    bottom: 0;
+    background: var(--app-elevated);
+  }
 }

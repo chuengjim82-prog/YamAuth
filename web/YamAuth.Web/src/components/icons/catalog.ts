@@ -1,7 +1,7 @@
 import type { ComponentType } from 'react'
-import type { IconBaseProps } from '@ant-design/icons/es/components/Icon'
+import type { AntdIconProps } from '@ant-design/icons/es/components/AntdIcon'
 
-export type IconComponent = ComponentType<IconBaseProps>
+export type IconComponent = ComponentType<AntdIconProps>
 export type IconTheme = 'Outlined' | 'Filled' | 'TwoTone'
 
 // Vite 默认忽略 node_modules；仅枚举图标叶子模块，不能把接口字符串拼成导入路径。

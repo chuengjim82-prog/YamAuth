@@ -3,112 +3,64 @@
   min-height: 0;
   overflow: hidden;
 }
-
 .body {
   flex: 1;
   min-height: 0;
   min-width: 0;
 }
-
 .sider {
   min-height: 0;
   background: var(--app-surface);
   border-right: 1px solid var(--app-sidebar-border);
 }
-
 .sider :global(.ant-layout-sider-children) {
   display: flex;
   flex-direction: column;
   min-height: 0;
 }
-
 .menu {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding-top: 8px;
-  color: var(--app-text-secondary);
+  padding-block: 12px;
   border-inline-end: 0 !important;
-  background: var(--app-surface);
   scrollbar-color: var(--app-scroll-menu-thumb) transparent;
   scrollbar-width: thin;
 }
-
-.menu :global(.ant-menu-item),
-.menu :global(.ant-menu-submenu-title) {
-  width: 100%;
-  height: 44px;
-  margin: 0;
-  line-height: 44px;
-  border-radius: 0;
-}
-
-.menu :global(.ant-menu-item:hover),
-.menu :global(.ant-menu-submenu-title:hover) {
-  color: var(--app-accent) !important;
-  background: var(--app-nav-hover) !important;
-}
-
-.menu :global(.ant-menu-submenu-open > .ant-menu-submenu-title) {
-  color: var(--app-accent);
-}
-
 .menu :global(.ant-menu-item-selected) {
-  position: relative;
-  color: var(--app-accent) !important;
-  background: var(--app-nav-selected) !important;
-  font-weight: 500;
+  font-weight: 600;
 }
-
-.menu :global(.ant-menu-item-selected)::after {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 2px;
-  background: var(--app-accent);
-  border: 0;
-  content: '';
-  opacity: 1 !important;
-  transform: none !important;
-}
-
 .menu :global(.ant-menu-item-icon),
 .menu :global(.ant-menu-submenu-title .anticon) {
   color: currentColor;
   font-size: 16px;
 }
-
-.menu::-webkit-scrollbar {
-  width: 6px;
+.menu :global(.ant-menu-title-content) {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-
-.menu::-webkit-scrollbar-thumb {
-  background: var(--app-scroll-menu-thumb);
-  border-radius: 6px;
+.menu:global(.ant-menu-inline-collapsed) :global(.ant-menu-item),
+.menu:global(.ant-menu-inline-collapsed) :global(.ant-menu-submenu-title) {
+  padding-inline: 12px;
 }
-
 .collapseBar {
-  height: 48px;
+  height: 56px;
   display: flex;
   align-items: center;
   padding: 0 12px;
   flex-shrink: 0;
   border-top: 1px solid var(--app-divider);
 }
-
 .collapseBarCollapsed {
   justify-content: center;
   padding: 0;
 }
-
 .collapseButton {
   width: 32px;
   height: 32px;
   font-size: 17px;
 }
-
 .content {
   display: flex;
   flex-direction: column;
@@ -118,14 +70,30 @@
   min-height: 0;
   overflow: auto;
 }
-
 .breadcrumb {
   flex: 0 0 auto;
+  min-width: 0;
   margin-bottom: 16px;
+  font-size: 13px;
 }
-
-@media (max-width: 768px) {
+.breadcrumb :global(li) {
+  min-width: 0;
+  max-width: 100%;
+}
+.breadcrumb :global(.ant-breadcrumb-link) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.drawerBody {
+  display: flex;
+  flex-direction: column;
+  padding: 0 !important;
+}
+@media (max-width: 767px) {
   .content {
     padding: 16px 12px 0;
+  }
+  .breadcrumb {
+    margin-bottom: 12px;
   }
 }

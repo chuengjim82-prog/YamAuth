@@ -6,7 +6,7 @@ import { login } from '@/api/auth'
 import type { LoginRequest } from '@/types/auth'
 import { useApp } from '@/store/AppContext'
 import ThemeSwitch from '@/components/ThemeSwitch'
-import loginEmblem from '@/assets/login-emblem.svg'
+import { appEmblem as loginEmblem, appName, usePageTitle } from '@/branding'
 import courtyard from '@/assets/login-courtyard.jpg'
 import styles from './Login.module.css'
 import type { LoginDestination } from '@/auth/recovery'
@@ -51,19 +51,7 @@ export default function Login() {
     []
   )
 
-  useEffect(() => {
-    // 登录页独立呈现，离开时恢复后台原有的标题和图标。
-    const previousTitle = document.title
-    const icon = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
-    const previousIcon = icon?.getAttribute('href')
-    document.title = '用户登录 · 管理工作台'
-    icon?.setAttribute('href', loginEmblem)
-    return () => {
-      document.title = previousTitle
-      if (previousIcon !== undefined && previousIcon !== null)
-        icon?.setAttribute('href', previousIcon)
-    }
-  }, [])
+  usePageTitle('用户登录')
 
   if (user) {
     return (
@@ -145,12 +133,12 @@ export default function Login() {
   return (
     <ConfigProvider theme={appearance.theme} input={loginInputConfig}>
       <main className={styles.container} style={appearance.style}>
-        <aside className={styles.visual} aria-label="管理工作台">
+        <aside className={styles.visual} aria-label={appName}>
           <img className={styles.visualImage} src={courtyard} alt="" fetchPriority="high" />
           <div className={styles.visualShade} />
           <div className={styles.wordmark}>
             <img src={loginEmblem} alt="" />
-            <span>管理工作台</span>
+            <span>{appName}</span>
           </div>
           <div className={styles.visualCopy}>
             <span className={styles.visualLine} aria-hidden="true" />

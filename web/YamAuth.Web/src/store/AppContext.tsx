@@ -71,7 +71,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [session, isCurrentSession])
 
-  if (!session.ready) return <Spin fullscreen tip="正在读取登录信息" />
+  if (!session.ready) return <Spin fullscreen description="正在读取登录信息" />
 
   return (
     <AppContext.Provider

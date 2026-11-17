@@ -1,71 +1,123 @@
 .header {
   height: 64px;
   flex: 0 0 64px;
-  background: var(--app-brand);
+  background: var(--app-bg);
+  border-bottom: 1px solid var(--app-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
   padding: 0 24px;
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 100;
 }
 
-.brand {
-  color: var(--app-on-brand);
-  font-size: 18px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
+.identity,
+.brand,
+.actions,
 .userMenu {
-  border: 0;
-  background: transparent;
-  padding: 4px;
-  font: inherit;
-  color: var(--app-on-brand);
-  cursor: pointer;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   min-width: 0;
 }
 
+.identity {
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.brand {
+  gap: 12px;
+  color: var(--app-heading);
+  font-size: 17px;
+  font-weight: 600;
+  white-space: nowrap;
+  letter-spacing: 1px;
+}
+
+.brand img {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
 .brand:hover {
-  color: var(--app-on-brand);
+  color: var(--app-accent);
 }
 
-.brand:focus-visible,
-.userMenu:focus-visible {
-  outline: 2px solid var(--app-on-brand);
-  outline-offset: 4px;
+.actions {
+  justify-content: flex-end;
+  gap: 12px;
+}
+.actions > button {
+  flex-shrink: 0;
+}
+.actions > .userMenu {
+  flex-shrink: 1;
+}
+.userMenu > :global(.anticon) {
+  flex-shrink: 0;
 }
 
+.userMenu {
+  gap: 8px;
+  max-width: 240px;
+  min-height: 36px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: var(--app-radius);
+  background: transparent;
+  color: var(--app-text);
+  font: inherit;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+.userMenu:hover {
+  background: var(--app-nav-hover);
+}
 .userName {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
-.actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 16px;
-  min-width: 0;
-  margin-left: 16px;
-}
-
-.actions > button {
-  flex-shrink: 0;
-}
-
-@media (max-width: 480px) {
+@media (max-width: 767px) {
   .header {
+    height: 56px;
+    flex-basis: 56px;
     padding-inline: 12px;
-  }
-
-  .actions {
     gap: 8px;
-    margin-left: 8px;
+  }
+  .menuButton,
+  .userMenu {
+    min-width: 44px;
+    height: 44px;
+    justify-content: center;
+  }
+  .brand {
+    gap: 8px;
+    font-size: 15px;
+    letter-spacing: 0;
+  }
+  .brand img {
+    width: 28px;
+    height: 28px;
+  }
+  .actions {
+    gap: 4px;
+  }
+}
+
+@media (max-width: 479px) {
+  .identity {
+    gap: 2px;
+  }
+  .userName {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .userMenu {
+    transition: none;
   }
 }

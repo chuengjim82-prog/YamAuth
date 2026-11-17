@@ -6,7 +6,7 @@
 .selection {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
 }
 
@@ -87,5 +87,20 @@
   }
   .dialog :global(.ant-pagination-total-text) {
     display: block;
+  }
+}
+
+@media (max-width: 767px) {
+  .dialog {
+    width: calc(100vw - 16px) !important;
+    max-width: none;
+  }
+  .dialog :global(.ant-modal-container) {
+    max-height: calc(100dvh - 16px);
+    padding: 16px;
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+  .grid {
+    max-height: 40dvh;
   }
 }

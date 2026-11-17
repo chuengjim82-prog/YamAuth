@@ -10,7 +10,7 @@ const options = [
   { key: 'dark', label: '深色主题', icon: <MoonOutlined aria-hidden /> }
 ] as const
 
-export default function ThemeSwitch({ onBrand = false }: { onBrand?: boolean }) {
+export default function ThemeSwitch({ compactOnNarrow = false }: { compactOnNarrow?: boolean }) {
   const buttonRef = useRef<GetRef<typeof Button>>(null)
   const focusFrameRef = useRef<number | null>(null)
   const { mode } = useTheme()
@@ -64,11 +64,12 @@ export default function ThemeSwitch({ onBrand = false }: { onBrand?: boolean }) 
         ref={buttonRef}
         type="text"
         icon={current.icon}
-        className={onBrand ? (styles.onBrand ?? '') : ''}
+        className={compactOnNarrow ? (styles.compact ?? '') : ''}
         aria-haspopup="menu"
         aria-label={`切换主题，当前${current.label}`}
+        title={compactOnNarrow ? `切换主题，当前${current.label}` : undefined}
       >
-        {current.label}
+        <span className={compactOnNarrow ? styles.label : undefined}>{current.label}</span>
       </Button>
     </Dropdown>
   )

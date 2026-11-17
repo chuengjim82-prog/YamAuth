@@ -3,19 +3,35 @@
   padding-bottom: 24px;
   overflow: auto;
 }
-
 .panel {
-  padding: 24px;
+  padding: 32px;
   background: var(--app-surface);
-  border: 1px solid var(--app-border-soft);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-panel-radius);
 }
-
+.emblem {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 24px;
+}
 .welcome {
-  margin-bottom: 8px;
-  font-size: 20px;
+  margin-bottom: 12px;
+  color: var(--app-heading);
+  font-size: 28px;
   font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
-
 .description {
   color: var(--app-text-secondary);
+  font-size: 14px;
+  line-height: 1.8;
+}
+@media (max-width: 767px) {
+  .panel {
+    padding: 24px;
+  }
+  .welcome {
+    font-size: 24px;
+  }
 }

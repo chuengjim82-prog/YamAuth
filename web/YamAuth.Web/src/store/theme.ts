@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react'
+import { palettes, paletteVariables } from '@/theme/palette'
 
 export type ThemeMode = 'system' | 'light' | 'dark'
 export type ResolvedTheme = 'light' | 'dark'
@@ -42,6 +43,9 @@ let snapshot: ThemeSnapshot = { mode: initialMode, resolvedTheme: resolveTheme(i
 function applyDocumentTheme() {
   document.documentElement.dataset.theme = snapshot.resolvedTheme
   document.documentElement.style.colorScheme = snapshot.resolvedTheme
+  for (const [name, value] of Object.entries(paletteVariables(palettes[snapshot.resolvedTheme]))) {
+    document.documentElement.style.setProperty(name, value)
+  }
 }
 
 function updateTheme(mode: ThemeMode) {

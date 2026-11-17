@@ -1,4 +1,4 @@
-import { test as base, expect } from '@playwright/test'
+import { test, expect } from './helpers/browser.mjs'
 
 const rememberedKey = 'yamauth-remembered-credentials:v1'
 const rememberedAccount = {
@@ -6,37 +6,6 @@ const rememberedAccount = {
   userName: 'saved@example.test',
   password: 'Mock-saved-password-only!'
 }
-
-// 每个用例使用独立上下文。未显式模拟的 API 和外部请求一律阻断并报告。
-const test = base.extend({
-  page: async ({ page, context, baseURL }, use) => {
-    const unexpectedRequests = []
-    const pageErrors = []
-    const observedPages = new Set()
-    const onPageError = (error) => pageErrors.push(error.message)
-    const observePage = (opened) => {
-      if (observedPages.has(opened)) return
-      observedPages.add(opened)
-      opened.on('pageerror', onPageError)
-    }
-    context.on('page', observePage)
-    context.pages().forEach(observePage)
-    await context.route('**/*', async (route) => {
-      const url = new URL(route.request().url())
-      if (url.origin !== baseURL || url.pathname.startsWith('/api/')) {
-        unexpectedRequests.push(`${route.request().method()} ${url.origin}${url.pathname}`)
-        await route.abort()
-      } else {
-        await route.continue()
-      }
-    })
-    await use(page)
-    context.off('page', observePage)
-    observedPages.forEach((opened) => opened.off('pageerror', onPageError))
-    expect(unexpectedRequests, '不应连接真实后端或漏掉请求模拟').toEqual([])
-    expect(pageErrors, '页面不应发生未捕获异常').toEqual([])
-  }
-})
 
 async function openLogin(page) {
   await page.goto('/#/login')
@@ -85,7 +54,7 @@ async function logout(page) {
   await page.getByRole('menuitem', { name: /退出登录/ }).click()
   await page
     .getByRole('dialog', { name: '确认退出' })
-    .getByRole('button', { name: '确 定' })
+    .getByRole('button', { name: /确\s*定/ })
     .click()
   await expect(page).toHaveURL(/#\/login$/)
 }
@@ -229,7 +198,7 @@ test('请求期间防止重复提交，失败后保留输入并允许重试', as
   await expect(page.getByText('模拟：再次失败')).toBeVisible()
 })
 
-test('登录和退出时正确恢复标题、图标以及后台主题', async ({ page }) => {
+test('登录和退出时使用统一标题、图标与后台主题', async ({ page }) => {
   await mockSuccessfulLogin(page)
   await openLogin(page)
   const favicon = page.locator('link[rel="icon"]')
@@ -238,14 +207,14 @@ test('登录和退出时正确恢复标题、图标以及后台主题', async ({
   await fillLogin(page)
   await page.getByRole('button', { name: '登录', exact: true }).click()
   await expect(page).toHaveURL(/#\/home$/)
-  await expect(page).toHaveTitle('YamAuth')
+  await expect(page).toHaveTitle('首页 · 管理工作台')
   await expect(page.getByRole('button', { name: '账号菜单' })).toContainText('界面验收')
-  await expect(favicon).toHaveAttribute('href', '/src/assets/favicon.svg')
+  await expect(favicon).toHaveAttribute('href', loginIcon)
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
-  // 局部主题只包围登录页，后台主题按钮继续使用原有品牌栏配色。
+  // 主题状态跨页面保留，后台按钮与深绿工作区使用相同文字色。
   await expect(page.getByRole('button', { name: /切换主题/ })).toHaveCSS(
     'color',
-    'rgb(255, 255, 255)'
+    'rgb(232, 238, 231)'
   )
   await logout(page)
   await expect(page).toHaveTitle('用户登录 · 管理工作台')

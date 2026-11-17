@@ -1,0 +1,91 @@
+const lightPalette = {
+  background: '#fafbf8',
+  surface: '#ffffff',
+  elevated: '#ffffff',
+  text: '#243c33',
+  secondary: '#606e63',
+  accent: '#315b49',
+  field: '#f2f4ee',
+  border: '#e2e7dd',
+  focus: 'rgb(49 91 73 / 10%)',
+  button: '#244b40',
+  buttonHover: '#193e33',
+  onButton: '#ffffff',
+  selected: '#e8eee3',
+  hover: '#f2f5ee',
+  disabled: '#edf0e8',
+  disabledText: '#859080',
+  warning: '#99580b',
+  mask: 'rgb(250 251 248 / 88%)',
+  scrollThumb: '#b0bcac',
+  scrollHover: '#899b85',
+  shadow: '0 8px 32px rgb(23 43 31 / 12%)'
+}
+
+export type AppPalette = typeof lightPalette
+
+const darkPalette: AppPalette = {
+  background: '#151f1b',
+  surface: '#1e2c25',
+  elevated: '#24372c',
+  text: '#e8eee7',
+  secondary: '#a2afa4',
+  accent: '#b6cdb1',
+  field: '#1e2c25',
+  border: '#34463b',
+  focus: 'rgb(182 205 177 / 14%)',
+  button: '#b6cdb1',
+  buttonHover: '#c9ddc4',
+  onButton: '#1b3528',
+  selected: '#304735',
+  hover: '#293c30',
+  disabled: '#29392f',
+  disabledText: '#78897b',
+  warning: '#eac27f',
+  mask: 'rgb(21 31 27 / 88%)',
+  scrollThumb: '#4d6553',
+  scrollHover: '#728970',
+  shadow: '0 8px 32px rgb(0 0 0 / 32%)'
+}
+
+export const palettes = { light: lightPalette, dark: darkPalette }
+
+/** 根节点变量同时供页面、body 下的浮层和错误边界使用。 */
+export function paletteVariables(palette: AppPalette) {
+  return {
+    '--app-bg': palette.background,
+    '--app-surface': palette.surface,
+    '--app-elevated': palette.elevated,
+    '--app-text': palette.text,
+    '--app-text-strong': palette.text,
+    '--app-heading': palette.text,
+    '--app-text-secondary': palette.secondary,
+    '--app-text-placeholder': palette.secondary,
+    '--app-border': palette.border,
+    '--app-border-soft': palette.border,
+    '--app-divider': palette.border,
+    '--app-sidebar-border': palette.border,
+    '--app-primary': palette.accent,
+    '--app-accent': palette.accent,
+    '--app-accent-bg': palette.selected,
+    '--app-accent-hover': palette.hover,
+    '--app-nav-hover': palette.hover,
+    '--app-nav-selected': palette.selected,
+    '--app-button-bg': palette.field,
+    '--app-button': palette.button,
+    '--app-button-hover': palette.buttonHover,
+    '--app-on-button': palette.onButton,
+    '--app-focus': palette.focus,
+    '--app-field': palette.field,
+    '--app-table-heading': palette.secondary,
+    '--app-table-header': palette.field,
+    '--app-row-hover': palette.hover,
+    '--app-loading-mask': palette.mask,
+    '--app-warning': palette.warning,
+    '--app-scroll-track': palette.field,
+    '--app-scroll-thumb': palette.scrollThumb,
+    '--app-scroll-thumb-hover': palette.scrollHover,
+    '--app-scroll-horizontal-thumb': palette.scrollThumb,
+    '--app-scroll-menu-thumb': palette.scrollThumb
+  }
+}

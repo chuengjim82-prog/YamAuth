@@ -32,12 +32,12 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <AppProvider>
-      <ThemeBoundary>
+    <ThemeBoundary>
+      <AppProvider>
         <HashRouter>
           <AppRoutes />
         </HashRouter>
-      </ThemeBoundary>
-    </AppProvider>
+      </AppProvider>
+    </ThemeBoundary>
   )
 }
