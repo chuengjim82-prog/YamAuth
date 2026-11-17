@@ -167,8 +167,25 @@
   font-weight: 500;
 }
 
+.rememberRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.rememberHint {
+  color: var(--login-secondary);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.rememberAlert {
+  margin-top: 16px;
+}
+
 .form .submitItem {
-  margin-top: 32px;
+  margin-top: 24px;
   margin-bottom: 0;
 }
 

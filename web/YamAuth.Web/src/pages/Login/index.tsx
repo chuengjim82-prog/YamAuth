@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Alert, Button, ConfigProvider, Form, Input, message } from 'antd'
+import { Alert, Button, Checkbox, ConfigProvider, Form, Input, message } from 'antd'
 import { ArrowRightOutlined, LockOutlined, UserOutlined } from '@ant-design/icons'
 import type { InputRef } from 'antd'
 import { login } from '@/api/auth'
@@ -15,18 +15,41 @@ import LoginRedirect from './LoginRedirect'
 import { isCurrentRequestSession, SessionStorageError, type RequestSession } from '@/auth/session'
 import { useTheme } from '@/store/theme'
 import { loginAppearances, loginInputConfig } from './theme'
+import {
+  clearRememberedCredentials,
+  readRememberedCredentials,
+  saveRememberedCredentials,
+  subscribeRememberedCredentials
+} from './rememberedCredentials'
 
 export default function Login() {
   const { user, login: saveLogin, session, isCurrentSession } = useApp()
   const { resolvedTheme } = useTheme()
   const appearance = loginAppearances[resolvedTheme]
   const [loading, setLoading] = useState(false)
+  const [remembered] = useState(readRememberedCredentials)
+  const [rememberPassword, setRememberPassword] = useState(!!remembered.credentials)
+  const [rememberError, setRememberError] = useState(remembered.error)
+  const rememberSelectionRef = useRef({ checked: rememberPassword, raw: remembered.raw })
+  const [clearingRemembered, setClearingRemembered] = useState(false)
   const [destination, setDestination] = useState<{
     session: RequestSession
     value: LoginDestination
   } | null>(null)
   const passwordInputRef = useRef<InputRef>(null)
   const submittingRef = useRef(false)
+
+  useEffect(
+    () =>
+      subscribeRememberedCredentials((value) => {
+        if (value.raw === rememberSelectionRef.current.raw && !value.error) return
+        const checked = !!value.credentials
+        rememberSelectionRef.current = { checked, raw: value.raw }
+        setRememberPassword(checked)
+        setRememberError(value.error)
+      }),
+    []
+  )
 
   useEffect(() => {
     // 登录页独立呈现，离开时恢复后台原有的标题和图标。
@@ -69,12 +92,53 @@ export default function Login() {
       if (!isCurrentRequestSession(savedSession)) return
       setDestination({ session: savedSession, value: next })
       message.success('登录成功')
+      const selection = rememberSelectionRef.current
+      if (selection.checked) {
+        try {
+          await saveRememberedCredentials(
+            values,
+            selection.raw,
+            () =>
+              rememberSelectionRef.current === selection && isCurrentRequestSession(savedSession)
+          )
+        } catch {
+          // 登录已经完成，密码记忆失败只提示，不撤销会话或阻断跳转。
+          if (isCurrentRequestSession(savedSession))
+            message.warning('记住密码失败，请检查浏览器存储设置')
+        }
+      }
     } catch (error: unknown) {
       if (error instanceof SessionStorageError) message.error(error.message)
       // 登录及目标解析分别负责错误提示；失败时保留恢复记录。
     } finally {
       submittingRef.current = false
       setLoading(false)
+    }
+  }
+
+  const onRememberChange = async (checked: boolean) => {
+    if (clearingRemembered) return
+    const current = checked ? readRememberedCredentials() : null
+    rememberSelectionRef.current = {
+      checked,
+      raw: current ? current.raw : rememberSelectionRef.current.raw
+    }
+    setRememberPassword(checked)
+    setRememberError(current?.error ?? null)
+    if (checked) return
+
+    setClearingRemembered(true)
+    try {
+      // 取消时立即发起清除，不等下次登录；清除期间阻止重复操作，保留表单输入。
+      await clearRememberedCredentials()
+      const latest = readRememberedCredentials()
+      rememberSelectionRef.current = { checked: !!latest.credentials, raw: latest.raw }
+      setRememberPassword(!!latest.credentials)
+      setRememberError(latest.error)
+    } catch {
+      setRememberError('清除记住的密码失败，请检查浏览器存储设置后重试')
+    } finally {
+      setClearingRemembered(false)
     }
   }
 
@@ -130,6 +194,7 @@ export default function Login() {
               className={styles.form ?? ''}
               layout="vertical"
               requiredMark={false}
+              initialValues={remembered.credentials ?? { userName: '', password: '' }}
               onFinish={(values) => {
                 // onFinish 内部处理请求失败并释放提交锁，Form 的回调不接收 Promise。
                 void onFinish(values)
@@ -168,6 +233,29 @@ export default function Login() {
                   autoComplete="current-password"
                 />
               </Form.Item>
+              <div className={styles.rememberRow}>
+                <Checkbox
+                  checked={rememberPassword}
+                  disabled={clearingRemembered}
+                  aria-describedby="remember-password-hint"
+                  onChange={(event) => {
+                    void onRememberChange(event.target.checked)
+                  }}
+                >
+                  记住密码
+                </Checkbox>
+                <span id="remember-password-hint" className={styles.rememberHint}>
+                  请勿在公共设备上使用
+                </span>
+              </div>
+              {rememberError && (
+                <Alert
+                  className={styles.rememberAlert ?? ''}
+                  type="warning"
+                  showIcon
+                  title={rememberError}
+                />
+              )}
               <Form.Item className={styles.submitItem ?? ''}>
                 <Button
                   size="large"
