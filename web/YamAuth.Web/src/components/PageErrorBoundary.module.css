@@ -14,8 +14,8 @@
 }
 /* 错误边界使用原生按钮，在组件加载失败时仍可重新加载。 */
 .error button {
-  min-height: 40px;
-  padding: 8px 20px;
+  height: 32px;
+  padding-inline: 20px;
   border: 0;
   border-radius: var(--app-radius);
   background: var(--app-button);

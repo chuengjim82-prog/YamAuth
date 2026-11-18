@@ -8,7 +8,6 @@
 @media (max-width: 767px) {
   .compact {
     min-width: 44px;
-    height: 44px;
   }
 }
 @media (max-width: 479px) {

@@ -61,8 +61,8 @@
 .userMenu {
   gap: 8px;
   max-width: 240px;
-  min-height: 36px;
-  padding: 6px 10px;
+  height: 32px;
+  padding-inline: 10px;
   border: 0;
   border-radius: var(--app-radius);
   background: transparent;
@@ -90,7 +90,6 @@
   .menuButton,
   .userMenu {
     min-width: 44px;
-    height: 44px;
     justify-content: center;
   }
   .brand {

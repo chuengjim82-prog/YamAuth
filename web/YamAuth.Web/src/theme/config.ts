@@ -41,6 +41,9 @@ function createTheme(palette: AppPalette, dark: boolean, mobile: boolean): Theme
     components: {
       Layout: { headerBg: palette.background, siderBg: palette.surface },
       Button: {
+        controlHeight: 32,
+        controlHeightLG: 32,
+        controlHeightSM: 32,
         colorPrimary: palette.button,
         colorPrimaryHover: palette.buttonHover,
         colorPrimaryActive: palette.buttonHover,
