@@ -238,10 +238,25 @@ test('折叠导航支持多级浮层和键盘操作，并保留目录展开状�
 test('列表筛选、分页、滚动与主题切换保留编辑输入', async ({ page, context }, testInfo) => {
   await openResource(page, '/auth/users', '用户')
   const keyword = page.getByRole('textbox', { name: '关键字' })
+  const filter = page.locator('form').filter({ has: keyword })
+  const inputFrame = filter.locator('.ant-input-affix-wrapper')
+  const search = filter.getByRole('button', { name: '查询', exact: true })
+  const reset = filter.getByRole('button', { name: '重置', exact: true })
+  await expect(filter.getByText('关键字', { exact: true })).toBeHidden()
+  await expect(keyword).toHaveAttribute('placeholder', '请输入关键字')
+  for (const control of [inputFrame, reset, search])
+    await expect(control).toHaveCSS('height', '32px')
+  if (page.viewportSize().width >= 768) {
+    const [inputBox, resetBox, searchBox] = await Promise.all(
+      [inputFrame, reset, search].map((control) => control.boundingBox())
+    )
+    expect(resetBox.y).toBe(inputBox.y)
+    expect(searchBox.y).toBe(inputBox.y)
+  }
   await keyword.fill('user31')
-  await page.getByRole('button', { name: '查询', exact: true }).click()
+  await search.click()
   await expect(page.getByRole('cell', { name: 'user31', exact: true })).toBeVisible()
-  await page.getByRole('button', { name: '重置', exact: true }).click()
+  await reset.click()
   await expect(page.getByRole('cell', { name: 'user01', exact: true })).toBeVisible()
   await page.locator('.ant-pagination-next').click()
   await expect(page.getByRole('cell', { name: 'user21', exact: true })).toBeVisible()

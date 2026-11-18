@@ -483,19 +483,15 @@ export default function ResourceCrudPage<E extends Entity, F extends object, C, 
               if (!resource.tree) setReloadVersion((current) => current + 1)
             }}
           >
-            <div className={styles.combinedSearch ?? ''}>
-              <label className={styles.keywordLabel ?? ''} htmlFor={keywordId}>
-                关键字
-              </label>
-              <Input
-                id={keywordId}
-                className={styles.keywordInput ?? ''}
-                allowClear
-                placeholder="请输入关键字"
-                value={searchKeyword}
-                onChange={(event) => setSearchKeyword(event.target.value)}
-              />
-            </div>
+            <Input
+              id={keywordId}
+              className={styles.keywordInput ?? ''}
+              aria-label="关键字"
+              allowClear
+              placeholder="请输入关键字"
+              value={searchKeyword}
+              onChange={(event) => setSearchKeyword(event.target.value)}
+            />
             <div className={styles.searchActions ?? ''}>
               <Button
                 onClick={() => {

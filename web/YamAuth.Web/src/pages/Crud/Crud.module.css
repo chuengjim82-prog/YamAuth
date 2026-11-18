@@ -9,23 +9,13 @@
   display: flex;
   flex-wrap: wrap;
   gap: 16px 24px;
-  align-items: flex-end;
-}
-.combinedSearch {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 0;
-  flex: 0 1 360px;
-}
-.keywordLabel {
-  color: var(--app-text);
-  font-size: 13px;
-  font-weight: 500;
+  align-items: center;
 }
 .keywordInput {
-  width: 100%;
+  flex: 0 1 360px;
   min-width: 0;
+  height: 32px;
+  padding-block: 0;
 }
 .searchActions {
   display: flex;
@@ -221,7 +211,7 @@
   border-start-end-radius: 0;
 }
 @media (max-width: 767px) {
-  .combinedSearch {
+  .keywordInput {
     flex: 1 1 100%;
   }
   .searchActions {
