@@ -87,6 +87,9 @@ test('品牌、主题、首页及导航在深浅模式和窄屏下保持一致',
   ]) {
     await selectTheme(page, label)
     await expect(page).toHaveTitle('首页 · 管理工作台')
+    await expect(
+      page.getByRole('heading', { name: '首页', exact: true, includeHidden: true })
+    ).toHaveCount(0)
     await expect(page.locator('link[rel="icon"]')).toHaveAttribute('href', /login-emblem\.svg/)
     await expect(page.getByText('从导航菜单进入用户、权限、公司和部门等维护页面。')).toBeVisible()
     await noPageOverflow(page)
@@ -676,6 +679,9 @@ test('16 个资源页面及编辑表单在深浅主题下完整呈现', async ({
     for (const [path, title] of resourcePages) {
       await openResource(page, path, title)
       await expect(page).toHaveTitle(`${title} · 管理工作台`)
+      await expect(
+        page.getByRole('heading', { name: title, exact: true, includeHidden: true })
+      ).toHaveCount(0)
       await noPageOverflow(page)
       await page.getByRole('button', { name: /^(新增|新增顶级)$/ }).click()
       const dialog = page.getByRole('dialog', { name: `新增${title}`, exact: true })
@@ -698,7 +704,7 @@ test('深色首屏在入口模块加载前后保持一致', async ({ page }, tes
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
   await expect(page.locator('html')).toHaveCSS('background-color', 'rgb(21, 31, 27)')
   await entry.continue()
-  await expect(page.getByRole('heading', { name: '首页', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /^欢迎，/ })).toBeVisible()
   await expect(page.locator('html')).toHaveCSS('background-color', 'rgb(21, 31, 27)')
 })
 
@@ -712,5 +718,5 @@ test('页面模块失败时显示可操作的错误态并能重新加载', async
   await page.screenshot({ path: testInfo.outputPath('page-error.png'), fullPage: true })
   await page.unroute('**/src/pages/Crud/index.tsx*')
   await page.getByRole('button', { name: '重新加载', exact: true }).click()
-  await expect(page.getByRole('heading', { name: '用户', exact: true })).toBeVisible()
+  await expect(page.getByRole('region', { name: '用户管理', exact: true })).toBeVisible()
 })

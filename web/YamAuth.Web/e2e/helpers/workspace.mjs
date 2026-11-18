@@ -264,13 +264,14 @@ export async function loginWorkspace(page) {
   await page.getByRole('button', { name: '登录', exact: true }).click()
   await expect(page).toHaveURL(/#\/home$/)
   // Hash 已变化时路由模块仍可能在加载；等工作区挂载后再开始下一次导航。
-  await expect(page.getByRole('heading', { name: '首页', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /^欢迎，/ })).toBeVisible()
 }
 
 export async function openResource(page, path, title) {
   await page.goto(`/#${path}`)
-  await expect(page.getByRole('heading', { name: title, exact: true })).toBeVisible()
-  await expect(page.getByRole('button', { name: /^(新增|新增顶级)$/ })).toBeEnabled()
+  const resource = page.getByRole('region', { name: `${title}管理`, exact: true })
+  await expect(resource).toBeVisible()
+  await expect(resource.getByRole('button', { name: /^(新增|新增顶级)$/ })).toBeEnabled()
 }
 
 export async function noPageOverflow(page) {

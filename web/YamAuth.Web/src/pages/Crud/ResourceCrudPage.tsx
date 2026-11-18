@@ -22,7 +22,6 @@ import { DeleteOutlined, EditOutlined, InboxOutlined, PlusOutlined } from '@ant-
 import type { TableColumnsType } from 'antd'
 import dayjs from 'dayjs'
 import DataListLayout from '@/components/DataListLayout'
-import PageHeader from '@/components/PageHeader'
 import IconPicker from '@/components/IconPicker'
 import TenantSelect from '@/components/TenantSelect'
 import DepartmentSelect from '@/components/DepartmentSelect'
@@ -471,7 +470,6 @@ export default function ResourceCrudPage<E extends Entity, F extends object, C, 
 
   return (
     <section className={styles.page ?? ''} aria-label={`${resource.title}管理`}>
-      <PageHeader title={resource.title} />
       <DataListLayout
         loading={loading}
         interactionBlocked={interactionBlocked}
