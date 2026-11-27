@@ -40,6 +40,20 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.menu:global(.ant-menu-inline):not(:global(.ant-menu-inline-collapsed)) :global(.ant-menu-item),
+.menu:global(.ant-menu-inline):not(:global(.ant-menu-inline-collapsed)) :global(.ant-menu-submenu-title) {
+  margin-inline-end: 0;
+  width: calc(100% - 8px);
+}
+.menu:global(.ant-menu-inline):not(:global(.ant-menu-inline-collapsed)) :global(.ant-menu-item) {
+  padding-inline-end: 12px;
+}
+.menu:global(.ant-menu-inline):not(:global(.ant-menu-inline-collapsed)) :global(.ant-menu-submenu-title) {
+  padding-inline-end: 26px;
+}
+.menu:global(.ant-menu-inline):not(:global(.ant-menu-inline-collapsed)) :global(.ant-menu-submenu-arrow) {
+  inset-inline-end: 12px;
+}
 .menu:global(.ant-menu-inline-collapsed) :global(.ant-menu-item),
 .menu:global(.ant-menu-inline-collapsed) :global(.ant-menu-submenu-title) {
   padding-inline: 12px;

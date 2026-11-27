@@ -122,6 +122,7 @@ function SessionLayout() {
       key={collapsedNavigation ? 'collapsed' : 'inline'}
       className={styles.menu}
       mode="inline"
+      inlineIndent={12}
       inlineCollapsed={collapsedNavigation}
       selectedKeys={[location.pathname]}
       openKeys={collapsedNavigation ? popupOpenKeys : openKeys}
@@ -150,7 +151,7 @@ function SessionLayout() {
         {!isMobile && (
           <Sider
             className={styles.sider}
-            width={256}
+            width={220}
             collapsedWidth={56}
             collapsed={collapsed}
             trigger={null}
