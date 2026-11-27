@@ -172,9 +172,16 @@
   padding-bottom: 0;
 }
 .editDialog:global(.ant-modal) .dialogContainer {
+  --edit-pad-top: 28px;
+  --edit-pad-x: 32px;
   display: flex;
   flex-direction: column;
   max-height: calc(100dvh - min(80px, 10dvh) - 24px);
+  padding: var(--edit-pad-top) var(--edit-pad-x);
+}
+.editDialog :global(.ant-modal-close) {
+  top: calc(var(--edit-pad-top) - 4px);
+  inset-inline-end: calc(var(--edit-pad-x) - 8px);
 }
 .editDialog:global(.ant-modal) .dialogBody {
   min-height: 0;
@@ -183,6 +190,22 @@
   padding: 4px 8px 0 0;
   margin-right: -8px;
   scrollbar-width: thin;
+}
+.editForm :global(.ant-form-item-row) {
+  flex-wrap: nowrap;
+}
+.editForm :global(.ant-form-item-label) {
+  overflow: visible;
+  white-space: nowrap;
+}
+.requiredMark {
+  margin-inline-start: 4px;
+  color: var(--ant-color-error);
+  font-family: sans-serif;
+  line-height: 1;
+}
+.editForm :global(.ant-form-item-control) {
+  min-width: 0;
 }
 .editForm :global(.ant-form-item-extra),
 .editForm :global(.ant-form-item-explain),
@@ -228,9 +251,11 @@
     margin: 0 auto;
   }
   .editDialog:global(.ant-modal) .dialogContainer {
+    --edit-pad-top: 20px;
+    --edit-pad-x: 20px;
     max-height: calc(100dvh - 16px);
-    padding: 16px;
-    padding-bottom: max(16px, env(safe-area-inset-bottom));
+    padding: var(--edit-pad-top) var(--edit-pad-x);
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
   }
   .editDialog :global(.ant-modal-footer) {
     display: flex;

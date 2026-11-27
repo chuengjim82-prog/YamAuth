@@ -724,7 +724,23 @@ function ResourceEditForm<E extends Entity, F extends object, C, U>({
       form={form}
       initialValues={initialValues}
       clearOnDestroy
-      layout="vertical"
+      layout="horizontal"
+      colon={false}
+      labelAlign="left"
+      requiredMark={(label, { required }) =>
+        required ? (
+          <>
+            {label}
+            <span className={styles.requiredMark} aria-hidden="true">
+              *
+            </span>
+          </>
+        ) : (
+          label
+        )
+      }
+      labelCol={{ flex: '96px' }}
+      wrapperCol={{ flex: 'auto' }}
       size="large"
       className={styles.editForm ?? ''}
       onFinish={(values) => {
