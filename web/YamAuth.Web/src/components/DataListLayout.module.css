@@ -13,7 +13,7 @@
   padding: 12px;
   background: var(--app-surface);
   border: 1px solid var(--app-border-soft);
-  border-radius: var(--app-panel-radius);
+  border-radius: 0;
 }
 
 .tablePanel {
@@ -24,7 +24,7 @@
   min-height: min-content;
   background: var(--app-surface);
   border: 1px solid var(--app-border-soft);
-  border-radius: var(--app-panel-radius);
+  border-radius: 0;
 }
 
 .tableContents {

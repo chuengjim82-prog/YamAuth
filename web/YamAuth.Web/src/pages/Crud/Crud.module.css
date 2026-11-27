@@ -160,7 +160,7 @@
   font-weight: 500;
   background: var(--app-loading-mask);
   backdrop-filter: blur(1px);
-  border-radius: var(--app-panel-radius);
+  border-radius: 0;
 }
 
 .failureMask {
@@ -263,12 +263,12 @@
   color: var(--app-text-strong);
   font-weight: 600;
 }
-.resultTable :global(.ant-table-container) {
-  border-radius: 0;
-}
-.resultTable :global(.ant-table-thead > tr:first-child > th) {
-  border-start-start-radius: 0;
-  border-start-end-radius: 0;
+.resultTable :global(.ant-table),
+.resultTable :global(.ant-table-header),
+.resultTable :global(.ant-table-container),
+.resultTable :global(table),
+.resultTable :global(.ant-table-thead > tr > th) {
+  border-radius: 0 !important;
 }
 @media (max-width: 767px) {
   .keywordInput {
