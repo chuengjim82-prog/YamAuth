@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Button, Dropdown, Modal } from 'antd'
+import { Breadcrumb, Button, Dropdown, Modal } from 'antd'
 import { LogoutOutlined, MenuOutlined, UserOutlined } from '@ant-design/icons'
-import type { MenuProps } from 'antd'
+import type { BreadcrumbProps, MenuProps } from 'antd'
 import { useApp } from '@/store/AppContext'
 import ThemeSwitch from '@/components/ThemeSwitch'
 import styles from './HeaderBar.module.css'
@@ -11,11 +11,13 @@ import { appEmblem, appName } from '@/branding'
 export default function HeaderBar({
   mobile,
   navigationOpen,
-  onOpenNavigation
+  onOpenNavigation,
+  breadcrumb
 }: {
   mobile: boolean
   navigationOpen: boolean
   onOpenNavigation: () => void
+  breadcrumb?: BreadcrumbProps['items']
 }) {
   const { user, logout } = useApp()
   const [open, setOpen] = useState(false)
@@ -72,10 +74,15 @@ export default function HeaderBar({
             aria-expanded={navigationOpen}
           />
         )}
-        <Link className={styles.brand} to="/home">
-          <img src={appEmblem} alt="" />
-          <span>{appName}</span>
-        </Link>
+        <div className={styles.brandBlock}>
+          <Link className={styles.brand} to="/home">
+            <img src={appEmblem} alt="" />
+            <span>{appName}</span>
+          </Link>
+          {breadcrumb && breadcrumb.length > 0 && (
+            <Breadcrumb className={styles.breadcrumb ?? ''} items={breadcrumb} />
+          )}
+        </div>
       </div>
       <div className={styles.actions}>
         <ThemeSwitch compactOnNarrow />

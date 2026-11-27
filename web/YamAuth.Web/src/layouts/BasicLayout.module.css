@@ -62,9 +62,35 @@
   height: 56px;
   display: flex;
   align-items: center;
+  gap: 8px;
   padding: 0 12px;
   flex-shrink: 0;
   border-top: 1px solid var(--app-divider);
+}
+.siderBreadcrumb {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--app-text-secondary);
+  font-size: 13px;
+  line-height: 18px;
+}
+.siderBreadcrumb :global(ol) {
+  flex-wrap: nowrap;
+}
+.siderBreadcrumb :global(li) {
+  min-width: 0;
+}
+.siderBreadcrumb :global(.ant-breadcrumb-link),
+.siderBreadcrumb :global(.ant-breadcrumb-separator) {
+  color: var(--app-text-secondary);
+}
+.siderBreadcrumb :global(.ant-breadcrumb-link) {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
 }
 .collapseBarCollapsed {
   justify-content: center;
@@ -73,7 +99,11 @@
 .collapseButton {
   width: 32px;
   height: 32px;
+  margin-inline-start: auto;
   font-size: 17px;
+}
+.collapseBarCollapsed .collapseButton {
+  margin-inline-start: 0;
 }
 .content {
   display: flex;
@@ -84,27 +114,8 @@
   min-height: 0;
   overflow: auto;
 }
-.breadcrumb {
-  flex: 0 0 auto;
-  min-width: 0;
-  margin-bottom: 16px;
-  font-size: 13px;
-}
-.breadcrumb :global(li) {
-  min-width: 0;
-  max-width: 100%;
-}
-.breadcrumb :global(.ant-breadcrumb-link) {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
 .drawerBody {
   display: flex;
   flex-direction: column;
   padding: 0 !important;
-}
-@media (max-width: 767px) {
-  .breadcrumb {
-    margin-bottom: 12px;
-  }
 }

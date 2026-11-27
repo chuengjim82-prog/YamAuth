@@ -146,6 +146,11 @@ function SessionLayout() {
         mobile={isMobile}
         navigationOpen={isMobile && mobileNavigation.open}
         onOpenNavigation={() => setMobileNavigation({ viewport: isMobile, open: true })}
+        breadcrumb={
+          isMobile && chain.length > 1
+            ? chain.map((node) => ({ title: node.menuName }))
+            : undefined
+        }
       />
       <Layout className={styles.body}>
         {!isMobile && (
@@ -160,6 +165,12 @@ function SessionLayout() {
             <div
               className={`${styles.collapseBar} ${collapsed ? styles.collapseBarCollapsed : ''}`}
             >
+              {!collapsed && chain.length > 1 && (
+                <Breadcrumb
+                  className={styles.siderBreadcrumb ?? ''}
+                  items={chain.map((node) => ({ title: node.menuName }))}
+                />
+              )}
               <Tooltip title={collapsed ? '展开菜单' : '收起菜单'} placement="right">
                 <Button
                   type="text"
@@ -176,12 +187,6 @@ function SessionLayout() {
           </Sider>
         )}
         <Content className={styles.content}>
-          {chain.length > 1 && (
-            <Breadcrumb
-              className={styles.breadcrumb ?? ''}
-              items={chain.map((node) => ({ title: node.menuName }))}
-            />
-          )}
           <PageErrorBoundary resetKey={`${session.revision}:${location.key}`}>
             <Suspense
               fallback={<Spin size="large" style={{ display: 'block', margin: '100px auto' }} />}

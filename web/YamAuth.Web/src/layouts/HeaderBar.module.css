@@ -35,6 +35,35 @@
   letter-spacing: 1px;
 }
 
+.brandBlock {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
+.breadcrumb {
+  margin-inline-start: 44px;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 18px;
+}
+.breadcrumb :global(ol) {
+  flex-wrap: nowrap;
+}
+.breadcrumb :global(li) {
+  min-width: 0;
+}
+.breadcrumb :global(.ant-breadcrumb-link) {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
 .brand img {
   width: 32px;
   height: 32px;
@@ -94,8 +123,22 @@
   }
   .brand {
     gap: 8px;
+    flex-shrink: 0;
     font-size: 15px;
     letter-spacing: 0;
+  }
+  .identity {
+    flex: 1;
+    flex-shrink: 1;
+  }
+  .brandBlock {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+  .breadcrumb {
+    flex: 1;
+    margin-inline-start: 0;
   }
   .brand img {
     width: 28px;
