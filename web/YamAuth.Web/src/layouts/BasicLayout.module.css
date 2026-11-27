@@ -59,7 +59,8 @@
   padding-inline: 12px;
 }
 .collapseBar {
-  height: 56px;
+  /* 与分页栏同高：32px 页码、上下各 12px 内边距，再加 1px 上边框。 */
+  height: 57px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -108,7 +109,7 @@
 .content {
   display: flex;
   flex-direction: column;
-  padding: 12px 12px 0;
+  padding: 0;
   background: var(--app-bg);
   min-width: 0;
   min-height: 0;

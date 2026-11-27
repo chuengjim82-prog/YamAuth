@@ -121,6 +121,8 @@
 
 .horizontalScroll[data-overflow='false'] {
   overflow-x: hidden;
+  flex-basis: 0;
+  height: 0;
 }
 
 .horizontalScroll:focus-visible {
