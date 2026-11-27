@@ -168,16 +168,17 @@
 }
 
 .editDialog:global(.ant-modal) {
-  top: min(80px, 10dvh);
+  top: 0;
   padding-bottom: 0;
 }
 .editDialog:global(.ant-modal) .dialogContainer {
-  --edit-pad-top: 28px;
+  --edit-pad-top: 20px;
   --edit-pad-x: 32px;
+  --edit-pad-bottom: 28px;
   display: flex;
   flex-direction: column;
-  max-height: calc(100dvh - min(80px, 10dvh) - 24px);
-  padding: var(--edit-pad-top) var(--edit-pad-x);
+  max-height: calc(100dvh - 48px);
+  padding: var(--edit-pad-top) var(--edit-pad-x) var(--edit-pad-bottom);
 }
 .editDialog :global(.ant-modal-close) {
   top: calc(var(--edit-pad-top) - 4px);
@@ -190,6 +191,9 @@
   padding: 4px 8px 0 0;
   margin-right: -8px;
   scrollbar-width: thin;
+}
+.editForm :global(.ant-form-item) {
+  margin-bottom: 6px;
 }
 .editForm :global(.ant-form-item-row) {
   flex-wrap: nowrap;
@@ -206,6 +210,39 @@
 }
 .editForm :global(.ant-form-item-control) {
   min-width: 0;
+}
+.editForm :global(.ant-form-item-label > label) {
+  height: 28px;
+}
+.editForm :global(.ant-input:not(textarea)),
+.editForm :global(.ant-input-affix-wrapper),
+.editForm :global(.ant-select),
+.editForm :global(.ant-input-number),
+.editForm :global(.ant-picker),
+.editForm :global(.ant-btn) {
+  height: 28px;
+  font-size: 13px;
+}
+.editForm :global(.ant-input:not(textarea)),
+.editForm :global(textarea.ant-input),
+.editForm :global(.ant-input-affix-wrapper),
+.editForm :global(.ant-select),
+.editForm :global(.ant-input-number),
+.editForm :global(.ant-picker) {
+  padding-block: 2px;
+  padding-inline: 8px;
+}
+.editForm :global(.ant-input-affix-wrapper .ant-input) {
+  height: auto;
+  padding: 0;
+}
+.editForm :global(.ant-input),
+.editForm :global(.ant-input-number-input),
+.editForm :global(.ant-select-content),
+.editForm :global(.ant-select-input),
+.editForm :global(.ant-picker-input > input),
+.editForm :global(.ant-btn) {
+  font-size: 13px;
 }
 .editForm :global(.ant-form-item-extra),
 .editForm :global(.ant-form-item-explain),
@@ -245,7 +282,6 @@
     flex: 1;
   }
   .editDialog:global(.ant-modal) {
-    top: 8px;
     width: calc(100vw - 16px) !important;
     max-width: none;
     margin: 0 auto;
@@ -268,6 +304,15 @@
   .resultTable :global(.ant-table-tbody > tr > td.ant-table-cell) {
     padding: 8px;
     height: 52px;
+  }
+  .editForm :global(.ant-input:not(textarea)),
+  .editForm :global(.ant-input-affix-wrapper),
+  .editForm :global(.ant-select),
+  .editForm :global(.ant-input-number),
+  .editForm :global(.ant-picker),
+  .editForm :global(.ant-form-item-label > label),
+  .editForm :global(.ant-btn) {
+    height: 36px;
   }
   .editForm :global(.ant-input),
   .editForm :global(.ant-select-selection-search-input) {

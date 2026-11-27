@@ -93,10 +93,11 @@ function createTheme(palette: AppPalette, dark: boolean, mobile: boolean): Theme
         itemHoverBg: palette.hover,
         itemSelectedBg: palette.selected,
         itemSelectedColor: palette.accent,
-        itemHeight: 44,
+        itemHeight: 29,
         itemBorderRadius: 10,
         itemMarginInline: 8,
-        itemMarginBlock: 4
+        itemMarginBlock: 0,
+        iconMarginInlineEnd: 5
       },
       Table: {
         headerBg: palette.field,

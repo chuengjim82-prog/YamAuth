@@ -56,6 +56,36 @@ import { crudMenuTypeLabel, crudMenuTypeOptions } from './menuType'
 
 const HTTP_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS']
 
+const DIALOG_SCREEN_MARGIN = 16
+
+/** 视口居中相对屏幕中心的偏移。工具栏在视口外，只在页面里居中会偏下。 */
+function screenCenterShift(modalHeight: number): number {
+  const { outerHeight, innerHeight, screenY, screen } = window
+  const chrome = outerHeight - innerHeight
+  // 嵌入式或未完成布局的窗口会给出无效坐标，这时保持在页面视口内居中。
+  if (
+    innerHeight <= 0 ||
+    screen.height <= 0 ||
+    chrome < 0 ||
+    chrome > 400 ||
+    screenY < -100 ||
+    screenY > screen.height
+  ) {
+    return 0
+  }
+  const viewportTop = screenY + chrome
+  const viewportCenter = viewportTop + innerHeight / 2
+  // 屏幕中心再上移 50px。
+  let shift = screen.height / 2 - viewportCenter - 50
+  const centeredTop = (innerHeight - modalHeight) / 2
+  const minTop = DIALOG_SCREEN_MARGIN
+  const maxTop = Math.max(minTop, innerHeight - modalHeight - DIALOG_SCREEN_MARGIN)
+  const nextTop = centeredTop + shift
+  if (nextTop < minTop) shift -= nextTop - minTop
+  else if (nextTop > maxTop) shift -= nextTop - maxTop
+  return Math.round(shift)
+}
+
 export default function ResourceCrudPage<E extends Entity, F extends object, C, U>({
   resource,
   size,
@@ -174,10 +204,30 @@ export default function ResourceCrudPage<E extends Entity, F extends object, C, 
     }
   }, [])
 
+  const [dialogShift, setDialogShift] = useState(0)
+
   useLayoutEffect(() => {
     // 弹出层退出动画和异步校验可能保留旧回调，操作前必须读取最新状态。
     actionStateRef.current = { blocked: interactionBlocked, open, formSession }
   }, [interactionBlocked, open, formSession])
+
+  useLayoutEffect(() => {
+    const dialogClass = styles.editDialog
+    if (!open || !dialogClass) return
+    const apply = () => {
+      const modal = document.querySelector<HTMLElement>(`.${dialogClass}`)
+      if (!modal) return
+      const next = screenCenterShift(modal.getBoundingClientRect().height)
+      setDialogShift((current) => (current === next ? current : next))
+    }
+    apply()
+    const frame = requestAnimationFrame(apply)
+    window.addEventListener('resize', apply)
+    return () => {
+      cancelAnimationFrame(frame)
+      window.removeEventListener('resize', apply)
+    }
+  }, [open])
 
   useEffect(() => {
     let cancelled = false
@@ -646,6 +696,8 @@ export default function ResourceCrudPage<E extends Entity, F extends object, C, 
       <Modal
         open={open}
         width={560}
+        centered
+        style={{ top: dialogShift }}
         className={styles.editDialog ?? ''}
         classNames={{ container: styles.dialogContainer ?? '', body: styles.dialogBody ?? '' }}
         title={editingId ? `编辑${resource.title}` : `新增${resource.title}`}
@@ -741,7 +793,7 @@ function ResourceEditForm<E extends Entity, F extends object, C, U>({
       }
       labelCol={{ flex: '96px' }}
       wrapperCol={{ flex: 'auto' }}
-      size="large"
+      size="small"
       className={styles.editForm ?? ''}
       onFinish={(values) => {
         // 提交函数内部处理失败并释放锁，表单回调只负责触发。
