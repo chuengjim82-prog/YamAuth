@@ -18,6 +18,43 @@
   flex-direction: column;
   min-height: 0;
 }
+.siderBrand {
+  display: flex;
+  flex: 0 0 64px;
+  align-items: center;
+  gap: 12px;
+  height: 64px;
+  padding: 0 16px;
+  background: var(--app-bg);
+  border-bottom: 1px solid var(--app-border);
+  color: var(--app-heading);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+.siderBrand img {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+.siderBrand:hover {
+  color: var(--app-accent);
+}
+.sider:global(.ant-layout-sider-collapsed) .siderBrand {
+  justify-content: center;
+  gap: 0;
+  padding: 0;
+}
+.sider:global(.ant-layout-sider-collapsed) .siderBrand span {
+  display: none;
+}
+.main {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  background: var(--app-bg);
+}
 .menu {
   flex: 1;
   min-height: 0;
@@ -58,56 +95,9 @@
 .menu:global(.ant-menu-inline-collapsed) :global(.ant-menu-submenu-title) {
   padding-inline: 12px;
 }
-.collapseBar {
-  /* 与分页栏同高：32px 页码、上下各 12px 内边距，再加 1px 上边框。 */
-  height: 57px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 12px;
-  flex-shrink: 0;
-  border-top: 1px solid var(--app-divider);
-}
-.siderBreadcrumb {
-  min-width: 0;
-  overflow: hidden;
-  color: var(--app-text-secondary);
-  font-size: 13px;
-  line-height: 18px;
-}
-.siderBreadcrumb :global(ol) {
-  flex-wrap: nowrap;
-}
-.siderBreadcrumb :global(li) {
-  min-width: 0;
-}
-.siderBreadcrumb :global(.ant-breadcrumb-link),
-.siderBreadcrumb :global(.ant-breadcrumb-separator) {
-  color: var(--app-text-secondary);
-}
-.siderBreadcrumb :global(.ant-breadcrumb-link) {
-  display: inline-block;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  vertical-align: bottom;
-}
-.collapseBarCollapsed {
-  justify-content: center;
-  padding: 0;
-}
-.collapseButton {
-  width: 32px;
-  height: 32px;
-  margin-inline-start: auto;
-  font-size: 17px;
-}
-.collapseBarCollapsed .collapseButton {
-  margin-inline-start: 0;
-}
 .content {
   display: flex;
+  flex: 1;
   flex-direction: column;
   padding: 0;
   background: var(--app-bg);

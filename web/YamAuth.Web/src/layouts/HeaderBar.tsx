@@ -1,7 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Breadcrumb, Button, Dropdown, Modal } from 'antd'
-import { LogoutOutlined, MenuOutlined, UserOutlined } from '@ant-design/icons'
+import {
+  LogoutOutlined,
+  MenuFoldOutlined,
+  MenuOutlined,
+  MenuUnfoldOutlined,
+  UserOutlined
+} from '@ant-design/icons'
 import type { BreadcrumbProps, MenuProps } from 'antd'
 import { useApp } from '@/store/AppContext'
 import ThemeSwitch from '@/components/ThemeSwitch'
@@ -12,11 +18,15 @@ export default function HeaderBar({
   mobile,
   navigationOpen,
   onOpenNavigation,
+  collapsed = false,
+  onToggleCollapsed,
   breadcrumb
 }: {
   mobile: boolean
   navigationOpen: boolean
   onOpenNavigation: () => void
+  collapsed?: boolean
+  onToggleCollapsed?: () => void
   breadcrumb?: BreadcrumbProps['items']
 }) {
   const { user, logout } = useApp()
@@ -63,26 +73,41 @@ export default function HeaderBar({
   return (
     <header className={styles.header}>
       <div className={styles.identity}>
-        {mobile && (
-          <Button
-            type="text"
-            icon={<MenuOutlined />}
-            onClick={onOpenNavigation}
-            className={styles.menuButton ?? ''}
-            aria-label="打开导航菜单"
-            aria-haspopup="dialog"
-            aria-expanded={navigationOpen}
-          />
+        {mobile ? (
+          <>
+            <Button
+              type="text"
+              icon={<MenuOutlined />}
+              onClick={onOpenNavigation}
+              className={styles.menuButton ?? ''}
+              aria-label="打开导航菜单"
+              aria-haspopup="dialog"
+              aria-expanded={navigationOpen}
+            />
+            <div className={styles.brandBlock}>
+              <Link className={styles.brand} to="/home">
+                <img src={appEmblem} alt="" />
+                <span>{appName}</span>
+              </Link>
+              {breadcrumb && breadcrumb.length > 0 && (
+                <Breadcrumb className={styles.breadcrumb ?? ''} items={breadcrumb} />
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            <Button
+              type="text"
+              icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+              onClick={onToggleCollapsed}
+              className={styles.collapseButton ?? ''}
+              aria-label={collapsed ? '展开菜单' : '收起菜单'}
+            />
+            {breadcrumb && breadcrumb.length > 0 && (
+              <Breadcrumb className={styles.pageCrumb ?? ''} items={breadcrumb} />
+            )}
+          </>
         )}
-        <div className={styles.brandBlock}>
-          <Link className={styles.brand} to="/home">
-            <img src={appEmblem} alt="" />
-            <span>{appName}</span>
-          </Link>
-          {breadcrumb && breadcrumb.length > 0 && (
-            <Breadcrumb className={styles.breadcrumb ?? ''} items={breadcrumb} />
-          )}
-        </div>
       </div>
       <div className={styles.actions}>
         <ThemeSwitch compactOnNarrow />

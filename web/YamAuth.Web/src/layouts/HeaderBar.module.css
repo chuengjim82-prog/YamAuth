@@ -22,8 +22,9 @@
 }
 
 .identity {
+  flex: 1;
   gap: 8px;
-  flex-shrink: 0;
+  min-width: 0;
 }
 
 .brand {
@@ -56,6 +57,33 @@
   min-width: 0;
 }
 .breadcrumb :global(.ant-breadcrumb-link) {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
+.collapseButton {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  font-size: 17px;
+}
+.pageCrumb {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 18px;
+}
+.pageCrumb :global(ol) {
+  flex-wrap: nowrap;
+}
+.pageCrumb :global(li) {
+  min-width: 0;
+}
+.pageCrumb :global(.ant-breadcrumb-link) {
   display: inline-block;
   max-width: 100%;
   overflow: hidden;

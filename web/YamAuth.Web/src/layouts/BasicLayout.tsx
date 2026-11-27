@@ -1,7 +1,6 @@
 import { Suspense, useEffect, useMemo, useState } from 'react'
-import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { Breadcrumb, Button, Drawer, Layout, Menu, Spin, Tooltip } from 'antd'
-import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons'
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Drawer, Layout, Menu, Spin } from 'antd'
 import type { MenuProps } from 'antd'
 import { fetchMenuTree } from '@/api/auth'
 import PageErrorBoundary from '@/components/PageErrorBoundary'
@@ -12,7 +11,7 @@ import styles from './BasicLayout.module.css'
 import type { MenuNode } from '@/types/auth'
 import { redirectUnauthenticated } from '@/auth/loginRedirect'
 import useMediaQuery from '@/components/useMediaQuery'
-import { appName } from '@/branding'
+import { appEmblem, appName } from '@/branding'
 
 const { Sider, Content } = Layout
 
@@ -142,16 +141,6 @@ function SessionLayout() {
 
   return (
     <Layout className={styles.layout}>
-      <HeaderBar
-        mobile={isMobile}
-        navigationOpen={isMobile && mobileNavigation.open}
-        onOpenNavigation={() => setMobileNavigation({ viewport: isMobile, open: true })}
-        breadcrumb={
-          isMobile && chain.length > 1
-            ? chain.map((node) => ({ title: node.menuName }))
-            : undefined
-        }
-      />
       <Layout className={styles.body}>
         {!isMobile && (
           <Sider
@@ -161,40 +150,41 @@ function SessionLayout() {
             collapsed={collapsed}
             trigger={null}
           >
-            {navigation}
-            <div
-              className={`${styles.collapseBar} ${collapsed ? styles.collapseBarCollapsed : ''}`}
+            <Link
+              className={styles.siderBrand}
+              to="/home"
+              aria-label={collapsed ? appName : undefined}
             >
-              {!collapsed && chain.length > 1 && (
-                <Breadcrumb
-                  className={styles.siderBreadcrumb ?? ''}
-                  items={chain.map((node) => ({ title: node.menuName }))}
-                />
-              )}
-              <Tooltip title={collapsed ? '展开菜单' : '收起菜单'} placement="right">
-                <Button
-                  type="text"
-                  className={styles.collapseButton ?? ''}
-                  icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-                  onClick={() => {
-                    setPopupOpenKeys([])
-                    setCollapsed((value) => !value)
-                  }}
-                  aria-label={collapsed ? '展开菜单' : '收起菜单'}
-                />
-              </Tooltip>
-            </div>
+              <img src={appEmblem} alt="" />
+              <span>{appName}</span>
+            </Link>
+            {navigation}
           </Sider>
         )}
-        <Content className={styles.content}>
-          <PageErrorBoundary resetKey={`${session.revision}:${location.key}`}>
-            <Suspense
-              fallback={<Spin size="large" style={{ display: 'block', margin: '100px auto' }} />}
-            >
-              <Outlet />
-            </Suspense>
-          </PageErrorBoundary>
-        </Content>
+        <Layout className={styles.main}>
+          <HeaderBar
+            mobile={isMobile}
+            navigationOpen={isMobile && mobileNavigation.open}
+            onOpenNavigation={() => setMobileNavigation({ viewport: isMobile, open: true })}
+            collapsed={collapsed}
+            onToggleCollapsed={() => {
+              setPopupOpenKeys([])
+              setCollapsed((value) => !value)
+            }}
+            breadcrumb={
+              chain.length > 1 ? chain.map((node) => ({ title: node.menuName })) : undefined
+            }
+          />
+          <Content className={styles.content}>
+            <PageErrorBoundary resetKey={`${session.revision}:${location.key}`}>
+              <Suspense
+                fallback={<Spin size="large" style={{ display: 'block', margin: '100px auto' }} />}
+              >
+                <Outlet />
+              </Suspense>
+            </PageErrorBoundary>
+          </Content>
+        </Layout>
       </Layout>
       <Drawer
         title={appName}
