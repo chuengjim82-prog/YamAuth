@@ -1,6 +1,6 @@
 .header {
-  height: 64px;
-  flex: 0 0 64px;
+  height: 48px;
+  flex: 0 0 48px;
   background: var(--app-bg);
   border-bottom: 1px solid var(--app-border);
   display: flex;

@@ -6,8 +6,8 @@
 .panel {
   padding: 32px;
   background: var(--app-surface);
-  border: 1px solid var(--app-border);
-  border-radius: var(--app-panel-radius);
+  border: 0;
+  border-radius: 0;
 }
 .emblem {
   width: 48px;
