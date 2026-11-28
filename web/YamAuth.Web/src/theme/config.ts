@@ -86,12 +86,12 @@ function createTheme(palette: AppPalette, dark: boolean, mobile: boolean): Theme
         itemMarginBottom: 24
       },
       Menu: {
-        itemBg: palette.surface,
-        subMenuItemBg: palette.surface,
+        itemBg: palette.field,
+        subMenuItemBg: palette.field,
         itemColor: palette.secondary,
         itemHoverColor: palette.accent,
-        itemHoverBg: palette.hover,
-        itemSelectedBg: palette.selected,
+        itemHoverBg: palette.menuHover,
+        itemSelectedBg: palette.menuSelected,
         itemSelectedColor: palette.accent,
         itemHeight: 29,
         itemBorderRadius: 10,
