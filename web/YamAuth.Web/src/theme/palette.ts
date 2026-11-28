@@ -15,6 +15,7 @@ const lightPalette = {
   hover: '#f2f5ee',
   menuHover: '#e8eee3',
   menuSelected: '#dde8d6',
+  menuIndicator: '#ea942f',
   disabled: '#edf0e8',
   disabledText: '#859080',
   warning: '#99580b',
@@ -43,6 +44,7 @@ const darkPalette: AppPalette = {
   hover: '#293c30',
   menuHover: '#293c30',
   menuSelected: '#304735',
+  menuIndicator: '#ea942f',
   disabled: '#29392f',
   disabledText: '#78897b',
   warning: '#eac27f',
@@ -90,6 +92,7 @@ export function paletteVariables(palette: AppPalette) {
     '--app-scroll-thumb': palette.scrollThumb,
     '--app-scroll-thumb-hover': palette.scrollHover,
     '--app-scroll-horizontal-thumb': palette.scrollThumb,
-    '--app-scroll-menu-thumb': palette.scrollThumb
+    '--app-scroll-menu-thumb': palette.scrollThumb,
+    '--app-menu-indicator': palette.menuIndicator
   }
 }

@@ -80,8 +80,23 @@
 }
 .menu:global(.ant-menu-inline):not(:global(.ant-menu-inline-collapsed)) :global(.ant-menu-item),
 .menu:global(.ant-menu-inline):not(:global(.ant-menu-inline-collapsed)) :global(.ant-menu-submenu-title) {
-  margin-inline-end: 0;
-  width: calc(100% - 8px);
+  margin-inline: 8px;
+  width: calc(100% - 16px);
+}
+.menu:global(.ant-menu-inline):not(:global(.ant-menu-inline-collapsed)) :global(.ant-menu-item-selected) {
+  margin-inline-end: 12px;
+  width: calc(100% - 20px);
+}
+.menu:global(.ant-menu-inline):not(:global(.ant-menu-inline-collapsed)) :global(.ant-menu-item-selected)::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 3px;
+  top: 4px;
+  bottom: 4px;
+  width: 3px;
+  height: auto;
+  border-radius: 999px;
+  background: var(--app-menu-indicator, #ea942f);
 }
 .menu:global(.ant-menu-inline):not(:global(.ant-menu-inline-collapsed)) :global(.ant-menu-item) {
   padding-inline-end: 12px;
